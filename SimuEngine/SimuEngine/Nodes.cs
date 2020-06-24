@@ -4,21 +4,21 @@ using System.Text;
 
 namespace SimuEngine
 {
-    class ExampleNode : Node
+    public class ExampleNode : Node
     {
     }
 
-    enum NodeType
-    {
-        Base
-    }
-
-    enum ConnectionType
+    public enum NodeType
     {
         Base
     }
 
-    enum GroupType
+    public enum ConnectionType
+    {
+        Base
+    }
+
+    public enum GroupType
     {
         Base
     }

@@ -5,23 +5,25 @@ using System.Text;
 
 namespace SimuEngine
 {
-    public class System
+    public class GraphSystem
     {
-        List<Node> graph;
+        public List<Node> graph;
 
-        public System()
+        public GraphSystem()
         {
             graph = new List<Node>();
         }
 
-        public void Generate(Node node)
+        public void Generate<T>() where T : Node, new()
         {
+            T node = new T();
             graph.Add(node);
             node.OnGenerate();
         }
 
-        public void Create(Node node)
+        public void Create<T>() where T : Node, new()
         {
+            T node = new T();
             graph.Add(node);
             node.OnCreate();
         }
