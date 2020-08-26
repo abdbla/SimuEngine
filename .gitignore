@@ -131,3 +131,7 @@ $RECYCLE.BIN/
 .DS_Store
 
 _NCrunch*
+
+SimuEngine/SimuEngine/obj
+SimuEngine/SimuEngine/bin
+SimuEngine/.vs
