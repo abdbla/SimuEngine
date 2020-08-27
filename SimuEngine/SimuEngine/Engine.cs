@@ -25,18 +25,15 @@ namespace SimuEngine
 
         public override void OnGenerate() {}
     }
-    class Engine
-    {
+    class Engine {
         EventList events;
         GraphSystem system;
-        
-        
-            /// <summary>
-            /// The main entry point for the application.
-            /// </summary>
+
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
         [STAThread]
-        static void Main()
-        {
+        static void Main() {
             Graph graph = new Graph();
             var node1 = new ExampleNode("a");
             var node2 = new ExampleNode("b");
@@ -50,7 +47,7 @@ namespace SimuEngine
             var conns = graph.GetConnections(node1);
 
             Console.WriteLine(graph.GetConnections(node1));
-                
+
             using (var game = new Simulation())
                 game.Run();
         }
