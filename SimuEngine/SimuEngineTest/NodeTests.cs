@@ -1,5 +1,6 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SimuEngine;
+using System;
 using System.Collections.Generic;
 
 namespace SimuEngineTest
@@ -53,8 +54,18 @@ namespace SimuEngineTest
     }
 
     [TestClass]
-    public class ExampleNode : Node
+    public class ExampleNode : Node, System.IEquatable<ExampleNode>
     {
+        static char ID = 'a';
+        public string name;
+        public ExampleNode() {
+            name = ID++.ToString();
+        }
+
+        public override void Update() {
+            throw new System.NotImplementedException();
+        }
+
         public override void OnGenerate()
         {
             return;
@@ -66,6 +77,10 @@ namespace SimuEngineTest
         public override EventList GetEventList()
         {
             return null;
+        }
+
+        bool IEquatable<ExampleNode>.Equals(ExampleNode other) {
+            return name == other.name;
         }
     }
 }

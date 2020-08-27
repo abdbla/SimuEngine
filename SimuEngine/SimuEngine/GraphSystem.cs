@@ -14,7 +14,7 @@ namespace SimuEngine
             graph = new Graph();
         }
 
-        public void Generate<T>() where T: Node, new()
+        public void Generate<T>() where T : Node, new()
         {
             T node = new T();
             graph.Add(node);
