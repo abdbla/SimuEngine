@@ -67,23 +67,31 @@ namespace SimuEngineTest
             Node node3 = graphSystem.graph.GetNodes()[2];
             Node node4 = graphSystem.graph.GetNodes()[3];
             Node node5 = graphSystem.graph.GetNodes()[4];
-            Connection connection = new Connection();
+            Connection connection = new ExampleConnection();
             graphSystem.graph.AddConnection(node1, node2, connection);
-            /*graphSystem.graph.AddConnection(node1, node3, connection);
-             *graphSystem.graph.AddConnection(node1, node4, connection);
-             *graphSystem.graph.AddConnection(node1, node5, connection);
-             */
+            graphSystem.graph.AddConnection(node1, node3, connection);
+            graphSystem.graph.AddConnection(node1, node4, connection);
+            graphSystem.graph.AddConnection(node1, node5, connection);
+
 
             //act
             List<(Connection, Node)> connectionList = new List<(Connection, Node)>();
             connectionList.Add((connection, node2));
-            /*connectionList.Add((connection, node3));
-             *connectionList.Add((connection, node4));
-             *connectionList.Add((connection, node5));
-             */
+            connectionList.Add((connection, node3));
+            connectionList.Add((connection, node4));
+            connectionList.Add((connection, node5));
+
+            List<(Connection, Node)> getConnectionsList = graphSystem.graph.GetConnections(node1);
 
             //assert
-            Assert.AreEqual(connectionList, graphSystem.graph.GetConnections(node1));
+            Assert.IsTrue(connectionList.TrueForAll(conn_node => getConnectionsList.Contains(conn_node)));
+        }
+    }
+
+    [TestClass]
+    public class ExampleConnection : Connection, IEquatable<ExampleConnection> {
+        bool IEquatable<ExampleConnection>.Equals(ExampleConnection other) {
+            return true;
         }
     }
 
