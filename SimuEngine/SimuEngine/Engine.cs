@@ -10,18 +10,33 @@ namespace SimuEngine
         EventList events;
         GraphSystem system;
 
-        
-            /// <summary>
-            /// The main entry point for the application.
-            /// </summary>
-            [STAThread]
-            static void Main()
-            {
-                using (var game = new Simulation())
-                    game.Run();
-            }
+
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
+        {
+            using (var game = new Simulation())
+                game.Run();
+        }
 
 
+    }
+    public class ExampleNode : Node
+    {
+        public override void OnGenerate()
+        {
+            return;
+        }
+        public override void OnCreate()
+        {
+            return;
+        }
+        public override EventList GetEventList()
+        {
+            return null;
+        }
     }
 
     class Simulation : Game
