@@ -10,7 +10,6 @@ namespace SimuEngine
 
         public static EventList LoadFromSerial()
         {
-            //To be implemented?
             throw new NotImplementedException();
         }
     }

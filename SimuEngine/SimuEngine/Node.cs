@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SimuEngine {
     public abstract class Node {
-        public abstract List<Event> GetEventList();
+        public abstract EventList GetEventList();
 
         List<Node> subGraph;
         List<string> statuses;
