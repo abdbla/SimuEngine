@@ -5,7 +5,7 @@ using System.Text;
 namespace SimuEngine {
     public class Graph
     {
-        List<Node> nodes;
+        public List<Node> nodes; //public for the purposes of unit tests
         Dictionary<(int, int), Connection> adjacencyMatrix;
 
         public Graph() {
