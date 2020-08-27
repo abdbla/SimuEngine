@@ -17,7 +17,7 @@ namespace SimuEngineTest
             graphSystem.Create<ExampleNode>();
 
             //assert
-            Assert.AreEqual(1, graphSystem.graph.nodes.Count);
+            Assert.AreEqual(1, graphSystem.graph.GetNodes());
         }
 
         [TestMethod]
@@ -30,7 +30,7 @@ namespace SimuEngineTest
             graphSystem.Generate<ExampleNode>();
 
             //assert
-            Assert.AreEqual(1, graphSystem.graph.nodes.Count);
+            Assert.AreEqual(1, graphSystem.graph.GetNodes());
         }
 
         [TestMethod]
@@ -63,7 +63,7 @@ namespace SimuEngineTest
         {
             return;
         }
-        public override List<Event> GetEventList()
+        public override EventList GetEventList()
         {
             return null;
         }
