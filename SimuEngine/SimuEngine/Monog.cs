@@ -11,6 +11,7 @@ namespace SimuEngine
         {
             GraphicsDeviceManager graphics;
             SpriteBatch spriteBatch;
+        SpriteFont arial;
 
             public Monog()
             {
@@ -39,6 +40,7 @@ namespace SimuEngine
             {
                 // Create a new SpriteBatch, which can be used to draw textures.
                 spriteBatch = new SpriteBatch(GraphicsDevice);
+            arial = Content.Load<SpriteFont>(@"Arial");
 
                 // TODO: use this.Content to load your game content here
             }
@@ -74,6 +76,12 @@ namespace SimuEngine
             protected override void Draw(GameTime gameTime)
             {
                 GraphicsDevice.Clear(Color.CornflowerBlue);
+
+            spriteBatch.Begin();
+
+            spriteBatch.DrawString(arial, "pls", Vector2.Zero, Color.Black);
+
+            spriteBatch.End();
 
                 // TODO: Add your drawing code here
 

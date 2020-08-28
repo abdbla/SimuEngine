@@ -1,12 +1,12 @@
 
 #----------------------------- Global Properties ----------------------------#
 
-/outputDir:bin
+/outputDir:..\bin\Debug\netcoreapp3.1\Content
 /intermediateDir:obj
 /platform:Windows
 /config:
 /profile:Reach
-/compress:False
+/compress:True
 
 #-------------------------------- References --------------------------------#
 
