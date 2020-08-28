@@ -18,8 +18,6 @@ namespace SimuEngine {
             connections = new List<Connection>();
         }
 
-        public abstract void Update();
-
         public abstract void OnGenerate();
 
         public abstract void OnCreate();

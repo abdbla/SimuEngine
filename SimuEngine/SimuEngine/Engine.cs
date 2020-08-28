@@ -17,10 +17,6 @@ namespace SimuEngine
         public ExampleNode(string name) {
             this.name = name;
         }
-
-        public override void Update() {
-            throw new NotImplementedException();
-        }
         public override void OnCreate() { }
 
         public override void OnGenerate() {}

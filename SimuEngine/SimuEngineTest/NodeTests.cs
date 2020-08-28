@@ -104,10 +104,6 @@ namespace SimuEngineTest
             name = ID++.ToString();
         }
 
-        public override void Update() {
-            throw new System.NotImplementedException();
-        }
-
         public override void OnGenerate()
         {
             return;
