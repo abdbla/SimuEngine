@@ -1,28 +1,10 @@
 ﻿using System;
-using System.Data;
-using System.Diagnostics;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
 
 
 namespace SimuEngine
 {
-    class ExampleNode : Node {
-
-        string name;
-        public override EventList GetEventList() {
-            throw new NotImplementedException();
-        }
-        
-        public ExampleNode(string name) {
-            this.name = name;
-        }
-        public override void OnCreate() { }
-
-        public override void OnGenerate() {}
-    }
-    class Engine {
+    class Engine
+    {
         EventList events;
         GraphSystem system;
 
@@ -30,26 +12,27 @@ namespace SimuEngine
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main() {
-            Graph graph = new Graph();
-            var node1 = new ExampleNode("a");
-            var node2 = new ExampleNode("b");
-            var node3 = new ExampleNode("c");
-            var conn = new Connection();
+        static void Main()
+        {
+            //Graph graph = new Graph();
+            //var node1 = new ExampleNode("a");
+            //var node2 = new ExampleNode("b");
+            //var node3 = new ExampleNode("c");
+            //var conn = new Connection();
 
-            graph.Add(node1);
-            graph.Add(node2);
-            graph.Add(node3);
-            graph.AddConnection(node1, node2, conn);
-            var conns = graph.GetConnections(node1);
+            //graph.Add(node1);
+            //graph.Add(node2);
+            //graph.Add(node3);
+            //graph.AddConnection(node1, node2, conn);
+            //var conns = graph.GetConnections(node1);
 
-            Console.WriteLine(graph.GetConnections(node1));
+            //Console.WriteLine(graph.GetConnections(node1));
 
             using (var game = new Monog())
                 game.Run();
         }
     }
 
-    
+
 
 }
