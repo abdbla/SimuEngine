@@ -4,11 +4,16 @@ using System.Text;
 
 namespace SimuEngine
 {
-    public class EventList
+    public class EventListContainer
     {
-        public Dictionary<Type, List<Event>> eventLists;
+        private Dictionary<Type, List<Event>> eventLists;
 
-        public static EventList LoadFromSerial()
+        public List<Event> GetEventList(Type type)
+        {
+            return eventLists[type];
+        }
+
+        public static EventListContainer LoadFromSerial()
         {
             throw new NotImplementedException();
         }

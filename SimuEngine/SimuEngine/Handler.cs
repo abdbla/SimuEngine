@@ -6,5 +6,6 @@ namespace SimuEngine
 {
     class Handler
     {
+        EventListContainer events;
     }
 }

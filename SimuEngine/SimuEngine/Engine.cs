@@ -5,8 +5,8 @@ namespace SimuEngine
 {
     class Engine
     {
-        EventList events;
         GraphSystem system;
+        Handler handler;
 
         /// <summary>
         /// The main entry point for the application.
@@ -27,9 +27,6 @@ namespace SimuEngine
             //var conns = graph.GetConnections(node1);
 
             //Console.WriteLine(graph.GetConnections(node1));
-
-            using (var game = new Monog())
-                game.Run();
         }
     }
 
