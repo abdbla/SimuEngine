@@ -7,7 +7,7 @@ using System.Collections.Generic;
 namespace SimuEngineTest
 {
     [TestClass]
-    public class NodeTests
+    public class SystemTests
     {
         [TestMethod]
         public void CreateNode_ExampleNode_Succeed()
@@ -117,20 +117,45 @@ namespace SimuEngineTest
                 graph.FindAllNodes(node => node == n1 || node == n3));
         }
 
-        [TestMethod]
-        public void ExampleNode_IEquatable_Success() {
-            ExampleNode n1 = new ExampleNode();
-            ExampleNode n2 = new ExampleNode();
 
-            Assert.IsTrue(n1.Equals(n1));
-            Assert.IsFalse(n1 == n2);
-        }
     }
 
     [TestClass]
     public class ExampleConnection : Connection, IEquatable<ExampleConnection> {
-        bool IEquatable<ExampleConnection>.Equals(ExampleConnection other) {
-            return true;
+        [TestMethod]
+        public void ExampleConnection_IEquatable_Success() {
+            ExampleConnection c1 = new ExampleConnection();
+            ExampleConnection c2 = new ExampleConnection();
+
+            Assert.AreSame(c1, c1);
+            Assert.AreNotSame(c1, c2);
+            Assert.IsTrue(c1 == c2);
+            Assert.IsFalse(c1 != c2);
+        }
+
+        public override bool Equals(object obj) {
+            if (obj.GetType() != this.GetType()) return false;
+            else return this.Equals(obj as ExampleConnection);
+        }
+
+        public bool Equals(ExampleConnection other) {
+            return !ReferenceEquals(other, null);
+        }
+
+        public override int GetHashCode() {
+            return base.GetHashCode();
+        }
+
+        public override string ToString() {
+            return base.ToString();
+        }
+
+        public static bool operator ==(ExampleConnection lhs, ExampleConnection rhs) {
+            return lhs.Equals(rhs);
+        }
+
+        public static bool operator !=(ExampleConnection lhs, ExampleConnection rhs) {
+            return !(lhs == rhs);
         }
     }
 
@@ -154,6 +179,15 @@ namespace SimuEngineTest
 
         bool IEquatable<ExampleNode>.Equals(ExampleNode other) {
             return name == other.name;
+        }
+
+        [TestMethod]
+        public void ExampleNode_IEquatable_Success() {
+            ExampleNode n1 = new ExampleNode();
+            ExampleNode n2 = new ExampleNode();
+
+            Assert.IsTrue(n1.Equals(n1));
+            Assert.IsFalse(n1 == n2);
         }
     }
 }
