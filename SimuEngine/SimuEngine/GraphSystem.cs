@@ -33,7 +33,7 @@ namespace SimuEngine
     {
     }
 
-    public class Connection
+    public abstract class Connection
     {
     }
 }
