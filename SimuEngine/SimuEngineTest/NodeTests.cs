@@ -1,3 +1,4 @@
+using Microsoft.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using SimuEngine;
 using System;
@@ -43,7 +44,7 @@ namespace SimuEngineTest
             graphSystem.Create<ExampleNode>();
             Node node1 = graphSystem.graph.nodes[0];
             Node node2 = graphSystem.graph.nodes[1];
-            Connection connection = new Connection();
+            Connection connection = new ExampleConnection();
 
             //act
             graphSystem.graph.AddConnection(node1, node2, connection);
@@ -84,7 +85,45 @@ namespace SimuEngineTest
             List<(Connection, Node)> getConnectionsList = graphSystem.graph.GetConnections(node1);
 
             //assert
-            Assert.IsTrue(connectionList.TrueForAll(conn_node => getConnectionsList.Contains(conn_node)));
+            CollectionAssert.AreEquivalent(connectionList, getConnectionsList);
+        }
+
+        [TestMethod]
+        public void FindNode_Predicate_Success() {
+            Graph graph = new Graph();
+            var n1 = new ExampleNode();
+            var n2 = new ExampleNode();
+
+            graph.Add(n1);
+            graph.Add(n2);
+
+            Assert.AreSame(n1, graph.FindNode(node => node == n1));
+        }
+
+        [TestMethod]
+        public void FindAllNodes_Predicate_Success() {
+            Graph graph = new Graph();
+            var n1 = new ExampleNode();
+            var n2 = new ExampleNode();
+            var n3 = new ExampleNode();
+
+            graph.Add(n1);
+            graph.Add(n2);
+            graph.Add(n3);
+
+            CollectionAssert.AreEquivalent(new List<Node>() { n1, n2 },
+                graph.FindAllNodes(node => node == n1 || node == n2));
+            CollectionAssert.AreEquivalent(new List<Node>() { n1, n3 },
+                graph.FindAllNodes(node => node == n1 || node == n3));
+        }
+
+        [TestMethod]
+        public void ExampleNode_IEquatable_Success() {
+            ExampleNode n1 = new ExampleNode();
+            ExampleNode n2 = new ExampleNode();
+
+            Assert.IsTrue(n1.Equals(n1));
+            Assert.IsFalse(n1 == n2);
         }
     }
 
