@@ -112,10 +112,6 @@ namespace SimuEngineTest
         {
             return;
         }
-        public override EventList GetEventList()
-        {
-            return null;
-        }
 
         bool IEquatable<ExampleNode>.Equals(ExampleNode other) {
             return name == other.name;
