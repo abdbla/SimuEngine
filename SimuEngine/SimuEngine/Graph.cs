@@ -44,7 +44,11 @@ namespace SimuEngine {
 
         // find the index of a certain node
         private int FindIndex(Node node) {
-            return nodes.FindIndex(node_ => node == node_);
+            int index = nodes.FindIndex(node_ => node == node_);
+            if (index == -1) {
+                throw new NodeNotFoundException($"Node {node} isn't present in this graph");
+            }
+            return index;
         }
 
         // shorthand to find the indices of two nodes
@@ -169,6 +173,11 @@ namespace SimuEngine {
         /// <returns>the list of all nodes</returns>
         public List<Node> GetNodes() {
             return nodes;
+        }
+    }
+
+    class NodeNotFoundException : Exception {
+        public NodeNotFoundException(string message) : base(message) {
         }
     }
 }
