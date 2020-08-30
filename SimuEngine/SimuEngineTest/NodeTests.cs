@@ -12,10 +12,10 @@ namespace SimuEngineTest
     [TestClass]
     public class SystemTests
     {
-        /* TODO: 
-         * - tests for RemoveConnection
-         * - tests for doing stuff with non-existent nodes
-         * - test that OnCreate/OnGenerate are called successfully
+        /* TODO: tests for RemoveConnection
+         * TODO: tests for doing stuff with non-existent nodes 
+         * TODO: test that OnCreate/OnGenerate are called successfully
+         * TODO: tests for generic versions of FindNode/FindAllNodes
          */
         [TestMethod]
         public void CreateNode_ExampleNode_Succeed()
@@ -109,6 +109,17 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
+        public void FindNode_WrongPredicate_ReturnsNull() {
+            Graph graph = new Graph();
+            var n1 = new ExampleNode();
+            var n2 = new ExampleNode();
+
+            graph.Add(n1);
+
+            Assert.IsNull(graph.FindNode(node => node == n2));
+        }
+
+        [TestMethod]
         public void FindAllNodes_Predicate_Success() {
             Graph graph = new Graph();
             var n1 = new ExampleNode();
@@ -167,7 +178,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void FindDuplicateConnections_CorrectCount() {
+        public void FindDuplicateConnections_MultipleConnections_CorrectCount() {
             Graph graph = new Graph();
 
             var n1 = new ExampleNode();
@@ -270,7 +281,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void RemoveNode_RemoveDisconnectedNode_Success() {
+        public void RemoveNode_RemoveUnconnectedNode_Success() {
             Graph graph = new Graph();
             var node = new ExampleNode();
 
@@ -300,7 +311,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void RemoveNode_NonEmptyGraph_NonexistentNode_ReturnsFalse() {
+        public void RemoveNode_NonEmptyGraphNonexistentNode_ReturnsFalse() {
             Graph graph = new Graph();
             var node1 = new ExampleNode();
             var node2 = new ExampleNode();
