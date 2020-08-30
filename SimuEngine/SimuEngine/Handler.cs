@@ -23,9 +23,9 @@ namespace SimuEngine
                 {
                     bool req = true;
                     bool pos = true;
-                    for (int j = 0; j < ev.ReqRequirement.Count; j++)
+                    for (int j = 0; j < ev.ReqGuaranteed.Count; j++)
                     {
-                        if (!ev.ReqRequirement[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
+                        if (!ev.ReqGuaranteed[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
                         {
                             req = false;
                         }
@@ -38,9 +38,9 @@ namespace SimuEngine
                         }
                     } else
                     {
-                        for (int j = 0; j < ev.ReqRequirement.Count; j++)
+                        for (int j = 0; j < ev.ReqGuaranteed.Count; j++)
                         {
-                            if (!ev.PosRequirement[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
+                            if (!ev.ReqPossible[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
                             {
                                 pos = false;
                             }
@@ -79,9 +79,9 @@ namespace SimuEngine
                 {
                     bool req = true;
                     bool pos = true;
-                    for (int j = 0; j < ev.ReqRequirement.Count; j++)
+                    for (int j = 0; j < ev.ReqGuaranteed.Count; j++)
                     {
-                        if (!ev.ReqRequirement[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
+                        if (!ev.ReqGuaranteed[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
                         {
                             req = false;
                         }
@@ -95,9 +95,9 @@ namespace SimuEngine
                     }
                     else
                     {
-                        for (int j = 0; j < ev.ReqRequirement.Count; j++)
+                        for (int j = 0; j < ev.ReqGuaranteed.Count; j++)
                         {
-                            if (!ev.PosRequirement[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
+                            if (!ev.ReqPossible[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
                             {
                                 pos = false;
                             }

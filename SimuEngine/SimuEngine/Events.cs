@@ -22,21 +22,21 @@ namespace SimuEngine
     public class Event
     {
         //The function takes the source node which triggered the event, the Graph it's contained in, and the top-level graph. It returns a bool if the requirement is fulfilled.
-        List<Func<Node, Graph, Graph, bool>> posRequirement;
-        List<Func<Node, Graph, Graph, bool>> reqRequirement;
-        List<Func<Node, Graph, Graph, bool>> outcome;
+        List<Func<Node, Graph, Graph, bool>> reqPossible;
+        List<Func<Node, Graph, Graph, bool>> reqGuaranteed;
+        List<Action<Node, Graph, Graph>> outcome;
 
-        public List<Func<Node, Graph, Graph, bool>> PosRequirement
+        public List<Func<Node, Graph, Graph, bool>> ReqPossible
         {
-            get { return posRequirement; }
+            get { return reqPossible; }
             set { }
         }
-        public List<Func<Node, Graph, Graph, bool>> ReqRequirement
+        public List<Func<Node, Graph, Graph, bool>> ReqGuaranteed
         {
-            get { return reqRequirement; }
+            get { return reqGuaranteed; }
             set { }
         }
-        public List<Func<Node, Graph, Graph, bool>> Outcome
+        public List<Action<Node, Graph, Graph>> Outcome
         {
             get { return outcome; }
             set { }
@@ -44,9 +44,9 @@ namespace SimuEngine
 
         public Event()
         {
-            posRequirement = new List<Func<Node, Graph, Graph, bool>>();
-            reqRequirement = new List<Func<Node, Graph, Graph, bool>>();
-            outcome = new List<Func<Node, Graph, Graph, bool>>();
+            reqPossible = new List<Func<Node, Graph, Graph, bool>>();
+            reqGuaranteed = new List<Func<Node, Graph, Graph, bool>>();
+            outcome = new List<Action<Node, Graph, Graph>>();
         }
     }
 }
