@@ -73,12 +73,34 @@ namespace SimuEngine {
         }
 
         /// <summary>
+        /// FindNode but generic, will only filter through the nodes of type T.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="predicate"></param>
+        /// <returns>the first matching node of type T, or null</returns>
+        public T FindNode<T>(Predicate<T> predicate) where T : Node
+        {
+            return _nodes.Find(node => node is T && predicate(node as T)) as T;
+        }
+
+        /// <summary>
         /// Find all nodes matching a predicate
         /// </summary>
         /// <param name="predicate">the predicate to test with</param>
         /// <returns>the list of nodes matching predicate</returns>
         public List<Node> FindAllNodes(Predicate<Node> predicate) {
             return _nodes.FindAll(predicate);
+        }
+
+        /// <summary>
+        /// Generic version of FindAllNodes, will return all nodes of type T matching the predicate
+        /// </summary>
+        /// <typeparam name="T">the type of node to filter and return</typeparam>
+        /// <param name="predicate"></param>
+        /// <returns>all matching nodes of type T</returns>
+        public List<T> FindAllNodes<T>(Predicate<T> predicate) where T : Node
+        {
+            return _nodes.FindAll(node => node is T && predicate(node as T)).Cast<T>().ToList();
         }
 
         // find the index of a certain node
