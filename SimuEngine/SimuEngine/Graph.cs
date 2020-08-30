@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace SimuEngine {
@@ -8,11 +9,12 @@ namespace SimuEngine {
     /// </summary>
     public class Graph
     {
-        public List<Node> nodes; //public for the purposes of unit tests
+        private List<Node> _nodes;
+        public ReadOnlyCollection<Node> Nodes => _nodes.AsReadOnly();
         Dictionary<(int, int), Connection> adjacencyMatrix;
 
         public Graph() {
-            nodes = new List<Node>();
+            _nodes = new List<Node>();
             adjacencyMatrix = new Dictionary<(int, int), Connection>();
         }
 
@@ -21,7 +23,7 @@ namespace SimuEngine {
         /// </summary>
         /// <param name="node">the node to be added</param>
         public void Add(Node node) {
-            nodes.Add(node);
+            _nodes.Add(node);
         }
 
         /// <summary>
@@ -39,7 +41,7 @@ namespace SimuEngine {
                         adjacencyMatrix.Remove(key);
                     }
                 }
-                nodes.RemoveAt(index);
+                _nodes.RemoveAt(index);
                 return true;
             } catch (NodeNotFoundException) {
                 return false;
@@ -67,7 +69,7 @@ namespace SimuEngine {
         /// <param name="predicate">the predicate to test with</param>
         /// <returns>the node found</returns>
         public Node FindNode(Predicate<Node> predicate) {
-            return nodes.Find(predicate);
+            return _nodes.Find(predicate);
         }
 
         /// <summary>
@@ -76,12 +78,12 @@ namespace SimuEngine {
         /// <param name="predicate">the predicate to test with</param>
         /// <returns>the list of nodes matching predicate</returns>
         public List<Node> FindAllNodes(Predicate<Node> predicate) {
-            return nodes.FindAll(predicate);
+            return _nodes.FindAll(predicate);
         }
 
         // find the index of a certain node
         private int FindIndex(Node node) {
-            int index = nodes.FindIndex(node_ => node == node_);
+            int index = _nodes.FindIndex(node_ => node == node_);
             if (index == -1) {
                 throw new NodeNotFoundException($"Node {node} isn't present in this graph");
             }
@@ -131,8 +133,8 @@ namespace SimuEngine {
         /// <returns>(connection, List<(source, target)>)</returns>
         public List<(Connection, List<(Node, Node)>)> FindDuplicateConnections() {
             var connections = (from kv in adjacencyMatrix
-                               let src = nodes[kv.Key.Item1]
-                               let dst = nodes[kv.Key.Item2]
+                               let src = _nodes[kv.Key.Item1]
+                               let dst = _nodes[kv.Key.Item2]
                                let conn = kv.Value
                                select new {
                                    src,
@@ -197,7 +199,7 @@ namespace SimuEngine {
             var ret = new List<(Connection, Node)>();
             foreach (var item in adjacencyMatrix) {
                 if (item.Key.Item1 == idx) {
-                    ret.Add((item.Value, nodes[item.Key.Item2]));
+                    ret.Add((item.Value, _nodes[item.Key.Item2]));
                 }
             }
 
@@ -209,11 +211,27 @@ namespace SimuEngine {
         /// </summary>
         /// <returns>the list of all nodes</returns>
         public List<Node> GetNodes() {
-            return nodes;
+            return _nodes;
+        }
+
+        public GraphCount Count {
+            get {
+                return new GraphCount (_nodes.Count, adjacencyMatrix.Count);
+            }
         }
     }
 
-    class NodeNotFoundException : Exception {
+    public readonly struct GraphCount {
+        public readonly int Nodes;
+        public readonly int Connections;
+
+        public GraphCount(int nodes, int connections) {
+            Nodes = nodes;
+            Connections = connections;
+        }
+    }
+
+    public class NodeNotFoundException : Exception {
         public NodeNotFoundException(string message) : base(message) {
         }
     }

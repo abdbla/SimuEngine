@@ -22,7 +22,7 @@ namespace SimuEngineTest
             graphSystem.Create<ExampleNode>();
 
             //assert
-            Assert.AreEqual(1, graphSystem.graph.GetNodes().Count);
+            Assert.AreEqual(1, graphSystem.graph.Nodes.Count);
         }
 
         [TestMethod]
@@ -35,7 +35,7 @@ namespace SimuEngineTest
             graphSystem.Generate<ExampleNode>();
 
             //assert
-            Assert.AreEqual(1, graphSystem.graph.GetNodes().Count);
+            Assert.AreEqual(1, graphSystem.graph.Nodes.Count);
         }
 
         [TestMethod]
@@ -45,8 +45,8 @@ namespace SimuEngineTest
             GraphSystem graphSystem = new GraphSystem();
             graphSystem.Create<ExampleNode>();
             graphSystem.Create<ExampleNode>();
-            Node node1 = graphSystem.graph.nodes[0];
-            Node node2 = graphSystem.graph.nodes[1];
+            Node node1 = graphSystem.graph.Nodes[0];
+            Node node2 = graphSystem.graph.Nodes[1];
             Connection connection = new ExampleConnection();
 
             //act
@@ -66,11 +66,11 @@ namespace SimuEngineTest
             graphSystem.Create<ExampleNode>();
             graphSystem.Create<ExampleNode>();
             graphSystem.Create<ExampleNode>();
-            Node node1 = graphSystem.graph.GetNodes()[0];
-            Node node2 = graphSystem.graph.GetNodes()[1];
-            Node node3 = graphSystem.graph.GetNodes()[2];
-            Node node4 = graphSystem.graph.GetNodes()[3];
-            Node node5 = graphSystem.graph.GetNodes()[4];
+            Node node1 = graphSystem.graph.Nodes[0];
+            Node node2 = graphSystem.graph.Nodes[1];
+            Node node3 = graphSystem.graph.Nodes[2];
+            Node node4 = graphSystem.graph.Nodes[3];
+            Node node5 = graphSystem.graph.Nodes[4];
             Connection connection = new ExampleConnection();
             graphSystem.graph.AddConnection(node1, node2, connection);
             graphSystem.graph.AddConnection(node1, node3, connection);
@@ -262,6 +262,79 @@ namespace SimuEngineTest
                 },
                 conn2List
             );
+        }
+
+        [TestMethod]
+        public void RemoveNode_RemoveDisconnectedNode_Success() {
+            Graph graph = new Graph();
+            var node = new ExampleNode();
+
+            graph.Add(node);
+            Assert.IsTrue(graph.Nodes.Count > 0, "Graph was empty after adding");
+            graph.RemoveNode(node);
+            Assert.IsTrue(graph.Nodes.Count == 0, "Graph was non-empty after removing a node");
+        }
+
+        [TestMethod]
+        public void RemoveNode_ReturnsTrue() {
+            Graph graph = new Graph();
+            var node = new ExampleNode();
+
+            graph.Add(node);
+            Assert.IsTrue(graph.Nodes.Count > 0, "Graph was empty after adding");
+            var result = graph.RemoveNode(node);
+            Assert.IsTrue(graph.Nodes.Count == 0 && result,
+                "RemoveNode return value was incorrect");
+        }
+
+        [TestMethod]
+        public void RemoveNode_EmptyGraph_ReturnsFalse() {
+            Graph graph = new Graph();
+            var node = new ExampleNode();
+            Assert.IsFalse(graph.RemoveNode(node), "RemoveNode returned true when the graph was empty");
+        }
+
+        [TestMethod]
+        public void RemoveNode_NonEmptyGraph_NonexistentNode_ReturnsFalse() {
+            Graph graph = new Graph();
+            var node1 = new ExampleNode();
+            var node2 = new ExampleNode();
+            graph.Add(node1);
+
+            Assert.IsFalse(graph.RemoveNode(node2), "RemoveNode returned true when it didn't contain the node");
+        }
+
+        [TestMethod]
+        public void RemoveNode_NonexistentNode_DoesNothing() {
+            Graph graph = new Graph();
+            var node1 = new ExampleNode();
+            var node2 = new ExampleNode();
+
+            graph.Add(node1);
+            graph.RemoveNode(node2);
+
+            Assert.IsTrue(graph.Nodes.Count > 0, "Graph is empty even though nothing was removed");
+        }
+
+        [TestMethod]
+        public void RemoveNode_RemovesCorrectConnections() {
+            Graph graph = new Graph();
+
+            var n1 = new ExampleNode();
+            var n2 = new ExampleNode();
+            var n3 = new ExampleNode();
+
+            graph.Add(n1);
+            graph.Add(n2);
+            graph.Add(n3);
+
+            graph.AddConnection(n1, n2, new ExampleConnection());
+            graph.AddConnection(n2, n1, new ExampleConnection());
+            graph.AddConnection(n1, n3, new ExampleConnection());
+            graph.AddConnection(n2, n3, new ExampleConnection());
+
+            graph.RemoveNode(n1);
+            Assert.AreEqual(new GraphCount(2, 1), graph.Count);
         }
     }
 
