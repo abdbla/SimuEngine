@@ -12,6 +12,11 @@ namespace SimuEngineTest
     [TestClass]
     public class SystemTests
     {
+        /* TODO: 
+         * - tests for RemoveConnection
+         * - tests for doing stuff with non-existent nodes
+         * - test that OnCreate/OnGenerate are called successfully
+         */
         [TestMethod]
         public void CreateNode_ExampleNode_Succeed()
         {
