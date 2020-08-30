@@ -1,6 +1,5 @@
 using Microsoft.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using SharpDX.Direct3D11;
 using SimuEngine;
 using System;
 using System.Collections.Generic;
