@@ -1,5 +1,6 @@
 using Microsoft.VisualBasic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using SharpDX.Direct3D11;
 using SimuEngine;
 using System;
 using System.Collections.Generic;
@@ -117,7 +118,28 @@ namespace SimuEngineTest
                 graph.FindAllNodes(node => node == n1 || node == n3));
         }
 
+        [TestMethod]
+        public void SanityCheck_Success() {
+            Graph graph = new Graph();
 
+            var n1 = new ExampleNode();
+            var n2 = new ExampleNode();
+            var n3 = new ExampleNode();
+
+            var conn = new ExampleConnection();
+
+            graph.Add(n1);
+            graph.Add(n2);
+            graph.Add(n3);
+
+            graph.AddConnection(n1, n2, conn);
+
+            Assert.IsFalse(graph.SanityCheckConnections());
+
+            graph.AddConnection(n1, n3, conn);
+
+            Assert.IsTrue(graph.SanityCheckConnections());
+        }
     }
 
     [TestClass]

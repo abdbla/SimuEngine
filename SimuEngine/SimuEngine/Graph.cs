@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SimuEngine {
     /// <summary>
@@ -61,6 +62,25 @@ namespace SimuEngine {
             var srcIndex = FindIndex(src);
             var targetIndex = FindIndex(target);
             adjacencyMatrix[(srcIndex, targetIndex)] = conn;
+        }
+
+        /// <summary>
+        /// Check that there are no duplicate connections
+        /// WARNING: this is a very expensive operation
+        /// </summary>
+        /// <returns>true if duplicate connections exist</returns>
+        public bool SanityCheckConnections() {
+            List<Connection> connections = adjacencyMatrix.Values.ToList();
+            
+            for (int i = 0; i < connections.Count - 1; i++) {
+                for (int j = i + 1; j < connections.Count; j++) {
+                    if (ReferenceEquals(connections[i], connections[j])) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
