@@ -121,7 +121,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void SanityCheck_Success() {
+        public void SanityCheck_Duplicates_ReturnsTrue() {
             Graph graph = new Graph();
 
             var n1 = new ExampleNode();
@@ -135,16 +135,34 @@ namespace SimuEngineTest
             graph.Add(n3);
 
             graph.AddConnection(n1, n2, conn);
-
-            Assert.IsFalse(graph.SanityCheckConnections());
-
             graph.AddConnection(n1, n3, conn);
 
             Assert.IsTrue(graph.SanityCheckConnections());
         }
 
         [TestMethod]
-        public void FindDuplicateConnections_Success() {
+        public void SanityCheck_NoDuplicates_ReturnsFalse() {
+            Graph graph = new Graph();
+
+            var n1 = new ExampleNode();
+            var n2 = new ExampleNode();
+            var n3 = new ExampleNode();
+
+            var c1 = new ExampleConnection();
+            var c2 = new ExampleConnection(); 
+
+            graph.Add(n1);
+            graph.Add(n2);
+            graph.Add(n3);
+
+            graph.AddConnection(n1, n2, c1);
+            graph.AddConnection(n1, n3, c2);
+
+            Assert.IsFalse(graph.SanityCheckConnections());
+        }
+
+        [TestMethod]
+        public void FindDuplicateConnections_CorrectCount() {
             Graph graph = new Graph();
 
             var n1 = new ExampleNode();
@@ -173,9 +191,60 @@ namespace SimuEngineTest
             var dupList = graph.FindDuplicateConnections();
 
             Assert.AreEqual(2, dupList.Count);
+        }
+
+        [TestMethod]
+        public void FindDuplicateConnections_NoDuplicates_ReturnsEmpty() {
+            Graph graph = new Graph();
+
+            var nodes = new List<Node>();
+
+            for (int i = 0; i < 10; i++) {
+                var node = new ExampleNode();
+                nodes.Add(node);
+                graph.Add(node);
+            }
+
+            for (int i = 0; i < nodes.Count - 1; i++) {
+                graph.AddConnection(nodes[i], nodes[i + 1], new ExampleConnection());
+            }
+
+            var emptyList = new List<(Connection, List<(Node, Node)>)>();
+
+            CollectionAssert.AreEquivalent(emptyList,
+                graph.FindDuplicateConnections());
+        }
+
+        [TestMethod]
+        public void FindDuplicateConnections_MultipleDistinctDuplicates_ReturnsAll() {
+            Graph graph = new Graph();
+
+            var n1 = new ExampleNode();
+            var n2 = new ExampleNode();
+            var n3 = new ExampleNode();
+            var n4 = new ExampleNode();
+
+            var conn1 = new ExampleConnection();
+            var conn2 = new ExampleConnection();
+            var conn3 = new ExampleConnection();
+
+            graph.Add(n1);
+            graph.Add(n2);
+            graph.Add(n3);
+            graph.Add(n4);
+
+            graph.AddConnection(n1, n2, conn1);
+            graph.AddConnection(n1, n3, conn1);
+            graph.AddConnection(n1, n4, conn1);
+
+            graph.AddConnection(n2, n3, conn2);
+            graph.AddConnection(n3, n2, conn2);
+
+            var dupList = graph.FindDuplicateConnections();
 
             var conn1List = dupList.Find(tuple => ReferenceEquals(tuple.Item1, conn1)).Item2;
             var conn2List = dupList.Find(tuple => ReferenceEquals(tuple.Item1, conn2)).Item2;
+
 
             CollectionAssert.AreEquivalent(
                 new List<(Node, Node)>() {
@@ -193,12 +262,6 @@ namespace SimuEngineTest
                 },
                 conn2List
             );
-
-            var connList = new List<Connection>();
-            foreach (var i in dupList) connList.Add(i.Item1);
-
-            // would use CollectionAssert.DoesNotContain, but also lmao equals
-            Assert.IsFalse(connList.Any(conn => ReferenceEquals(conn, conn3)));
         }
     }
 
