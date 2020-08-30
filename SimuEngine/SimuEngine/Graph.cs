@@ -66,7 +66,7 @@ namespace SimuEngine {
 
         /// <summary>
         /// Check that there are no duplicate connections
-        /// WARNING: this is a very expensive operation
+        /// WARNING: this is a relatively expensive operation (O(n^2) with n = # connections)
         /// </summary>
         /// <returns>true if duplicate connections exist</returns>
         public bool SanityCheckConnections() {
@@ -81,6 +81,56 @@ namespace SimuEngine {
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Find all duplicate connections so they can presumably be removed or something
+        /// WARNING: this is even more expensive than SanityCheckConnections
+        /// </summary>
+        /// <returns>(connection, List<(source, target)>)</returns>
+        public List<(Connection, List<(Node, Node)>)> FindDuplicateConnections() {
+            var connections = (from kv in adjacencyMatrix
+                               let src = nodes[kv.Key.Item1]
+                               let dst = nodes[kv.Key.Item2]
+                               let conn = kv.Value
+                               select new {
+                                   src,
+                                   dst,
+                                   conn
+                               }).ToList();
+            List<(Connection, List<(Node, Node)>)> result = new List<(Connection, List<(Node, Node)>)>();
+
+            // This loop is fucking yikes
+            for (int i = 0; i < connections.Count - 1; i++) {
+                // check if we've already done this series of duplicates
+                bool prematureContinue = false;
+                foreach (var k in result) {
+                    if (ReferenceEquals(connections[i].conn, k.Item1)) {
+                        prematureContinue = true;
+                    }
+                }
+                if (prematureContinue) continue;
+
+                // start of null as a somewhat premature optimisation
+                List<(Node, Node)> currentList = null;
+                for (int j = i + 1; j < connections.Count; j++) {
+                    // we've found two connections that have the same conn instance
+                    if (ReferenceEquals(connections[i].conn, connections[j].conn)) {
+                        // if currentList wasn't initialised, it gets initialised
+                        // I think this is pretty cool tbh
+                        currentList ??= new List<(Node, Node)>() {
+                            (connections[i].src, connections[i].dst)
+                        };
+                        currentList.Add((connections[j].src, connections[j].dst));
+                    }
+                }
+
+                if (currentList != null) {
+                    result.Add((connections[i].conn, currentList));
+                }
+            }
+
+            return result;
         }
 
         /// <summary>

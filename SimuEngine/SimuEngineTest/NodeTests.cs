@@ -4,6 +4,8 @@ using SharpDX.Direct3D11;
 using SimuEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.Cryptography.Xml;
 
 namespace SimuEngineTest
 {
@@ -139,6 +141,64 @@ namespace SimuEngineTest
             graph.AddConnection(n1, n3, conn);
 
             Assert.IsTrue(graph.SanityCheckConnections());
+        }
+
+        [TestMethod]
+        public void FindDuplicateConnections_Success() {
+            Graph graph = new Graph();
+
+            var n1 = new ExampleNode();
+            var n2 = new ExampleNode();
+            var n3 = new ExampleNode();
+            var n4 = new ExampleNode();
+
+            var conn1 = new ExampleConnection();
+            var conn2 = new ExampleConnection();
+            var conn3 = new ExampleConnection();
+
+            graph.Add(n1);
+            graph.Add(n2);
+            graph.Add(n3);
+            graph.Add(n4);
+
+            graph.AddConnection(n1, n2, conn1);
+            graph.AddConnection(n1, n3, conn1);
+            graph.AddConnection(n1, n4, conn1);
+
+            graph.AddConnection(n2, n3, conn2);
+            graph.AddConnection(n3, n2, conn2);
+
+            graph.AddConnection(n3, n4, conn3);
+
+            var dupList = graph.FindDuplicateConnections();
+
+            Assert.AreEqual(2, dupList.Count);
+
+            var conn1List = dupList.Find(tuple => ReferenceEquals(tuple.Item1, conn1)).Item2;
+            var conn2List = dupList.Find(tuple => ReferenceEquals(tuple.Item1, conn2)).Item2;
+
+            CollectionAssert.AreEquivalent(
+                new List<(Node, Node)>() {
+                    (n1, n2),
+                    (n1, n3),
+                    (n1, n4),
+                },
+                conn1List
+            );
+
+            CollectionAssert.AreEquivalent(
+                new List<(Node, Node)>() {
+                    (n2, n3),
+                    (n3, n2),
+                },
+                conn2List
+            );
+
+            var connList = new List<Connection>();
+            foreach (var i in dupList) connList.Add(i.Item1);
+
+            // would use CollectionAssert.DoesNotContain, but also lmao equals
+            Assert.IsFalse(connList.Any(conn => ReferenceEquals(conn, conn3)));
         }
     }
 
