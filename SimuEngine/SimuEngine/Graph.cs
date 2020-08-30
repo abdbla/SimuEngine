@@ -25,6 +25,43 @@ namespace SimuEngine {
         }
 
         /// <summary>
+        /// Removes a node and all connected edges
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns>
+        /// true if the node was found and removed, false if it doesn't exist.
+        /// </returns>
+        public bool RemoveNode(Node node) {
+            try {
+                int index = FindIndex(node);
+                foreach (var key in adjacencyMatrix.Keys) {
+                    if (key.Item1 == index || key.Item2 == index) {
+                        adjacencyMatrix.Remove(key);
+                    }
+                }
+                nodes.RemoveAt(index);
+                return true;
+            } catch (NodeNotFoundException) {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Remove the connection src->dst
+        /// </summary>
+        /// <param name="src">the source node</param>
+        /// <param name="dst">the destination node</param>
+        /// <returns>
+        /// true if the connection was found and removed, false if the 
+        /// connection didn't exist to begin with
+        /// </returns>
+        public bool RemoveConnection(Node src, Node dst) {
+            var index = FindSrcDstIndex(src, dst);
+
+            return adjacencyMatrix.Remove(index);
+        }
+
+        /// <summary>
         /// Find the first node in the node list based on the predicate
         /// </summary>
         /// <param name="predicate">the predicate to test with</param>
