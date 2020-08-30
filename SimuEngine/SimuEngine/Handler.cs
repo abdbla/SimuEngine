@@ -51,7 +51,9 @@ namespace SimuEngine
                         posEvents.Add(ev);
                     }
                 }
-                //add code for possibly but not definitely invoking events
+                /*
+                 * TODO: randomly selecting possible events to trigger
+                 */
 
                 if (graph.Nodes[i].Graph != null)
                 {
@@ -59,8 +61,12 @@ namespace SimuEngine
                 }
             }
         } 
-
-        public void TickGraph(Graph graph, List<Graph> graphTree)
+        /// <summary>
+        /// Internal function to recursively iterate over several subgraphs.
+        /// </summary>
+        /// <param name="graph">the subgraph on which to iterate over</param>
+        /// <param name="graphTree">the current graphs it has gone through</param>
+        private void TickGraph(Graph graph, List<Graph> graphTree)
         {
             List<Graph> graphs = new List<Graph>();
             graphs.AddRange(graphTree);
@@ -102,7 +108,9 @@ namespace SimuEngine
                         posEvents.Add(ev);
                     }
                 }
-                //add code for possibly but not definitely invoking events
+                /*
+                 * TODO: randomly selecting possible events to trigger
+                 */
 
                 if (graph.Nodes[i].Graph != null)
                 {
