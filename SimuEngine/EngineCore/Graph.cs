@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace SimuEngine {
+namespace EngineCore {
     /// <summary>
     /// A Graph class implemented using a list of Nodes and an adjacency matrix
     /// </summary>

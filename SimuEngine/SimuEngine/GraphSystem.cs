@@ -3,6 +3,8 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Text;
 
+using EngineCore;
+
 namespace SimuEngine
 {
     public class GraphSystem
@@ -27,13 +29,5 @@ namespace SimuEngine
             graph.Add(node);
             node.OnCreate();
         }
-    }
-
-    public abstract class Group
-    {
-    }
-
-    public abstract class Connection
-    {
     }
 }

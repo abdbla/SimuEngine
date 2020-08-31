@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 
+using EngineCore;
+
 namespace SimuEngine
 {
     class Handler
@@ -16,38 +18,19 @@ namespace SimuEngine
             List<Graph> graphs = new List<Graph>();
             graphs.Add(graph);
 
-            for (int i = 0; i < graph.Nodes.Count; i++)
-            {
+            for (int i = 0; i < graph.Nodes.Count; i++) {
                 List<Event> posEvents = new List<Event>();
-                foreach (Event ev in events.GetEventList(graph.Nodes[i].GetType()))
-                {
+                foreach (Event ev in events.GetEventList(graph.Nodes[i].GetType())) {
                     bool req = true;
                     bool pos = true;
-                    for (int j = 0; j < ev.ReqRequirement.Count; j++)
-                    {
-                        if (!ev.ReqRequirement[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
-                        {
-                            req = false;
-                        }
+
+                    req = ev.ReqGuaranteed(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
+                    if (req) {
+                        ev.Outcome.Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
+                    } else {
+                        pos = ev.ReqPossible(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
                     }
-                    if (req)
-                    {
-                        foreach (var act in ev.Outcome)
-                        {
-                            act.Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
-                        }
-                    } else
-                    {
-                        for (int j = 0; j < ev.ReqRequirement.Count; j++)
-                        {
-                            if (!ev.PosRequirement[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
-                            {
-                                pos = false;
-                            }
-                        }
-                    }
-                    if (pos)
-                    {
+                    if (pos) {
                         posEvents.Add(ev);
                     }
                 }
@@ -55,12 +38,11 @@ namespace SimuEngine
                  * TODO: randomly selecting possible events to trigger
                  */
 
-                if (graph.Nodes[i].Graph != null)
-                {
+                if (graph.Nodes[i].Graph != null) {
                     TickGraph(graph.Nodes[i].Graph, graphs);
                 }
             }
-        } 
+        }
         /// <summary>
         /// Internal function to recursively iterate over several subgraphs.
         /// </summary>
@@ -72,39 +54,17 @@ namespace SimuEngine
             graphs.AddRange(graphTree);
             graphs.Add(graph);
 
-            for (int i = 0; i < graph.Nodes.Count; i++)
-            {
+            for (int i = 0; i < graph.Nodes.Count; i++) {
                 List<Event> posEvents = new List<Event>();
-                foreach (Event ev in events.GetEventList(graph.Nodes[i].GetType()))
-                {
-                    bool req = true;
+                foreach (Event ev in events.GetEventList(graph.Nodes[i].GetType())) {
                     bool pos = true;
-                    for (int j = 0; j < ev.ReqRequirement.Count; j++)
-                    {
-                        if (!ev.ReqRequirement[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
-                        {
-                            req = false;
-                        }
+                    bool req = ev.ReqGuaranteed(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
+                    if (req) {
+                        ev.Outcome.Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
+                    } else {
+                        pos = ev.ReqPossible(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
                     }
-                    if (req)
-                    {
-                        foreach (var act in ev.Outcome)
-                        {
-                            act.Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
-                        }
-                    }
-                    else
-                    {
-                        for (int j = 0; j < ev.ReqRequirement.Count; j++)
-                        {
-                            if (!ev.PosRequirement[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
-                            {
-                                pos = false;
-                            }
-                        }
-                    }
-                    if (pos)
-                    {
+                    if (pos) {
                         posEvents.Add(ev);
                     }
                 }
@@ -112,8 +72,7 @@ namespace SimuEngine
                  * TODO: randomly selecting possible events to trigger
                  */
 
-                if (graph.Nodes[i].Graph != null)
-                {
+                if (graph.Nodes[i].Graph != null) {
                     TickGraph(graph.Nodes[i].Graph, graphs);
                 }
             }
