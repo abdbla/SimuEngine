@@ -7,6 +7,7 @@ namespace SimuEngine
     class Handler
     {
         EventListContainer events;
+
         /// <summary>
         /// Method to tick every node forward one step, triggering events. Requires several calls if several top level nodes exist.
         /// </summary>
@@ -16,38 +17,28 @@ namespace SimuEngine
             List<Graph> graphs = new List<Graph>();
             graphs.Add(graph);
 
-            for (int i = 0; i < graph.Nodes.Count; i++)
-            {
+            for (int i = 0; i < graph.Nodes.Count; i++) {
                 List<Event> posEvents = new List<Event>();
-                foreach (Event ev in events.GetEventList(graph.Nodes[i].GetType()))
-                {
+                foreach (Event ev in events.GetEventList(graph.Nodes[i].GetType())) {
                     bool req = true;
                     bool pos = true;
-                    for (int j = 0; j < ev.ReqGuaranteed.Count; j++)
-                    {
-                        if (!ev.ReqGuaranteed[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
-                        {
+                    for (int j = 0; j < ev.ReqGuaranteed.Count; j++) {
+                        if (!ev.ReqGuaranteed[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0])) {
                             req = false;
                         }
                     }
-                    if (req)
-                    {
-                        foreach (var act in ev.Outcome)
-                        {
+                    if (req) {
+                        foreach (var act in ev.Outcome) {
                             act.Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
                         }
-                    } else
-                    {
-                        for (int j = 0; j < ev.ReqGuaranteed.Count; j++)
-                        {
-                            if (!ev.ReqPossible[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]))
-                            {
+                    } else {
+                        for (int j = 0; j < ev.ReqGuaranteed.Count; j++) {
+                            if (!ev.ReqPossible[i].Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0])) {
                                 pos = false;
                             }
                         }
                     }
-                    if (pos)
-                    {
+                    if (pos) {
                         posEvents.Add(ev);
                     }
                 }
@@ -55,9 +46,8 @@ namespace SimuEngine
                  * TODO: randomly selecting possible events to trigger
                  */
 
-                if (graph.Nodes[i].Graph != null)
-                {
-                    TickGraph(graph.Nodes[i].Graph, graphs);
+                if (graph.Nodes[i].Graph != null) {
+                    Tick(graph.Nodes[i].Graph, graphs);
                 }
             }
         } 
@@ -66,7 +56,7 @@ namespace SimuEngine
         /// </summary>
         /// <param name="graph">the subgraph on which to iterate over</param>
         /// <param name="graphTree">the current graphs it has gone through</param>
-        private void TickGraph(Graph graph, List<Graph> graphTree)
+        private void Tick(Graph graph, List<Graph> graphTree)
         {
             List<Graph> graphs = new List<Graph>();
             graphs.AddRange(graphTree);
@@ -114,9 +104,14 @@ namespace SimuEngine
 
                 if (graph.Nodes[i].Graph != null)
                 {
-                    TickGraph(graph.Nodes[i].Graph, graphs);
+                    Tick(graph.Nodes[i].Graph, graphs);
                 }
             }
+        }
+
+        public Handler()
+        {
+            events = new EventListContainer();
         }
     }
 }

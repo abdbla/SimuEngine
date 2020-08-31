@@ -9,13 +9,17 @@ namespace SimuEngine {
     /// </summary>
     public class Graph
     {
+        private int currentIndex;
         private List<Node> _nodes;
         public ReadOnlyCollection<Node> Nodes => _nodes.AsReadOnly();
         Dictionary<(int, int), Connection> adjacencyMatrix;
+        Dictionary<Node, int> indexLookup;
 
         public Graph() {
             _nodes = new List<Node>();
+            indexLookup = new Dictionary<Node, int>();
             adjacencyMatrix = new Dictionary<(int, int), Connection>();
+            currentIndex = 0;
         }
 
         /// <summary>
@@ -24,10 +28,13 @@ namespace SimuEngine {
         /// <param name="node">the node to be added</param>
         public void Add(Node node) {
             _nodes.Add(node);
+            indexLookup.Add(node, currentIndex++);
         }
 
         /// <summary>
         /// Removes a node and all connected edges
+        /// WARNING: this is a very expensive operation, please avoid if possible.
+        /// It involves rebuilding practically the entire adjacency matrix from scratch
         /// </summary>
         /// <param name="node"></param>
         /// <returns>
@@ -42,6 +49,7 @@ namespace SimuEngine {
                     }
                 }
                 _nodes.RemoveAt(index);
+                indexLookup.Remove(node);
                 return true;
             } catch (NodeNotFoundException) {
                 return false;
@@ -105,9 +113,10 @@ namespace SimuEngine {
 
         // find the index of a certain node
         private int FindIndex(Node node) {
-            int index = _nodes.FindIndex(node_ => node == node_);
-            if (index == -1) {
-                throw new NodeNotFoundException($"Node {node} isn't present in this graph");
+            int index; 
+            bool success = indexLookup.TryGetValue(node, out index);
+            if (!success) {
+                throw new NodeNotFoundException($"Couldn't find node `{node}` in the graph");
             }
             return index;
         }
