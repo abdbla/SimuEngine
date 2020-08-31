@@ -5,6 +5,7 @@ using System.Text;
 namespace SimuEngine {
     public abstract class Node {
         Graph subGraph;
+        Dictionary<string, int> traits;
         List<string> statuses;
         List<Group> groups;
         List<Connection> connections;
