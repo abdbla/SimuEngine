@@ -8,6 +8,10 @@ namespace SimuEngine
     {
         private Dictionary<Type, List<Event>> eventLists;
 
+        public EventListContainer()
+        {
+            eventLists = new Dictionary<Type, List<Event>>();
+        }
         public List<Event> GetEventList(Type type)
         {
             return eventLists[type];
