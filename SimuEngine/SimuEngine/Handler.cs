@@ -7,6 +7,7 @@ namespace SimuEngine
     class Handler
     {
         EventListContainer events;
+
         /// <summary>
         /// Method to tick every node forward one step, triggering events. Requires several calls if several top level nodes exist.
         /// </summary>
@@ -106,6 +107,11 @@ namespace SimuEngine
                     Tick(graph.Nodes[i].Graph, graphs);
                 }
             }
+        }
+
+        public Handler()
+        {
+            events = new EventListContainer();
         }
     }
 }
