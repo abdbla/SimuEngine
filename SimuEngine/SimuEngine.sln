@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimuEngine", "SimuEngine\Si
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SimuEngineTest", "SimuEngineTest\SimuEngineTest.csproj", "{CBED6C37-F3FF-464F-8C51-52653D3FD7E4}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "EventParser", "EventParser\EventParser.fsproj", "{10BF70E5-6273-4F29-9A4A-C8C687DAE1C2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{CBED6C37-F3FF-464F-8C51-52653D3FD7E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CBED6C37-F3FF-464F-8C51-52653D3FD7E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CBED6C37-F3FF-464F-8C51-52653D3FD7E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10BF70E5-6273-4F29-9A4A-C8C687DAE1C2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10BF70E5-6273-4F29-9A4A-C8C687DAE1C2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10BF70E5-6273-4F29-9A4A-C8C687DAE1C2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10BF70E5-6273-4F29-9A4A-C8C687DAE1C2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
