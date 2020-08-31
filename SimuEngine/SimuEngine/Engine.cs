@@ -14,6 +14,10 @@ namespace SimuEngine
         [STAThread]
         static void Main()
         {
+
+                using (var game = new Monog())
+                    game.Run();
+            
             //Graph graph = new Graph();
             //var node1 = new ExampleNode("a");
             //var node2 = new ExampleNode("b");
