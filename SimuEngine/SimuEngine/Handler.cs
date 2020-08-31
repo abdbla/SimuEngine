@@ -46,7 +46,7 @@ namespace SimuEngine
                  */
 
                 if (graph.Nodes[i].Graph != null) {
-                    TickGraph(graph.Nodes[i].Graph, graphs);
+                    Tick(graph.Nodes[i].Graph, graphs);
                 }
             }
         } 
@@ -55,7 +55,7 @@ namespace SimuEngine
         /// </summary>
         /// <param name="graph">the subgraph on which to iterate over</param>
         /// <param name="graphTree">the current graphs it has gone through</param>
-        private void TickGraph(Graph graph, List<Graph> graphTree)
+        private void Tick(Graph graph, List<Graph> graphTree)
         {
             List<Graph> graphs = new List<Graph>();
             graphs.AddRange(graphTree);
@@ -103,7 +103,7 @@ namespace SimuEngine
 
                 if (graph.Nodes[i].Graph != null)
                 {
-                    TickGraph(graph.Nodes[i].Graph, graphs);
+                    Tick(graph.Nodes[i].Graph, graphs);
                 }
             }
         }
