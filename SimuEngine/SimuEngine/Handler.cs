@@ -26,7 +26,7 @@ namespace SimuEngine
 
                     req = ev.ReqGuaranteed(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
                     if (req) {
-                        ev.Outcome.Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
+                        ev.Outcome(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
                     } else {
                         pos = ev.ReqPossible(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
                     }
@@ -55,14 +55,17 @@ namespace SimuEngine
             graphs.Add(graph);
 
             for (int i = 0; i < graph.Nodes.Count; i++) {
+                var world = graphs[0];
+                var local = graphs[graphs.Count - 1];
+
                 List<Event> posEvents = new List<Event>();
                 foreach (Event ev in events.GetEventList(graph.Nodes[i].GetType())) {
                     bool pos = true;
-                    bool req = ev.ReqGuaranteed(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
+                    bool req = ev.ReqGuaranteed(graph.Nodes[i], local, world);
                     if (req) {
-                        ev.Outcome.Invoke(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
+                        ev.Outcome(graph.Nodes[i], local, world);
                     } else {
-                        pos = ev.ReqPossible(graph.Nodes[i], graphs[graphs.Count - 1], graphs[0]);
+                        pos = ev.ReqPossible(graph.Nodes[i], local, world);
                     }
                     if (pos) {
                         posEvents.Add(ev);

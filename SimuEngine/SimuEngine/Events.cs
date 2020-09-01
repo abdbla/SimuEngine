@@ -32,8 +32,8 @@ namespace SimuEngine
 
         public Event(string possible, string guaranteed, Action<Node, Graph, Graph> outcome)
         {
-            reqPossible = new EventParser.Parser(possible).toFunction();
-            reqGuaranteed = new EventParser.Parser(guaranteed).toFunction();
+            reqPossible = new EventParser.Parser(possible).toPredicate();
+            reqGuaranteed = new EventParser.Parser(guaranteed).toPredicate();
 
             this.outcome = outcome;
         }

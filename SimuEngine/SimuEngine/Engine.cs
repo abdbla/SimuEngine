@@ -16,8 +16,11 @@ namespace SimuEngine
         {
             Graph graph1 = new Graph();
             Graph graph2 = new Graph();
-            Event ev = new Event("forall(this + neighbors; thing1 = 10)",
-                "forall(neighbors; thing1 = 10)", (n, g1, g2) => { return; });
+            Event ev = new Event(
+                "forall(this + neighbors; thing1 = 10)",
+                "forall(neighbors; all(thing1 = 10, thing2 = 20))",
+                (n, g1, g2) => { return; }
+            );
 
             var node1 = new ExampleNode();
             var node2 = new ExampleNode();

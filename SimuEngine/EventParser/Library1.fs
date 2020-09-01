@@ -19,6 +19,7 @@ type PredicateExpr =
   | Greater of string * int
   | Lesser  of string * int
   | Equal   of string * int
+  | Status  of string
 
 type Expr =
   | Functional of FunctionalExpr
@@ -80,7 +81,7 @@ module Parsers =
     let forAny p = pstring "forany" >>. forX p ForAny
 
     let rec parse x =
-        choice 
+        choice
             (List.map (fun f -> f parse) [forAny; forAll; all; any] @ [infixPredicate]) x
         
 open EngineCore
@@ -98,9 +99,8 @@ module Execution =
         |> List.reduce f
     and convertPredicate (p : PredicateExpr) : (Node -> Graph -> Graph -> bool) =
         fun (n : EngineCore.Node) (g1 : EngineCore.Graph) (g2 : EngineCore.Graph) ->
-            let traits : System.Collections.Generic.Dictionary<string, int> = n.traits;
             let predicate f s i =
-                let found, value = traits.TryGetValue s
+                let found, value = n.traits.TryGetValue s
                 if found then f value i else false
             let mapping ps f =
                 ps |> List.map (convertPredicate >> (fun f -> f n g1 g2)) |> List.reduce f
@@ -121,7 +121,11 @@ type Parser(inner : Expr) =
                        | Success(result, _, _) -> result
                        | Failure(errorMsg, _, _) -> failwith ("Failure: " + errorMsg)))
 
-    member this.toFunction() =
+    member this.toPredicate() =
         match inner with
         | Functional _ -> failwith "lol"
         | Predicate p -> System.Func<Node, Graph, Graph, bool> (Execution.convertPredicate p)
+    member this.toAction() =
+        match inner with
+        | Functional _ -> failwith "lol again"
+        | Predicate _ -> failwith "this is a predicate expression"
