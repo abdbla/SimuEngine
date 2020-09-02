@@ -4,11 +4,11 @@ using System.Text;
 
 namespace Core {
     public abstract class Node {
-        Graph subGraph;
-        Dictionary<string, int> traits;
-        List<string> statuses;
-        List<Group> groups;
-        List<Connection> connections;
+        protected Graph subGraph;
+        protected Dictionary<string, int> traits;
+        protected List<string> statuses;
+        protected List<Group> groups;
+        protected List<Connection> connections;
 
         public Graph Graph
         {
