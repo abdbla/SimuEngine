@@ -31,6 +31,7 @@ namespace SimuEngine
         List<Func<Node, Graph, Graph, bool>> reqPossible;
         List<Func<Node, Graph, Graph, bool>> reqGuaranteed;
         List<Action<Node, Graph, Graph>> outcome;
+        double chance;
 
         public List<Func<Node, Graph, Graph, bool>> ReqPossible
         {
@@ -47,12 +48,17 @@ namespace SimuEngine
             get { return outcome; }
             set { }
         }
+        public double Chance {
+            get { return chance; }
+            set { if (value <= 1 && value >= 0chance = value; }
+        }
 
         public Event()
         {
             reqPossible = new List<Func<Node, Graph, Graph, bool>>();
             reqGuaranteed = new List<Func<Node, Graph, Graph, bool>>();
             outcome = new List<Action<Node, Graph, Graph>>();
+            chance = 0.5;
         }
     }
 }
