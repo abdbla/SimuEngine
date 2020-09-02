@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SimuEngine {
+namespace Core {
     public abstract class Node {
         Graph subGraph;
         Dictionary<string, int> traits;
