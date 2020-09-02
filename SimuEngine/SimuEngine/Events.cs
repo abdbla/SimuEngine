@@ -50,7 +50,7 @@ namespace SimuEngine
         }
         public double Chance {
             get { return chance; }
-            set { if (value <= 1 && value >= 0chance = value; }
+            set { if (value <= 1 && value >= 0) chance = value; }
         }
 
         public Event()
