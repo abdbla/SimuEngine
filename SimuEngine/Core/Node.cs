@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
 using System.Text;
 
 namespace Core {
@@ -19,6 +20,7 @@ namespace Core {
         public Node() {
             subGraph = new Graph();
             statuses = new List<string>();
+            traits = new Dictionary<string, int>();
             groups = new List<Group>();
             connections = new List<Connection>();
         }
