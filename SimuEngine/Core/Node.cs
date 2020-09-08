@@ -6,15 +6,14 @@ using System.Text;
 namespace Core {
     public abstract class Node {
 
-        public Graph subGraph;
-        public Dictionary<string, int> traits;
-        public List<string> statuses;
-        public List<Group> groups;
-        public List<Connection> connections;
-        public string name = "";
+        protected Graph subGraph { get; }
+        protected Dictionary<string, int> traits { get; }
+        protected List<string> statuses { get; }
+        protected List<Group> groups { get; }
+        protected List<Connection> connections { get; }
+        protected string name { get; }
 
-
-        public Graph Graph
+    public Graph Graph
         {
             get { return subGraph; }
             set { }
@@ -31,6 +30,7 @@ namespace Core {
             traits = new Dictionary<string, int>();
             groups = new List<Group>();
             connections = new List<Connection>();
+            name = "";
         }
 
         public abstract void OnGenerate();
