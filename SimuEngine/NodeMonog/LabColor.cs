@@ -30,7 +30,9 @@ namespace NodeMonog {
         const float KAPPA = 24389.0f / 27.0f;
 
         static Vector3 RgbToXyz(Vector3 rgb) {
-            Func<float, float> inverseCompanding = x => (float)(x <= 0.04045 ? x / 12.92 : Math.Pow((double)(x + 0.055) / 1.055, (double)2.4));
+            Func<float, float> inverseCompanding = x =>
+                (float)(x <= 0.04045 ? x / 12.92
+                                     : Math.Pow((double)(x + 0.055) / 1.055, (double)2.4));
 
             var companded = new Vector3(inverseCompanding(rgb.X), inverseCompanding(rgb.Y), inverseCompanding(rgb.Z));
 
