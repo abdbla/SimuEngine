@@ -338,15 +338,24 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
 
             }
 
+            var startColor = LabColor.RgbToLab(Color.Blue);
+            Console.WriteLine(startColor);
+            var endColor = LabColor.RgbToLab(Color.Red);
+
+            var diff = startColor - endColor;
+
             spriteBatch.Draw(circle, new Rectangle(
                     x: (int)((x - x / (8 - transitionAnimation / (double)animThreshold * 2) + cameraPosition.X) * zoomlevel),
-                    y: (int)(( r.Height / 2 - x / (8 - transitionAnimation / (double)animThreshold * 2) + cameraPosition.Y) * zoomlevel),
-                    width: (int)(x / (4 - transitionAnimation /  (double)animThreshold) * zoomlevel),
+                    y: (int)((r.Height / 2 - x / (8 - transitionAnimation / (double)animThreshold * 2) + cameraPosition.Y) * zoomlevel),
+                    width: (int)(x / (4 - transitionAnimation / (double)animThreshold) * zoomlevel),
                     height: (int)(x / (4 - transitionAnimation / (double)animThreshold) * zoomlevel)
-                    
+
                 ),
-                new Color(transitionAnimation / (float)animThreshold, 0, 1.0f - transitionAnimation / (float)animThreshold)
-                );
+                LabColor.LabToRgb(startColor - (transitionAnimation / (float)animThreshold) * diff));
+
+                //new Color(
+                //    transitionAnimation / (float)animThreshold, 0, 1.0f - transitionAnimation / (float)animThreshold)
+                //);
             spriteBatch.DrawString(arial, selectedNode.name, new Vector2((float)((x - x / 6 + cameraPosition.X * zoomlevel)), (float)( (r.Height / 2 - x / 6 + cameraPosition.Y) * zoomlevel)),Color.Black);
 
             

@@ -6,12 +6,12 @@ using System.Text;
 namespace Core {
     public abstract class Node {
 
-        protected Graph subGraph { get; }
-        protected Dictionary<string, int> traits { get; }
-        protected List<string> statuses { get; }
-        protected List<Group> groups { get; }
-        protected List<Connection> connections { get; }
-        protected string name { get; }
+        public Graph subGraph { get; protected set; }
+        public Dictionary<string, int> traits { get; protected set;  }
+        public List<string> statuses { get; protected set; }
+        public List<Group> groups { get; protected set; }
+        public List<Connection> connections { get; protected set; }
+        public string name { get; set; }
 
     public Graph Graph
         {
