@@ -24,31 +24,6 @@ namespace NodeMonog {
             0.0f, 0.0f, 0.0f, 1.0f
         );
 
-        private Vector3 lab;
-        public Vector3 Lab {
-            get => lab;
-            set {
-                lab = value;
-                rgb = XyzToRgb(LabToXyzWhite(value, D65_WHITE));
-            }
-        }
-
-        private Vector3 rgb;
-        public Vector3 Rgb {
-            get => rgb;
-            set {
-                var x = Vector3.Clamp(value, new Vector3(0, 0, 0), new Vector3(1, 1, 1));
-                lab = XyzToLabWhite(RgbToXyz(x), D65_WHITE);
-                rgb = value;
-            }
-        }
-
-        public LabColor(Vector3 rgb) {
-            var xyz = RgbToXyz(rgb);
-            lab = XyzToLabWhite(xyz, D65_WHITE);
-            this.rgb = rgb;
-        }
-
         static Vector3 D65_WHITE = new Vector3(95.047f, 100.0f, 108.883f);
 
         const float EPSILON = 216.0f / 24389.0f;
@@ -93,10 +68,11 @@ namespace NodeMonog {
             var x_r = (float)(Math.Pow(f_x, 3) > EPSILON ? Math.Pow(f_x, 3) : (116 * f_x - 16) / KAPPA);
             var z_r = (float)(Math.Pow(f_x, 3) > EPSILON ? Math.Pow(f_z, 3) : (116 * f_z - 16) / KAPPA);
 
-            return new Vector3(x_r, y_r, z_r);
+            return new Vector3(x_r, y_r, z_r) * white;
          }
 
         static Vector3 XyzToRgb(Vector3 xyz) {
+            xyz /= 100;
             Func<float, float> f = x => (float)(x < 0.0031308 ? 12.92 * x : 1.055 * Math.Pow(x, 1f / 2.4) - 0.055);
             var rgb = Vector3.Transform(xyz, XYZ_TO_SRGB_MAT);
             return new Vector3(f(rgb.X), f(rgb.Y), f(rgb.Z));
