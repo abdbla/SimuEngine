@@ -5,17 +5,25 @@ using System.Text;
 
 namespace Core {
     public abstract class Node {
-        protected Graph subGraph;
-        protected Dictionary<string, int> traits;
-        protected List<string> statuses;
-        protected List<Group> groups;
-        protected List<Connection> connections;
+
+        public Graph subGraph;
+        public Dictionary<string, int> traits;
+        public List<string> statuses;
+        public List<Group> groups;
+        public List<Connection> connections;
+        public string name = "";
+
 
         public Graph Graph
         {
             get { return subGraph; }
             set { }
         }
+
+  //     public string Name{
+  //         get { return name; }
+  //         set { name = value; }
+  // }
 
         public Node() {
             subGraph = new Graph();

@@ -14,6 +14,7 @@
     <FileAlignment>512</FileAlignment>
     <MonoGamePlatform>Windows</MonoGamePlatform>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <LangVersion>8.0</LangVersion>
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
@@ -45,6 +46,7 @@
     <Compile Include="MegaLoop.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ShittyAssNode.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MonoGame.Framework">
@@ -62,6 +64,10 @@
     <None Include="app.manifest" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Core\Core.csproj">
+      <Project>{8a50e188-69ef-4734-b173-54be3a86b8ae}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SimuEngine\SimuEngine.csproj">
       <Project>{8273bbbd-7fb2-4e9b-8814-3c9c2a4a52a8}</Project>
       <Name>SimuEngine</Name>
