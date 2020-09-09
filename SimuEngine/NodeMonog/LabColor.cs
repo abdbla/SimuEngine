@@ -92,5 +92,16 @@ namespace NodeMonog {
             var vecRgb = XyzToRgb(xyz);
             return new Color(vecRgb.X, vecRgb.Y, vecRgb.Z);
         }
+
+        /// <summary>
+        /// Linear color gradient from start to end in the LAB color space
+        /// </summary>
+        /// <param name="startColor">color to start from</param>
+        /// <param name="endColor">color to end with</param>
+        /// <param name="gradient">a number [0, 1] for where the color should be</param>
+        public static Vector3 LinearGradient(Vector3 startColor, Vector3 endColor, float gradient) {
+            var diff = startColor - endColor;
+            return startColor - gradient * diff;
+        }
     }
 }
