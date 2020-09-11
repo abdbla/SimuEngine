@@ -26,8 +26,8 @@ namespace NodeMonog {
 
         static Vector3 D65_WHITE = new Vector3(95.047f, 100.0f, 108.883f);
 
-        const float EPSILON = 216.0f / 24389.0f;
-        const float KAPPA = 24389.0f / 27.0f;
+        const float EPSILON = 216f / 24389f;
+        const float KAPPA = 24389f / 27f;
 
         static Vector3 RgbToXyz(Vector3 rgb) {
             Func<float, float> inverseCompanding = x =>
