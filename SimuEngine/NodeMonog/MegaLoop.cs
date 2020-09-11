@@ -100,11 +100,11 @@ namespace NodeMonog
             graph.Add(testNode4);
             graph.Add(testNode5);
 
-            testNode.name = "billy";
-            testNode2.name = "Steve";
-            testNode3.name = "Felix";
-            testNode4.name = "Felix But good";
-            testNode5.name = "Felix 2";
+            testNode.Name = "billy";
+            testNode2.Name = "Steve";
+            testNode3.Name = "Felix";
+            testNode4.Name = "Felix But good";
+            testNode5.Name = "Felix 2";
 
             //Doesn't work btw
             graph.AddConnection(testNode, testNode2, new ShittyAssKnect(200,100));
@@ -340,7 +340,7 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
                 }
                 else spriteBatch.Draw(circle, new Rectangle((int)((((x + Math.Cos(spinInterval * ii) * x / 2f) - x / 8) + cameraPosition.X) * zoomlevel), (int)(((r.Height / 2 + Math.Sin(spinInterval * ii) * x / 2) - x / 8 + cameraPosition.Y) * zoomlevel), (int)(x / 4f * zoomlevel), (int)(x / 4 * zoomlevel)), Color.Blue);
 
-                spriteBatch.DrawString(arial, n.name, new Vector2((int)((((x + Math.Cos(spinInterval * ii) * x / 2f) - x / 8)+ cameraPosition.X) * zoomlevel), (int)(((r.Height / 2 + Math.Sin(spinInterval * ii) * x / 2) - x / 8 + cameraPosition.Y) * zoomlevel)),Color.Black);
+                spriteBatch.DrawString(arial, n.Name, new Vector2((int)((((x + Math.Cos(spinInterval * ii) * x / 2f) - x / 8)+ cameraPosition.X) * zoomlevel), (int)(((r.Height / 2 + Math.Sin(spinInterval * ii) * x / 2) - x / 8 + cameraPosition.Y) * zoomlevel)),Color.Black);
                             
                 ii++;
             
@@ -369,7 +369,7 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
                 //new Color(
                 //    transitionAnimation / (float)animThreshold, 0, 1.0f - transitionAnimation / (float)animThreshold)
                 //);
-            spriteBatch.DrawString(arial, selectedNode.name, new Vector2((float)((x - x / 6 + cameraPosition.X * zoomlevel)), (float)( (r.Height / 2 - x / 6 + cameraPosition.Y) * zoomlevel)),Color.Black);
+            spriteBatch.DrawString(arial, selectedNode.Name, new Vector2((float)((x - x / 6 + cameraPosition.X * zoomlevel)), (float)( (r.Height / 2 - x / 6 + cameraPosition.Y) * zoomlevel)),Color.Black);
 
             
             

@@ -11,7 +11,7 @@ namespace Core {
         public List<string> statuses { get; protected set; }
         public List<Group> groups { get; protected set; }
         public List<Connection> connections { get; protected set; }
-        public string name { get; set; }
+        public string Name { get; set; }
 
     public Graph Graph
         {
@@ -30,12 +30,10 @@ namespace Core {
             traits = new Dictionary<string, int>();
             groups = new List<Group>();
             connections = new List<Connection>();
-            name = "";
         }
 
         public abstract void OnGenerate();
 
         public abstract void OnCreate();
     }
-
 }
