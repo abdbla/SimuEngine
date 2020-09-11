@@ -351,18 +351,15 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             var startColor = LabColor.RgbToLab(new Color(0xA5, 0xD7, 0xC8));
             Console.WriteLine(startColor);
             var endColor = LabColor.RgbToLab(new Color(0x48, 0x73, 0x66));
-
-            var diff = startColor - endColor;
             float time = transitionAnimation / (float)animThreshold;
             time = 1 - (float)Math.Pow(1 - time, 3);
-            var color = LabColor.LabToRgb(startColor - time * diff);
+            var color = LabColor.LabToRgb(LabColor.LinearGradient(startColor, endColor, time));
 
             spriteBatch.Draw(circle, new Rectangle(
                     x: (int)((x - x / (8 - time * 2) + cameraPosition.X) * zoomlevel),
                     y: (int)((r.Height / 2 - x / (8 - time * 2) + cameraPosition.Y) * zoomlevel),
                     width: (int)(x / (4 - time) * zoomlevel),
                     height: (int)(x / (4 - time) * zoomlevel)
-
                 ),
                color);
 
