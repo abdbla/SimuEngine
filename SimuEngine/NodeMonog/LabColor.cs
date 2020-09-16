@@ -26,8 +26,8 @@ namespace NodeMonog {
 
         static Vector3 D65_WHITE = new Vector3(95.047f, 100.0f, 108.883f);
 
-        const float EPSILON = 216.0f / 24389.0f;
-        const float KAPPA = 24389.0f / 27.0f;
+        const float EPSILON = 216f / 24389f;
+        const float KAPPA = 24389f / 27f;
 
         static Vector3 RgbToXyz(Vector3 rgb) {
             Func<float, float> inverseCompanding = x =>
@@ -91,6 +91,17 @@ namespace NodeMonog {
             var xyz = LabToXyzWhite(lab, D65_WHITE);
             var vecRgb = XyzToRgb(xyz);
             return new Color(vecRgb.X, vecRgb.Y, vecRgb.Z);
+        }
+
+        /// <summary>
+        /// Linear color gradient from start to end in the LAB color space
+        /// </summary>
+        /// <param name="startColor">color to start from</param>
+        /// <param name="endColor">color to end with</param>
+        /// <param name="gradient">a number [0, 1] for where the color should be</param>
+        public static Vector3 LinearGradient(Vector3 startColor, Vector3 endColor, float gradient) {
+            var diff = startColor - endColor;
+            return startColor - gradient * diff;
         }
     }
 }
