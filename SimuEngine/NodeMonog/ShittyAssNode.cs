@@ -25,7 +25,7 @@ namespace NodeMonog
     
     class ShittyAssKnect : Connection
     {
-        int affection, affection2;
+        public int affection, affection2;
 
 
         public ShittyAssKnect(int affection, int affection2)
