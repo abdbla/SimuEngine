@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 
 namespace SimuEngine
@@ -19,7 +20,7 @@ namespace SimuEngine
             EventListContainer events = new EventListContainer();
             system = new GraphSystem();
             handler = new Handler(events);
-            player = new PlayerObject(system.graph, system.graph);
+            player = new PlayerObject(system.graph, system.graph, new List<Event>());
         }
         [STAThread]
         static void Main()

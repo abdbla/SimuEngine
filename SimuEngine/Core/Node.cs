@@ -11,18 +11,7 @@ namespace Core {
         public List<string> statuses { get; protected set; }
         public List<Group> groups { get; protected set; }
         public List<Connection> connections { get; protected set; }
-        public string Name { get; set; }
-
-    public Graph Graph
-        {
-            get { return subGraph; }
-            set { }
-        }
-
-  //     public string Name{
-  //         get { return name; }
-  //         set { name = value; }
-  // }
+        public string name { get; protected set; }
 
         public Node() {
             subGraph = new Graph();

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -25,7 +26,13 @@ namespace SimuEngine
                         action(this, localGraph, worldGraph);
                     }
                 }
-            }   
+            }
+        }
+        public ReadOnlyCollection<Node> CurrentNodes {
+            get { return localGraph.Nodes; }
+        }
+        public ReadOnlyCollection<Node> TopLevelNodes {
+            get { return worldGraph.Nodes; }
         }
         public override void OnCreate()
         {
@@ -36,11 +43,17 @@ namespace SimuEngine
             throw new Exception("Attempted to call OnGenerate on the player object.");
         }
 
-        public PlayerObject(Graph _localGraph, Graph _worldGraph)
+        /// <summary>
+        /// The constructor for the PlayerObject
+        /// </summary>
+        /// <param name="_localGraph">The graph it's started out looking at. Usually the same as worldGraph.</param>
+        /// <param name="_worldGraph">The top-level graph, belongning to the GraphSystem.</param>
+        /// <param name="_actions">the list of actions the PlayerObject can take.</param>
+        public PlayerObject(Graph _localGraph, Graph _worldGraph, List<Event> _actions)
         {
             localGraph = _localGraph;
             worldGraph = _worldGraph;
-            actions = new List<Event>(); //TODO: add implementation support
+            actions = _actions;
         }
     }
 }
