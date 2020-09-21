@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+using System.Diagnostics;
 
 namespace SimuEngine
 {
@@ -11,16 +11,15 @@ namespace SimuEngine
         PlayerObject player;
 
         /// <summary>
-        /// The main entry point for the application.
+        /// Where the application starts the engine.
         /// </summary>
-        
-
-        public Engine()
+        /// <param name="actions">The actions that the PlayerObject can take.</param>
+        /// <param name="eventListContainer">The events that different nodes can experience.</param>
+        public Engine(List<Event> actions, EventListContainer eventListContainer)
         {
-            EventListContainer events = new EventListContainer();
             system = new GraphSystem();
-            handler = new Handler(events);
-            player = new PlayerObject(system.graph, system.graph, new List<Event>());
+            handler = new Handler(eventListContainer);
+            player = new PlayerObject(system.graph, system.graph, actions);
         }
         [STAThread]
         static void Main()

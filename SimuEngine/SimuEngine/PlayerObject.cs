@@ -34,6 +34,9 @@ namespace SimuEngine
         public ReadOnlyCollection<Node> TopLevelNodes {
             get { return worldGraph.Nodes; }
         }
+        public List<Event> Actions {
+            get { return actions; }
+        }
         public override void OnCreate()
         {
             throw new NotImplementedException();
