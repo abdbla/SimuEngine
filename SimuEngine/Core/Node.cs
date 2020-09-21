@@ -35,5 +35,10 @@ namespace Core {
         public abstract void OnGenerate();
 
         public abstract void OnCreate();
+
+        public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph)
+        {
+            action(this, localGraph, worldGraph);
+        }
     }
 }

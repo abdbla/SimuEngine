@@ -7,10 +7,20 @@ namespace SimuEngine
     {
         GraphSystem system;
         Handler handler;
+        PlayerObject player;
 
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
+        
+
+        public Engine()
+        {
+            EventListContainer events = new EventListContainer();
+            system = new GraphSystem();
+            handler = new Handler(events);
+            player = new PlayerObject(system.graph, system.graph);
+        }
         [STAThread]
         static void Main()
         {

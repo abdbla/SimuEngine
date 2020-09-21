@@ -42,7 +42,7 @@ namespace SimuEngine
                     }
                     if (req) {
                         foreach (var act in ev.Outcome) {
-                            act(graph.Nodes[i], localGraph, worldGraph);
+                            graph.Nodes[i].InvokeAction(act, localGraph, worldGraph);
                         }
                     } else {
                         for (int j = 0; j < ev.ReqGuaranteed.Count; j++) {
@@ -54,7 +54,7 @@ namespace SimuEngine
                     if (pos) {
                         if (rng.NextDouble() <= ev.Chance) {
                             foreach (var act in ev.Outcome) {
-                                act(graph.Nodes[i], localGraph, worldGraph);
+                                graph.Nodes[i].InvokeAction(act, localGraph, worldGraph);
                             }
                         }
                     }
@@ -66,9 +66,9 @@ namespace SimuEngine
             }
         }
 
-        public Handler()
+        public Handler(EventListContainer _eventList)
         {
-            events = new EventListContainer();
+            events = _eventList;
         }
     }
 }
