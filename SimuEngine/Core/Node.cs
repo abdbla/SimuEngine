@@ -4,8 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace Core {
     public abstract class Node {
-
-        public Graph subGraph;
+        public Graph subGraph { get; protected set; }
         public Dictionary<string, int> traits;
         public List<string> statuses;
         public List<Group> groups;
@@ -41,8 +40,7 @@ namespace Core {
 
         public abstract void OnCreate();
 
-        public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph)
-        {
+        public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph) {
             action(this, localGraph, worldGraph);
         }
     }
