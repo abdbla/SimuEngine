@@ -5,12 +5,25 @@ using System.Text;
 using System.Threading.Tasks;
 using SimuEngine;
 using Core;
+using Microsoft.Xna.Framework;
 
 namespace NodeMonog
 {
     class ShittyAssNode : Node
     {
-        
+        public Point position;
+
+        public string NName
+        {
+            get { return Name; }
+            set { Name = value; }
+        }
+
+        public ShittyAssNode(Point position)
+        {
+            this.position = position;
+        }
+
         public override void OnCreate()
         {
             //traits.Add("age", 50);

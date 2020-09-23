@@ -116,11 +116,11 @@ namespace NodeMonog
             graph.Add(testNode4);
             graph.Add(testNode5);
 
-            testNode.Name = "billy";
-            testNode2.Name = "Steve";
-            testNode3.Name = "Felix";
-            testNode4.Name = "Felix But good";
-            testNode5.Name = "Felix 2";
+            testNode.NName = "billy";
+            testNode2.NName = "Steve";
+            testNode3.NName = "Felix";
+            testNode4.NName = "Felix But good";
+            testNode5.NName = "Felix 2";
 
             //Doesn't work btw                                          
             graph.AddConnection(testNode, testNode2, new ShittyAssKnect (2000, 1000));
@@ -187,7 +187,7 @@ namespace NodeMonog
         /// Allows the game to run logic such as updating the world,
         /// checking for collisions, gathering input, and playing audio.
         /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
             Rectangle r = Window.ClientBounds;
@@ -307,7 +307,7 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
         /// <summary>
         /// This is called when the game should draw itself.
         /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.LightGray);
@@ -398,7 +398,7 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
                     color: Color.White,
                     layerDepth: 0.75f);
 
-                spriteBatch.DrawString(arial, currentNode.name, (currentNode.position ).ToVector2() * (float)zoomlevel + cameraPosition.ToVector2(), Color.Black);
+                spriteBatch.DrawString(arial, currentNode.NName, (currentNode.position ).ToVector2() * (float)zoomlevel + cameraPosition.ToVector2(), Color.Black);
 
             }
 
