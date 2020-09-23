@@ -146,9 +146,9 @@ namespace SimuEngineTest
             graph.Add(b);
             graph.Add(new ExampleNode());
 
-            Assert.AreEqual(b, graph.FindNode<ExampleNode2>(n => n.name == "b"));
-            Assert.AreEqual(a, graph.FindNode<ExampleNode2>(n => n.name == "a"));
-            Assert.AreNotEqual((Node)b, graph.FindNode<ExampleNode>(n => n.name == "b"));
+            Assert.AreEqual(b, graph.FindNode<ExampleNode2>(n => n.Name == "b"));
+            Assert.AreEqual(a, graph.FindNode<ExampleNode2>(n => n.Name == "a"));
+            Assert.AreNotEqual((Node)b, graph.FindNode<ExampleNode>(n => n.Name == "b"));
         }
 
         [TestMethod]
@@ -411,16 +411,11 @@ namespace SimuEngineTest
 
     [TestClass]
     public class ExampleNode : Node, System.IEquatable<ExampleNode> {
-        public string Name { get => name; }
 
         static char ID = 'a';
 
-        public Dictionary<string, int> Traits {
-            get { return traits; }
-            set { traits = value; }
-        }
         public ExampleNode() {
-            name = ID++.ToString();
+            Name = ID++.ToString();
         }
 
         public override void OnGenerate() {
@@ -431,7 +426,7 @@ namespace SimuEngineTest
         }
 
         bool IEquatable<ExampleNode>.Equals(ExampleNode other) {
-            return name == other.name;
+            return Name == other.Name;
         }
 
         [TestMethod]
