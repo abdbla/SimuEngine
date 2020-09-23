@@ -21,6 +21,7 @@ namespace NodeMonog
         Texture2D circle, pixel, topCurve, tickButton, square, arrow;
         int selectedTab = 0;
         MouseState oms = Mouse.GetState();
+        Random r = new Random();
 
         int dragtimer = 0;
         Point cameraPosition = Point.Zero, cameraGoal = Point.Zero,  cameraPress = Point.Zero;
@@ -34,20 +35,18 @@ namespace NodeMonog
         const int animationRepeat = short.MaxValue;
 
         int transitionAnimation = animThreshold;
-        
-
-        float oldRotation = 0;
 
         double zoomlevel = 1f;
 
-        Node testNode; 
-        Node testNode2;
-        Node testNode3;
-        Node testNode4;
-        Node testNode5;
+       
+        ShittyAssNode testNode; 
+        ShittyAssNode testNode2;
+        ShittyAssNode testNode3;
+        ShittyAssNode testNode4;
+        ShittyAssNode testNode5;
 
-        Node selectedNode;
-        Node previosNode;
+        ShittyAssNode selectedNode;
+        ShittyAssNode previosNode;
 
 
 
@@ -74,11 +73,22 @@ namespace NodeMonog
 
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
-            testNode = new ShittyAssNode();
-            testNode2 = new ShittyAssNode();
-            testNode3 = new ShittyAssNode();
-            testNode4 = new ShittyAssNode();
-            testNode5 = new ShittyAssNode();
+
+            //AA boy
+            graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            GraphicsDevice.PresentationParameters.MultiSampleCount = 8;
+            graphics.PreparingDeviceSettings += Graphics_PreparingDeviceSettings;
+            //RasterizerState = new RasterizerState { MultiSampleAntiAlias = true };
+
+            graphics.ApplyChanges();
+
+
+
+            testNode = new ShittyAssNode(new Point(r.Next(0,64)));
+            testNode2 = new ShittyAssNode(new Point( 72 + r.Next(0, 64), r.Next(0,128)));
+            testNode3 = new ShittyAssNode(new Point(156 + r.Next(0, 64), r.Next(0,128)));
+            testNode4 = new ShittyAssNode(new Point(256 + r.Next(0, 64), r.Next(0,128)));
+            testNode5 = new ShittyAssNode(new Point( 326 + r.Next(0, 64), r.Next(0,128)));
 
 
             testNode.traits.Add("Age", 500);
@@ -158,6 +168,12 @@ namespace NodeMonog
             // TODO: use this.Content to load your game content here
         }
 
+        private void Graphics_PreparingDeviceSettings(object sender, PreparingDeviceSettingsEventArgs e)
+        {
+            graphics.PreferMultiSampling = true;
+            e.GraphicsDeviceInformation.PresentationParameters.MultiSampleCount = 8;
+        }
+
         /// <summary>
         /// UnloadContent will be called once per game and is the place to unload
         /// game-specific content.
@@ -196,7 +212,7 @@ namespace NodeMonog
                         else if (new Rectangle((int)(x * 2.5f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 2;
                         else if (new Rectangle((int)(x * 2.75f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 3;
                     }
-                    //screen click
+                    //Vänsta hud klick
                     else
                     {
                         cameraPress = nms.Position - cameraPosition;
@@ -213,25 +229,26 @@ namespace NodeMonog
                         //    //}
                         //}
 
-                        float spinInterval = (float)MathHelper.Pi / graph.GetConnections(selectedNode).Count * 2;
-                        int i = 0;
-                        foreach ((Connection c, Node n) in graph.GetConnections(selectedNode))
+                        for (int i = 0; i < graph.GetNodes().Count; i++)
                         {
-                            //Changing selected Node
-                            if (new Rectangle((int)((((x + Math.Cos(spinInterval * i) * x / 2f) - x / 8) + cameraPosition.X) * zoomlevel), (int)(((r.Height / 2 + Math.Sin(spinInterval * i) * x / 2) - x / 8 + cameraPosition.Y) * zoomlevel), (int)(x / 4f * zoomlevel), (int)(x / 4 * zoomlevel))
-                                .Contains(nms.Position))
-                            {
-                                previosNode = selectedNode;
-                                selectedNode = n;
-                                cameraPosition += new Point((int)((((x + Math.Cos(spinInterval * i) * x / 2f) - x / 8) + cameraPosition.X) * zoomlevel),(int)(((r.Height / 2 + Math.Sin(spinInterval * i) * x / 2) - x / 8 + cameraPosition.Y) * zoomlevel)) - new Point((int)((x - x / 6 + cameraPosition.X) * zoomlevel), (int)((r.Height / 2 - x / 6 + cameraPosition.Y) * zoomlevel));
-                                //cameraGoal -= cameraGoal + cameraGoal;
-                                //cameraPosition -= cameraPosition + cameraPosition;
-                                transitionAnimation = 0;
-                            }
-                            
-                            i++;
-                        }
+                            ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
+
+                            if (new Rectangle(
+                                x: (int)(currentNode.position.X * zoomlevel) + cameraPosition.X,
+                                y: (int)(currentNode.position.Y * zoomlevel) + cameraPosition.Y,
+                                width:  (int)(64 * zoomlevel),
+                                height: (int)(64 * zoomlevel)).Contains(nms.Position))
+                            {
+                                selectedNode = currentNode;
+                                cameraGoal = new Point(x - selectedNode.position.X, r.Height / 2 - selectedNode.position.Y);
+                                //cameraPosition += new Point((int)((((x + Math.Cos(spinInterval * i) * x / 2f) - x / 8) + cameraPosition.X) * zoomlevel), (int)(((r.Height / 2 + Math.Sin(spinInterval * i) * x / 2) - x / 8 + cameraPosition.Y) * zoomlevel)) - new Point((int)((x - x / 6 + cameraPosition.X) * zoomlevel), (int)((r.Height / 2 - x / 6 + cameraPosition.Y) * zoomlevel));
+
+
+                            };
+
+
+                        }
                     }
                 }
                 if (nms.LeftButton == ButtonState.Pressed)
@@ -286,6 +303,7 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
 
 
 
+
         /// <summary>
         /// This is called when the game should draw itself.
         /// </summary>
@@ -298,113 +316,92 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
 
             spriteBatch.Begin();
 
+
+            //spriteBatch.Draw(circle, new Rectangle(r.Width / 3 - r.Width / 18, r.Height / 2 - r.Width / 18, r.Width / 9, r.Width / 9), Color.Red);
+            spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
+            spriteBatch.DrawString(arial, "Tick", new Vector2(16, r.Height - 48), Color.Black);
+
+
+            int x = r.Width / 3;
             
 
 
             spriteBatch.DrawString(arial, (animation % 1000).ToString() + "   :   " + transitionAnimation,  Vector2.Zero,Color.Black);
 
-            spriteBatch.DrawString(arial, frameRate.ToString(), new Vector2(0, 32), Color.Black);
+            spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
 
-            int x = r.Width / 3;
 
             //float spinInterval = (float)MathHelper.Pi / selectedNode.connections.Count * 2;
-            float spinInterval = (float)MathHelper.Pi / graph.GetConnections(selectedNode).Count * 2;
-            int ii = 0;
-            foreach ((Connection c, Node n) in graph.GetConnections(selectedNode))
+
+            for (int i = 0; i < graph.GetNodes().Count; i++)
             {
-                float spiiinInterval;
-                if (graph.GetConnections(n).Any(x => x.Item2 == selectedNode)) spiiinInterval = (float)MathHelper.Pi / (graph.GetConnections(n).Count) * 2;
-                else spiiinInterval = (float)MathHelper.Pi / (graph.GetConnections(n).Count + 1) * 2;
-                int iii = -1;
+                ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
-                Point origo = new Point(
-                    x: (int)(((x + Math.Cos(spinInterval * ii) * x / 2f) - x / 8 + cameraPosition.X ) * zoomlevel),
-                    y: (int)(((r.Height / 2 + Math.Sin(spinInterval * ii) * x / 2) -x / 8 + cameraPosition.Y) *zoomlevel));
+                Color selectcolour;
+                if (selectedNode == currentNode) selectcolour = Color.Black;
+                else selectcolour = new Color(0, 0, 0, 15);
 
-                foreach ((Connection cc, Node nn) in graph.GetConnections(n))
+                foreach ((Connection c, Node n) in graph.GetConnections(currentNode))
                 {
-                    if (nn != selectedNode) {
+                    ShittyAssNode nConvert = (ShittyAssNode)n;
+                    Vector2 pointerKinda = (new Vector2(
+                        x: nConvert.position.X - currentNode.position.X,
+                        y: nConvert.position.Y - currentNode.position.Y));
+                    double rotation = Math.Atan(pointerKinda.Y / pointerKinda.X);
+                    if (pointerKinda.X < 0) rotation += Math.PI;
+                    Point offsetPoint = new Point((int)(32 + 16 * Math.Cos(rotation)), (int)(32 + 16 * Math.Sin(rotation)));
+                    
 
-                        Point oorigo = new Point((int)((Math.Cos(spiiinInterval * iii /*- spinInterval * ii / 2*/) * x / 4f + x / 16) * zoomlevel),
-                            (int)((Math.Sin(spiiinInterval * iii /*- spinInterval * ii / 2*/) * x / 4 + x / 16) * zoomlevel));
+                    spriteBatch.Draw(pixel, 
+                        destinationRectangle: new Rectangle(
+                        x: (int)((currentNode.position.X + offsetPoint.X) * zoomlevel + cameraPosition.X),
+                        y: (int)((currentNode.position.Y + offsetPoint.Y) * zoomlevel + cameraPosition.Y),
+                        width: (int)(pointerKinda.Length() * zoomlevel),
+                        height: (int)(8 * zoomlevel)),
+                        color: selectcolour,
+                        rotation: (float)rotation,
+                        origin: new Vector2(0,0.5f),
+                        effects: SpriteEffects.None,
+                        layerDepth: 0.5f
+                        );
 
-                        //spriteBatch.Draw(arrow,
-                        //    new Rectangle(
-                        //        x: (int)((x + Math.Cos(spinInterval * ii) * x / 2f + cameraPosition.X) * zoomlevel),
-                        //        y: (int)((r.Height / 2 + Math.Sin(spinInterval * ii) * x / 2 + cameraPosition.Y) * zoomlevel),
-                        //        width: (int)(x / 4 * zoomlevel),
-                        //        height: (int)(2 * zoomlevel)),
-                        //    sourceRectangle: new Rectangle(0,0,128,32), color: new Color(0,0,0,200),
-                        //    rotation: spiiinInterval * iii - spinInterval * ii * 2/*- (float)Math.PI / 2*/,
-                        //    origin: Vector2.Zero,
-                        //    SpriteEffects.None,
-                        //    1);
-
-                        spriteBatch.Draw(circle,
-                            destinationRectangle: new Rectangle(origo + oorigo, new Point((int)x / 8, (int)(x / 8))),
-                            color: Color.Blue);
-
-                        //spriteBatch.Draw(circle, new Rectangle((int)((((x + Math.Cos(spinInterval * ii) * x / 2f + Math.Cos(spinInterval * iii) * x / 4f) - x / 16) + cameraPosition.X) * zoomlevel), (int)(((r.Height / 2 + Math.Sin(spinInterval * ii) * x / 2 + Math.Sin(spinInterval * iii) * x / 4) - x / 16 + cameraPosition.Y) * zoomlevel), (int)(x / 8f * zoomlevel), (int)(x / 8 * zoomlevel)), new Color(0,0,255,150));
-                    }
-                    iii++;
+                    spriteBatch.Draw(pixel,
+                        destinationRectangle: new Rectangle(
+                        x: (int)((currentNode.position.X + offsetPoint.X) * zoomlevel + cameraPosition.X),
+                        y: (int)((currentNode.position.Y + offsetPoint.Y) * zoomlevel + cameraPosition.Y),
+                        width: (int)(4 * zoomlevel),
+                        height: (int)(8 * zoomlevel)),
+                        color: Color.Red,
+                        rotation: (float)rotation,
+                       /* origin: new Vector2(0, (int)(4 * zoomlevel)),*/
+                        effects: SpriteEffects.None,
+                        layerDepth: 0.5f
+                        );
                 }
 
 
-                spriteBatch.Draw(pixel, new Rectangle(
-                    x: (int)((x + cameraPosition.X) * zoomlevel),
-                    y: (int)(( r.Height / 2 + cameraPosition.Y) * zoomlevel),
-                    width: (int)(( x / 2 - x / 9)* zoomlevel),
-                    height: (int)(8 * zoomlevel)), 
-                    sourceRectangle: new Rectangle(0, 0, 1,1), 
-                    color:  Color.Black, 
-                    rotation: spinInterval * ii, 
-                    origin: new Vector2(0, 0.5f),  SpriteEffects.None, 1);
-
-                //if(graph.GetConnections(n).ForEach(x => x.Item2 == selectedNode). )spriteBatch.Draw(pixel, new Rectangle(
-                //  x: (int)((x + cameraPosition.X) * zoomlevel),
-                //  y: (int)((r.Height / 2 + cameraPosition.Y) * zoomlevel),
-                //  width: (int)((x / 2 - x / 9) * zoomlevel),
-                //  height: (int)(2 * zoomlevel)),
-                //  sourceRectangle: new Rectangle(0, 0, 1, 1),
-                //  color: Color.White,
-                //  rotation: spinInterval * ii,
-                //  origin: new Vector2(0, 0.5f), SpriteEffects.None, 1);
-
-                spriteBatch.Draw(arrow, new Rectangle(
-                    x: (int)((x + Math.Cos(spinInterval * ii) * (x / 2f - x / 9 - 8) * (0.5f + (double)(animation % ((ShittyAssKnect)c).affection) / ((ShittyAssKnect)c).affection) + cameraPosition.X) * zoomlevel),
-                    y: (int)((cameraPosition.Y +  r.Height / 2 + Math.Sin(spinInterval * ii) * (x / 2 - x / 9) * (0.5f + (double)(animation % ((ShittyAssKnect)c).affection) / ((ShittyAssKnect)c).affection)) * zoomlevel),
-                    width: (int)((16)),
-                    height: (int)(32)),
-                    sourceRectangle: new Rectangle(0, 0, 16, 32),
-                    color: Color.Black,
-                    rotation: spinInterval * ii,
-                    origin: new Vector2(16, 16), SpriteEffects.None, 1);
-
-
-
-                if (n == previosNode)
-                {
-                    //  spriteBatch.Draw(circle, new Rectangle(
-                    // x: (int)((x + Math.Cos(spinInterval * iiii) * x / 2f - x / (7 - transitionAnimation / (double)animThreshold * 2) + cameraPosition.X) * zoomlevel),
-                    // y: (int)((r.Height / 2 + Math.Sin(spinInterval * iiii) * x / 2) - (x / (8 - transitionAnimation / (double)animThreshold * 2) + cameraPosition.Y) * zoomlevel),
-                    // width: (int)(x / (3 + transitionAnimation / (double)animThreshold) * zoomlevel),
-                    // height: (int)(x / (3 + transitionAnimation / (double)animThreshold) * zoomlevel)),
-                    // new Color(1.0f - transitionAnimation / (float)animThreshold, 0, transitionAnimation / (float)animThreshold));
-                    spriteBatch.Draw(circle, new Rectangle((int)((((x + Math.Cos(spinInterval * ii) * x / 2f) - x / 8) + cameraPosition.X) * zoomlevel), (int)(((r.Height / 2 + Math.Sin(spinInterval * ii) * x / 2) - x / 8 + cameraPosition.Y) * zoomlevel), (int)(x / 4f * zoomlevel), (int)(x / 4 * zoomlevel)), Color.Blue);
-
-
-                }
-                else spriteBatch.Draw(circle, 
-                    new Rectangle(origo, new Point((int)(x / 4 * zoomlevel), (int)(x / 4 * zoomlevel))), 
-                    Color.Blue);
-
-                spriteBatch.DrawString(arial, n.Name, new Vector2((int)((((x + Math.Cos(spinInterval * ii) * x / 2f) - x / 8)+ cameraPosition.X) * zoomlevel), (int)(((r.Height / 2 + Math.Sin(spinInterval * ii) * x / 2) - x / 8 + cameraPosition.Y) * zoomlevel)),Color.Black);
-                            
-                ii++;
-            
 
 
             }
+
+
+            //A repeat becaue of the bitch ass alyers not working
+            for (int i = 0; i < graph.GetNodes().Count; i++)
+            {
+                ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
+
+                spriteBatch.Draw(circle, destinationRectangle: new Rectangle(
+                    x: (int)(currentNode.position.X * zoomlevel) + cameraPosition.X,
+                    y: (int)(currentNode.position.Y * zoomlevel) + cameraPosition.Y,
+                    width: (int)(64 * zoomlevel),
+                    height: (int)(64 * zoomlevel)),
+                    color: Color.White,
+                    layerDepth: 0.75f);
+
+                spriteBatch.DrawString(arial, currentNode.name, (currentNode.position ).ToVector2() * (float)zoomlevel + cameraPosition.ToVector2(), Color.Black);
+
+            }
+
 
             var startColor = LabColor.RgbToLab(new Color(0xA5, 0xD7, 0xC8));
             Console.WriteLine(startColor);
@@ -413,22 +410,17 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             time = 1 - (float)Math.Pow(1 - time, 3);
             var color = LabColor.LabToRgb(LabColor.LinearGradient(startColor, endColor, time));
 
-            spriteBatch.Draw(circle, new Rectangle(
-                    x: (int)((x - x / (8 - time * 2) + cameraPosition.X) * zoomlevel),
-                    y: (int)((r.Height / 2 - x / (8 - time * 2) + cameraPosition.Y) * zoomlevel),
-                    width: (int)(x / (4 - time) * zoomlevel),
-                    height: (int)(x / (4 - time) * zoomlevel)
-                ),
-               color);
+           // spriteBatch.Draw(circle, new Rectangle(
+           //         x: (int)((x - x / (8 - time * 2) + cameraPosition.X) * zoomlevel),
+           //         y: (int)((r.Height / 2 - x / (8 - time * 2) + cameraPosition.Y) * zoomlevel),
+           //         width: (int)(x / (4 - time) * zoomlevel),
+           //         height: (int)(x / (4 - time) * zoomlevel)
+           //     ),
+           //    color);
 
                 //new Color(
                 //    transitionAnimation / (float)animThreshold, 0, 1.0f - transitionAnimation / (float)animThreshold)
                 //);
-            spriteBatch.DrawString(arial, selectedNode.Name, new Vector2((float)((x - x / 6 + cameraPosition.X * zoomlevel)), (float)( (r.Height / 2 - x / 6 + cameraPosition.Y) * zoomlevel)),Color.Black);
-
-            
-            
-            
             
             
             
