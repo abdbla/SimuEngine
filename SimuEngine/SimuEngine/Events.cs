@@ -4,47 +4,38 @@ using System.Text;
 
 using Core;
 
-namespace SimuEngine
-{
-    public class EventListContainer
-    {
+namespace SimuEngine {
+    public class EventListContainer {
         private Dictionary<Type, List<Event>> eventLists;
 
-        public EventListContainer()
-        {
+        public EventListContainer() {
             eventLists = new Dictionary<Type, List<Event>>();
         }
-        public List<Event> GetEventList(Type type)
-        {
+        public List<Event> GetEventList(Type type) {
             return eventLists[type];
         }
 
-        public static EventListContainer LoadFromSerial()
-        {
+        public static EventListContainer LoadFromSerial() {
             throw new NotImplementedException();
         }
     }
 
-    public class Event
-    {
+    public class Event {
         //The function takes the source node which triggered the event, the Graph it's contained in, and the top-level graph. It returns a bool if the requirement is fulfilled.
         List<Func<Node, Graph, Graph, bool>> reqPossible;
         List<Func<Node, Graph, Graph, bool>> reqGuaranteed;
         List<Action<Node, Graph, Graph>> outcome;
         double chance;
 
-        public List<Func<Node, Graph, Graph, bool>> ReqPossible
-        {
+        public List<Func<Node, Graph, Graph, bool>> ReqPossible {
             get { return reqPossible; }
             set { }
         }
-        public List<Func<Node, Graph, Graph, bool>> ReqGuaranteed
-        {
+        public List<Func<Node, Graph, Graph, bool>> ReqGuaranteed {
             get { return reqGuaranteed; }
             set { }
         }
-        public List<Action<Node, Graph, Graph>> Outcome
-        {
+        public List<Action<Node, Graph, Graph>> Outcome {
             get { return outcome; }
             set { }
         }
@@ -53,8 +44,7 @@ namespace SimuEngine
             set { if (value <= 1 && value >= 0) chance = value; }
         }
 
-        public Event()
-        {
+        public Event() {
             reqPossible = new List<Func<Node, Graph, Graph, bool>>();
             reqGuaranteed = new List<Func<Node, Graph, Graph, bool>>();
             outcome = new List<Action<Node, Graph, Graph>>();

@@ -2,10 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace SimuEngine
-{
-    class Engine
-    {
+namespace SimuEngine {
+    class Engine {
         GraphSystem system;
         Handler handler;
         PlayerObject player;
@@ -15,15 +13,14 @@ namespace SimuEngine
         /// </summary>
         /// <param name="actions">The actions that the PlayerObject can take.</param>
         /// <param name="eventListContainer">The events that different nodes can experience.</param>
-        public Engine(List<Event> actions, EventListContainer eventListContainer)
-        {
+        public Engine(List<Event> actions, EventListContainer eventListContainer) {
             system = new GraphSystem();
             handler = new Handler(eventListContainer);
             player = new PlayerObject(system.graph, system.graph, actions);
         }
+
         [STAThread]
-        static void Main()
-        {
+        static void Main() {
             //Graph graph = new Graph();
             //var node1 = new ExampleNode("a");
             //var node2 = new ExampleNode("b");
@@ -39,7 +36,4 @@ namespace SimuEngine
             //Console.WriteLine(graph.GetConnections(node1));
         }
     }
-
-
-
 }

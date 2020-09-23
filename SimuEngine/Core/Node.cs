@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 
 namespace Core {
     public abstract class Node {
-
         public Graph subGraph { get; protected set; }
         public Dictionary<string, int> traits;
         public ReadOnlyDictionary<string, int> Traits {
@@ -27,8 +26,7 @@ namespace Core {
 
         public abstract void OnCreate();
 
-        public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph)
-        {
+        public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph) {
             action(this, localGraph, worldGraph);
         }
     }
