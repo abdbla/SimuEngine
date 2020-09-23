@@ -15,13 +15,13 @@ namespace Core {
             get => new ReadOnlyDictionary<string, int>(traits);
         }
         public ReadOnlyCollection<string> Statuses {
-            get { return statuses.AsReadOnly(); }
+            get => statuses.AsReadOnly();
         }
         public ReadOnlyCollection<Group> Groups {
-            get { return groups.AsReadOnly(); }
+            get => groups.AsReadOnly();
         }
         public ReadOnlyCollection<Connection> Connections {
-            get { return connections.AsReadOnly(); }
+            get => connections.AsReadOnly();
         }
 
         public Node() {
