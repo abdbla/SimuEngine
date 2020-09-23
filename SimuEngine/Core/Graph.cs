@@ -9,13 +9,13 @@ namespace Core {
     /// </summary>
     public class Graph {
         private int currentIndex;
-        private List<Node> _nodes;
-        public ReadOnlyCollection<Node> Nodes => _nodes.AsReadOnly();
+        private List<Node> nodes;
+        public ReadOnlyCollection<Node> Nodes => nodes.AsReadOnly();
         Dictionary<(int, int), Connection> adjacencyMatrix;
         Dictionary<Node, int> indexLookup;
 
         public Graph() {
-            _nodes = new List<Node>();
+            nodes = new List<Node>();
             indexLookup = new Dictionary<Node, int>();
             adjacencyMatrix = new Dictionary<(int, int), Connection>();
             currentIndex = 0;
@@ -26,7 +26,7 @@ namespace Core {
         /// </summary>
         /// <param name="node">the node to be added</param>
         public void Add(Node node) {
-            _nodes.Add(node);
+            nodes.Add(node);
             indexLookup.Add(node, currentIndex++);
         }
 
@@ -47,7 +47,7 @@ namespace Core {
                         adjacencyMatrix.Remove(key);
                     }
                 }
-                _nodes.RemoveAt(index);
+                nodes.RemoveAt(index);
                 indexLookup.Remove(node);
                 return true;
             } catch (NodeNotFoundException) {
@@ -76,7 +76,7 @@ namespace Core {
         /// <param name="predicate">the predicate to test with</param>
         /// <returns>the node found</returns>
         public Node FindNode(Predicate<Node> predicate) {
-            return _nodes.Find(predicate);
+            return nodes.Find(predicate);
         }
 
         /// <summary>
@@ -87,7 +87,7 @@ namespace Core {
         /// <returns>the first matching node of type T, or null</returns>
         public T FindNode<T>(Predicate<T> predicate) where T : Node
         {
-            return _nodes.Find(node => node is T && predicate(node as T)) as T;
+            return nodes.Find(node => node is T && predicate(node as T)) as T;
         }
 
         /// <summary>
@@ -96,7 +96,7 @@ namespace Core {
         /// <param name="predicate">the predicate to test with</param>
         /// <returns>the list of nodes matching predicate</returns>
         public List<Node> FindAllNodes(Predicate<Node> predicate) {
-            return _nodes.FindAll(predicate);
+            return nodes.FindAll(predicate);
         }
 
         /// <summary>
@@ -107,7 +107,7 @@ namespace Core {
         /// <returns>all matching nodes of type T</returns>
         public List<T> FindAllNodes<T>(Predicate<T> predicate) where T : Node
         {
-            return _nodes.FindAll(node => node is T && predicate(node as T)).Cast<T>().ToList();
+            return nodes.FindAll(node => node is T && predicate(node as T)).Cast<T>().ToList();
         }
 
         // find the index of a certain node
@@ -163,8 +163,8 @@ namespace Core {
         /// <returns>(connection, List<(source, target)>)</returns>
         public List<(Connection, List<(Node, Node)>)> FindDuplicateConnections() {
             var connections = (from kv in adjacencyMatrix
-                               let src = _nodes[kv.Key.Item1]
-                               let dst = _nodes[kv.Key.Item2]
+                               let src = nodes[kv.Key.Item1]
+                               let dst = nodes[kv.Key.Item2]
                                let conn = kv.Value
                                select new {
                                    src,
@@ -229,7 +229,7 @@ namespace Core {
             var ret = new List<(Connection, Node)>();
             foreach (var item in adjacencyMatrix) {
                 if (item.Key.Item1 == idx) {
-                    ret.Add((item.Value, _nodes[item.Key.Item2]));
+                    ret.Add((item.Value, nodes[item.Key.Item2]));
                 }
             }
 
@@ -241,12 +241,12 @@ namespace Core {
         /// </summary>
         /// <returns>the list of all nodes</returns>
         public List<Node> GetNodes() {
-            return _nodes;
+            return nodes;
         }
 
         public GraphCount Count {
             get {
-                return new GraphCount (_nodes.Count, adjacencyMatrix.Count);
+                return new GraphCount (nodes.Count, adjacencyMatrix.Count);
             }
         }
     }
