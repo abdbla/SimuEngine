@@ -446,10 +446,10 @@ namespace SimuEngineTest
 
     [TestClass]
     public class ExampleNode2 : Node, System.IEquatable<ExampleNode2> {
-        public string Name { get => name; }
+
         static char ID = 'a';
         public ExampleNode2() {
-            name = ID++.ToString();
+            Name = ID++.ToString();
         }
 
         public override void OnGenerate() {
@@ -460,7 +460,7 @@ namespace SimuEngineTest
         }
 
         bool IEquatable<ExampleNode2>.Equals(ExampleNode2 other) {
-            return name == other.name;
+            return Name == other.Name;
         }
     }
 }
