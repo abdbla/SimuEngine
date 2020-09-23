@@ -58,8 +58,8 @@ namespace SimuEngine
                     }
                 }
 
-                if (graph.Nodes[i].subGraph != null) {
-                    Tick(graph.Nodes[i].subGraph, graphs);
+                if (graph.Nodes[i].SubGraph != null) {
+                    Tick(graph.Nodes[i].SubGraph, graphs);
                 }
             }
         }

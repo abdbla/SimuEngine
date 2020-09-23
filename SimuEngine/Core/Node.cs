@@ -10,7 +10,7 @@ namespace Core {
         public List<Connection> connections;
 
         public string Name { get; protected set; }
-        public Graph subGraph { get; protected set; }
+        public Graph SubGraph { get; protected set; }
         public ReadOnlyDictionary<string, int> Traits {
             get => new ReadOnlyDictionary<string, int>(traits);
         }
@@ -25,7 +25,7 @@ namespace Core {
         }
 
         public Node() {
-            subGraph = new Graph();
+            SubGraph = new Graph();
             statuses = new List<string>();
             traits = new Dictionary<string, int>();
             groups = new List<Group>();
