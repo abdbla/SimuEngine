@@ -35,27 +35,25 @@ namespace SimuEngine
                     bool pos = true;
                     var worldGraph = graphs[0];
                     var localGraph = graphs[graphs.Count - 1];
-                    for (int j = 0; j < ev.ReqGuaranteed.Count; j++) {
+                    for (int j = 0; j < ev.ReqGuaranteed.Count; j++) { // Check each requirement
                         if (!ev.ReqGuaranteed[i](graph.Nodes[i], localGraph, worldGraph)) {
-                            req = false;
+                            req = false; //if any are false, dont fire the event.
                         }
                     }
                     if (req) {
                         foreach (var act in ev.Outcome) {
-                            graph.Nodes[i].InvokeAction(act, localGraph, worldGraph);
+                            graph.Nodes[i].InvokeAction(act, localGraph, worldGraph); //seperate loop so as to not fire event for each requirement.
                         }
                     } else {
                         for (int j = 0; j < ev.ReqGuaranteed.Count; j++) {
-                            if (!ev.ReqPossible[i](graph.Nodes[i], localGraph, worldGraph)) {
-                                pos = false;
+                            if (rng.NextDouble() <= ev.ReqPossible[i](graph.Nodes[i], localGraph, worldGraph)) {
+                                pos = false; //same over here as before, though the possible req returns a modifier on the chance to fire the event
                             }
                         }
                     }
                     if (pos) {
-                        if (rng.NextDouble() <= ev.Chance) {
-                            foreach (var act in ev.Outcome) {
-                                graph.Nodes[i].InvokeAction(act, localGraph, worldGraph);
-                            }
+                        foreach (var act in ev.Outcome) {
+                            graph.Nodes[i].InvokeAction(act, localGraph, worldGraph);
                         }
                     }
                 }

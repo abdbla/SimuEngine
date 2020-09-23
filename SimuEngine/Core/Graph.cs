@@ -7,8 +7,7 @@ namespace Core {
     /// <summary>
     /// A Graph class implemented using a list of Nodes and an adjacency matrix
     /// </summary>
-    public class Graph
-    {
+    public class Graph {
         private int currentIndex;
         private List<Node> _nodes;
         public ReadOnlyCollection<Node> Nodes => _nodes.AsReadOnly();

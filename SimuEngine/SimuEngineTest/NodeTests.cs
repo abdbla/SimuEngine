@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Cryptography.Xml;
 
 using Core;
+using System.Collections.ObjectModel;
 
 namespace SimuEngineTest
 {
@@ -19,8 +20,7 @@ namespace SimuEngineTest
          * TODO: tests for generic versions of FindNode/FindAllNodes
          */
         [TestMethod]
-        public void CreateNode_ExampleNode_Succeed()
-        {
+        public void CreateNode_ExampleNode_Succeed() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
 
@@ -32,8 +32,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void GenerateNode_ExampleNode_Succeed()
-        {
+        public void GenerateNode_ExampleNode_Succeed() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
 
@@ -45,8 +44,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void CreateConnection_Connection_Succeed()
-        {
+        public void CreateConnection_Connection_Succeed() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
             graphSystem.Create<ExampleNode>();
@@ -63,8 +61,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void GetConnections_ConnectionList_Success()
-        {
+        public void GetConnections_ConnectionList_Success() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
             graphSystem.Create<ExampleNode>();
@@ -138,6 +135,23 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
+        public void GenericFindNode_MultipleNodeTypes_ReturnsCorrectly() {
+            Graph graph = new Graph();
+            ExampleNode2 a = new ExampleNode2();
+            ExampleNode2 b = new ExampleNode2();
+
+            graph.Add(new ExampleNode());
+            graph.Add(a);
+            graph.Add(new ExampleNode());
+            graph.Add(b);
+            graph.Add(new ExampleNode());
+
+            Assert.AreEqual(b, graph.FindNode<ExampleNode2>(n => n.name == "b"));
+            Assert.AreEqual(a, graph.FindNode<ExampleNode2>(n => n.name == "a"));
+            Assert.AreNotEqual((Node)b, graph.FindNode<ExampleNode>(n => n.name == "b"));
+        }
+
+        [TestMethod]
         public void SanityCheck_Duplicates_ReturnsTrue() {
             Graph graph = new Graph();
 
@@ -166,7 +180,7 @@ namespace SimuEngineTest
             var n3 = new ExampleNode();
 
             var c1 = new ExampleConnection();
-            var c2 = new ExampleConnection(); 
+            var c2 = new ExampleConnection();
 
             graph.Add(n1);
             graph.Add(n2);
@@ -356,7 +370,8 @@ namespace SimuEngineTest
     }
 
     [TestClass]
-    public class ExampleConnection : Connection, IEquatable<ExampleConnection> {
+    public class ExampleConnection : Connection, IEquatable<ExampleConnection>
+    {
         [TestMethod]
         public void ExampleConnection_IEquatable_Success() {
             ExampleConnection c1 = new ExampleConnection();
@@ -395,20 +410,23 @@ namespace SimuEngineTest
     }
 
     [TestClass]
-    public class ExampleNode : Node, System.IEquatable<ExampleNode>
-    {
+    public class ExampleNode : Node, System.IEquatable<ExampleNode> {
+        public string Name { get => name; }
+
         static char ID = 'a';
-        public string name;
+
+        public Dictionary<string, int> Traits {
+            get { return traits; }
+            set { traits = value; }
+        }
         public ExampleNode() {
             name = ID++.ToString();
         }
 
-        public override void OnGenerate()
-        {
+        public override void OnGenerate() {
             return;
         }
-        public override void OnCreate()
-        {
+        public override void OnCreate() {
             return;
         }
 
@@ -423,6 +441,26 @@ namespace SimuEngineTest
 
             Assert.IsTrue(n1.Equals(n1));
             Assert.IsFalse(n1 == n2);
+        }
+    }
+
+    [TestClass]
+    public class ExampleNode2 : Node, System.IEquatable<ExampleNode2> {
+
+        static char ID = 'a';
+        public ExampleNode2() {
+            Name = ID++.ToString();
+        }
+
+        public override void OnGenerate() {
+            return;
+        }
+        public override void OnCreate() {
+            return;
+        }
+
+        bool IEquatable<ExampleNode2>.Equals(ExampleNode2 other) {
+            return Name == other.Name;
         }
     }
 }

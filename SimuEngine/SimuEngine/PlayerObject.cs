@@ -9,7 +9,7 @@ using Core;
 
 namespace SimuEngine
 {
-    class PlayerObject : Node
+    public class PlayerObject : Node
     {
         List<Event> actions;
         Graph localGraph;

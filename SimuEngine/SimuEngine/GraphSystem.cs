@@ -8,26 +8,21 @@ using System.Text.Json.Serialization;
 
 using Core;
 
-namespace SimuEngine
-{
-    public class GraphSystem
-    {
+namespace SimuEngine {
+    public class GraphSystem {
         public Graph graph;
 
-        public GraphSystem()
-        {
+        public GraphSystem() {
             graph = new Graph();
         }
 
-        public void Generate<T>() where T : Node, new()
-        {
+        public void Generate<T>() where T : Node, new() {
             T node = new T();
             graph.Add(node);
             node.OnGenerate();
         }
 
-        public void Create<T>() where T : Node, new()
-        {
+        public void Create<T>() where T : Node, new() {
             T node = new T();
             graph.Add(node);
             node.OnCreate();
