@@ -398,7 +398,6 @@ namespace SimuEngineTest
     public class ExampleNode : Node, System.IEquatable<ExampleNode>
     {
         static char ID = 'a';
-        public string name;
         public ExampleNode() {
             name = ID++.ToString();
         }
