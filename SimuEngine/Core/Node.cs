@@ -6,13 +6,27 @@ namespace Core {
     public abstract class Node {
         public Graph subGraph { get; protected set; }
         public Dictionary<string, int> traits;
+        public List<string> statuses;
+        public List<Group> groups;
+        public List<Connection> connections;
+
+        public string Name { get; protected set; }
+        public Graph Graph {
+            get { return subGraph; }
+            protected set { subGraph = value; }
+        }
         public ReadOnlyDictionary<string, int> Traits {
             get => new ReadOnlyDictionary<string, int>(traits);
         }
-        public List<string> statuses { get; protected set; }
-        public List<Group> groups { get; protected set; }
-        public List<Connection> connections { get; protected set; }
-        public string name { get; protected set; }
+        public ReadOnlyCollection<string> Statuses {
+            get { return statuses.AsReadOnly(); }
+        }
+        public ReadOnlyCollection<Group> Groups {
+            get { return groups.AsReadOnly(); }
+        }
+        public ReadOnlyCollection<Connection> Connections {
+            get { return connections.AsReadOnly(); }
+        }
 
         public Node() {
             subGraph = new Graph();

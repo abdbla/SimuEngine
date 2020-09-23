@@ -7,6 +7,7 @@ using System.Linq;
 using System.Security.Cryptography.Xml;
 
 using Core;
+using System.Collections.ObjectModel;
 
 namespace SimuEngineTest
 {
@@ -19,8 +20,7 @@ namespace SimuEngineTest
          * TODO: tests for generic versions of FindNode/FindAllNodes
          */
         [TestMethod]
-        public void CreateNode_ExampleNode_Succeed()
-        {
+        public void CreateNode_ExampleNode_Succeed() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
 
@@ -32,8 +32,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void GenerateNode_ExampleNode_Succeed()
-        {
+        public void GenerateNode_ExampleNode_Succeed() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
 
@@ -45,8 +44,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void CreateConnection_Connection_Succeed()
-        {
+        public void CreateConnection_Connection_Succeed() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
             graphSystem.Create<ExampleNode>();
@@ -63,8 +61,7 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
-        public void GetConnections_ConnectionList_Success()
-        {
+        public void GetConnections_ConnectionList_Success() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
             graphSystem.Create<ExampleNode>();
@@ -183,7 +180,7 @@ namespace SimuEngineTest
             var n3 = new ExampleNode();
 
             var c1 = new ExampleConnection();
-            var c2 = new ExampleConnection(); 
+            var c2 = new ExampleConnection();
 
             graph.Add(n1);
             graph.Add(n2);
@@ -373,7 +370,8 @@ namespace SimuEngineTest
     }
 
     [TestClass]
-    public class ExampleConnection : Connection, IEquatable<ExampleConnection> {
+    public class ExampleConnection : Connection, IEquatable<ExampleConnection>
+    {
         [TestMethod]
         public void ExampleConnection_IEquatable_Success() {
             ExampleConnection c1 = new ExampleConnection();
@@ -416,16 +414,19 @@ namespace SimuEngineTest
         public string Name { get => name; }
 
         static char ID = 'a';
+
+        public Dictionary<string, int> Traits {
+            get { return traits; }
+            set { traits = value; }
+        }
         public ExampleNode() {
             name = ID++.ToString();
         }
 
-        public override void OnGenerate()
-        {
+        public override void OnGenerate() {
             return;
         }
-        public override void OnCreate()
-        {
+        public override void OnCreate() {
             return;
         }
 

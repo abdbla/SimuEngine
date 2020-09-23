@@ -22,12 +22,11 @@ namespace SimuEngine {
 
     public class Event {
         //The function takes the source node which triggered the event, the Graph it's contained in, and the top-level graph. It returns a bool if the requirement is fulfilled.
-        List<Func<Node, Graph, Graph, bool>> reqPossible;
+        List<Func<Node, Graph, Graph, double>> reqPossible;
         List<Func<Node, Graph, Graph, bool>> reqGuaranteed;
         List<Action<Node, Graph, Graph>> outcome;
-        double chance;
 
-        public List<Func<Node, Graph, Graph, bool>> ReqPossible {
+        public List<Func<Node, Graph, Graph, double>> ReqPossible {
             get { return reqPossible; }
             set { }
         }
@@ -39,16 +38,11 @@ namespace SimuEngine {
             get { return outcome; }
             set { }
         }
-        public double Chance {
-            get { return chance; }
-            set { if (value <= 1 && value >= 0) chance = value; }
-        }
 
         public Event() {
-            reqPossible = new List<Func<Node, Graph, Graph, bool>>();
+            reqPossible = new List<Func<Node, Graph, Graph, double>>();
             reqGuaranteed = new List<Func<Node, Graph, Graph, bool>>();
             outcome = new List<Action<Node, Graph, Graph>>();
-            chance = 0.5;
         }
     }
 }
