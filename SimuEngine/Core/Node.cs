@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.ExceptionServices;
-using System.Text;
+using System.Collections.ObjectModel;
 
 namespace Core {
     public abstract class Node {
 
         public Graph subGraph { get; protected set; }
-        public Dictionary<string, int> traits { get; protected set;  }
+        public Dictionary<string, int> traits;
+        public ReadOnlyDictionary<string, int> Traits {
+            get => new ReadOnlyDictionary<string, int>(traits);
+        }
         public List<string> statuses { get; protected set; }
         public List<Group> groups { get; protected set; }
         public List<Connection> connections { get; protected set; }
