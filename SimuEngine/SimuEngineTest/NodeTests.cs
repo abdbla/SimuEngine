@@ -138,6 +138,23 @@ namespace SimuEngineTest
         }
 
         [TestMethod]
+        public void GenericFindNode_MultipleNodeTypes_ReturnsCorrectly() {
+            Graph graph = new Graph();
+            ExampleNode2 a = new ExampleNode2();
+            ExampleNode2 b = new ExampleNode2();
+
+            graph.Add(new ExampleNode());
+            graph.Add(a);
+            graph.Add(new ExampleNode());
+            graph.Add(b);
+            graph.Add(new ExampleNode());
+
+            Assert.AreEqual(b, graph.FindNode<ExampleNode2>(n => n.name == "b"));
+            Assert.AreEqual(a, graph.FindNode<ExampleNode2>(n => n.name == "a"));
+            Assert.AreNotEqual((Node)b, graph.FindNode<ExampleNode>(n => n.name == "b"));
+        }
+
+        [TestMethod]
         public void SanityCheck_Duplicates_ReturnsTrue() {
             Graph graph = new Graph();
 
@@ -395,8 +412,9 @@ namespace SimuEngineTest
     }
 
     [TestClass]
-    public class ExampleNode : Node, System.IEquatable<ExampleNode>
-    {
+    public class ExampleNode : Node, System.IEquatable<ExampleNode> {
+        public string Name { get => name; }
+
         static char ID = 'a';
         public ExampleNode() {
             name = ID++.ToString();
@@ -422,6 +440,26 @@ namespace SimuEngineTest
 
             Assert.IsTrue(n1.Equals(n1));
             Assert.IsFalse(n1 == n2);
+        }
+    }
+
+    [TestClass]
+    public class ExampleNode2 : Node, System.IEquatable<ExampleNode2> {
+        public string Name { get => name; }
+        static char ID = 'a';
+        public ExampleNode2() {
+            name = ID++.ToString();
+        }
+
+        public override void OnGenerate() {
+            return;
+        }
+        public override void OnCreate() {
+            return;
+        }
+
+        bool IEquatable<ExampleNode2>.Equals(ExampleNode2 other) {
+            return name == other.name;
         }
     }
 }
