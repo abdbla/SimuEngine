@@ -4,17 +4,13 @@ using System.Collections.ObjectModel;
 
 namespace Core {
     public abstract class Node {
-        public Graph subGraph { get; protected set; }
         public Dictionary<string, int> traits;
         public List<string> statuses;
         public List<Group> groups;
         public List<Connection> connections;
 
         public string Name { get; protected set; }
-        public Graph Graph {
-            get { return subGraph; }
-            protected set { subGraph = value; }
-        }
+        public Graph subGraph { get; protected set; }
         public ReadOnlyDictionary<string, int> Traits {
             get => new ReadOnlyDictionary<string, int>(traits);
         }
