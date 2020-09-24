@@ -16,29 +16,32 @@ namespace NodeMonog
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        SpriteFont arial;
+        MouseState oms = Mouse.GetState();
+
         // hud elements:
         Texture2D circle, pixel, topCurve, tickButton, square, arrow;
+        SpriteFont arial;
         int selectedTab = 0;
-        MouseState oms = Mouse.GetState();
-        Random r = new Random();
 
         int dragtimer = 0;
         Point cameraPosition = Point.Zero, cameraGoal = Point.Zero,  cameraPress = Point.Zero;
         Vector2 cameraVelocity = Vector2.Zero;
+        double zoomlevel = 1f;
 
         const int zwoomTime = 200;
-        const int animThreshold = short.MaxValue;
         int frameRate = 0;
 
         int animation = 0;
+        const int animThreshold = short.MaxValue;
         const int animationRepeat = short.MaxValue;
-
         int transitionAnimation = animThreshold;
 
-        double zoomlevel = 1f;
+        
 
-       
+
+        Random r = new Random();
+
+
         ShittyAssNode testNode; 
         ShittyAssNode testNode2;
         ShittyAssNode testNode3;
@@ -267,9 +270,11 @@ namespace NodeMonog
                 {
                     dragtimer = 0;
                 }
-                //if(nms.ScrollWheelValue != oms.ScrollWheelValue) 
+                if(nms.ScrollWheelValue != oms.ScrollWheelValue) { 
                     zoomlevel *= ( (oms.ScrollWheelValue - nms.ScrollWheelValue )/ 2000f) + 1f;
+                    cameraGoal = new Point(x - selectedNode.position.X, r.Height / 2 - selectedNode.position.Y);
 
+                }
 
             }
             
