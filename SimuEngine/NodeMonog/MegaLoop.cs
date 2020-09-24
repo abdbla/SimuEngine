@@ -358,6 +358,7 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
                         y: (int)((currentNode.position.Y + offsetPoint.Y) * zoomlevel + cameraPosition.Y),
                         width: (int)(pointerKinda.Length() * zoomlevel),
                         height: (int)(8 * zoomlevel)),
+                        sourceRectangle: new Rectangle(0, 0, 1, 1),
                         color: selectcolour,
                         rotation: (float)rotation,
                         origin: new Vector2(0,0.5f),
@@ -371,9 +372,10 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
                         y: (int)((currentNode.position.Y + offsetPoint.Y) * zoomlevel + cameraPosition.Y),
                         width: (int)(4 * zoomlevel),
                         height: (int)(8 * zoomlevel)),
+                        sourceRectangle: new Rectangle(0,0,1,1),
                         color: Color.Red,
                         rotation: (float)rotation,
-                       /* origin: new Vector2(0, (int)(4 * zoomlevel)),*/
+                        origin: new Vector2(0, 0.5f),
                         effects: SpriteEffects.None,
                         layerDepth: 0.5f
                         );
@@ -395,8 +397,8 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
                     y: (int)(currentNode.position.Y * zoomlevel) + cameraPosition.Y,
                     width: (int)(64 * zoomlevel),
                     height: (int)(64 * zoomlevel)),
-                    color: Color.White,
-                    layerDepth: 0.75f);
+                    sourceRectangle: new Rectangle(0, 0, 512, 512),
+                    color: Color.White); 
 
                 spriteBatch.DrawString(arial, currentNode.NName, (currentNode.position ).ToVector2() * (float)zoomlevel + cameraPosition.ToVector2(), Color.Black);
 
