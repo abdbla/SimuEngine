@@ -37,13 +37,8 @@ namespace SimuEngine
         public List<Event> Actions {
             get { return actions; }
         }
-        public override void OnCreate()
-        {
-            throw new NotImplementedException();
-        }
-        public override void OnGenerate()
-        {
-            throw new Exception("Attempted to call OnGenerate on the player object.");
+        public override void NodeCreation(NodeCreationInfo info) {
+            throw new Exception("Attempted to call NodeCreation on PlayerObject.");
         }
 
         /// <summary>

@@ -25,12 +25,8 @@ namespace Core.Physics {
             Point = new Point(new Vector2(x, y));
         }
 
-        public override void OnCreate() {
-            Inner.OnCreate();
-        }
-
-        public override void OnGenerate() {
-            Inner.OnGenerate();
+        public override void NodeCreation(NodeCreationInfo info) {
+            Inner.NodeCreation(info);
         }
 
         public void ApplyForce(Vector2 force) {

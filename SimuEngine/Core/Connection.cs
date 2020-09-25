@@ -14,6 +14,11 @@ namespace Core {
             get => statuses.AsReadOnly();
         }
 
+        public Connection() {
+            statuses = new List<string>();
+            traits = new Dictionary<string, int>();
+        }
+
         public virtual float Strength() => 0.0f;
     }
 }
