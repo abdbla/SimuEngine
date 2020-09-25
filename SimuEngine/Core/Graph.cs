@@ -9,6 +9,7 @@ namespace Core {
     /// </summary>
     public class Graph {
         private int currentIndex;
+        public IEnumerable<Connection> Connections { get => adjacencyMatrix.Values; }
         private List<Node> nodes;
         public ReadOnlyCollection<Node> Nodes => nodes.AsReadOnly();
         Dictionary<(int, int), Connection> adjacencyMatrix;
@@ -120,6 +121,13 @@ namespace Core {
             return index;
         }
 
+        private Node FindNodeIndex(int idx) {
+            foreach (var item in indexLookup) {
+                if (item.Value == idx) return item.Key;
+            }
+            return null;
+        }
+
         // shorthand to find the indices of two nodes
         private (int, int) FindSrcDstIndex(Node src, Node dst) {
             return (FindIndex(src), FindIndex(dst));
@@ -219,6 +227,11 @@ namespace Core {
             return res ? ret : null;
         }
 
+        public bool TryGetDirectedConnection(Node src, Node target, out Connection connection) {
+            var index = FindSrcDstIndex(src, target);
+            return adjacencyMatrix.TryGetValue(index, out connection);
+        }
+
         /// <summary>
         /// Get all connected nodes from a certain node
         /// </summary>
@@ -242,6 +255,29 @@ namespace Core {
         /// <returns>the list of all nodes</returns>
         public List<Node> GetNodes() {
             return nodes;
+        }
+
+        public List<(Connection, Connection, Node)> GetNeighbors(Node node) {
+            var nIdx = FindIndex(node);
+            var indices = new HashSet<int>();
+            
+            foreach (var item in adjacencyMatrix) {
+                if (item.Key.Item1 == nIdx) {
+                    indices.Add(item.Key.Item2);
+                } else if (item.Key.Item2 == nIdx) {
+                    indices.Add(item.Key.Item1);
+                }
+            }
+
+            var ret = new List<(Connection, Connection, Node)>();
+
+            foreach (var idx in indices) {
+                if (!adjacencyMatrix.TryGetValue((nIdx, idx), out var conn1)) conn1 = null;
+                if (!adjacencyMatrix.TryGetValue((idx, nIdx), out var conn2)) conn2 = null;
+                ret.Add((conn1, conn2, FindNodeIndex(idx)));
+            }
+
+            return ret;
         }
 
         public GraphCount Count {
