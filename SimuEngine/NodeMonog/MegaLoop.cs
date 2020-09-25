@@ -24,7 +24,7 @@ namespace NodeMonog
         int selectedTab = 0;
 
         int dragtimer = 0;
-        Point cameraPosition = Point.Zero, cameraGoal = Point.Zero,  cameraPress = Point.Zero;
+        Point cameraPosition = Point.Zero, cameraGoal = Point.Zero, cameraPress = Point.Zero;
         Vector2 cameraVelocity = Vector2.Zero;
         double zoomlevel = 1f;
 
@@ -36,13 +36,13 @@ namespace NodeMonog
         const int animationRepeat = short.MaxValue;
         int transitionAnimation = animThreshold;
 
-        
+        const int circleDiameter = 64;
 
 
         Random r = new Random();
 
 
-        ShittyAssNode testNode; 
+        ShittyAssNode testNode;
         ShittyAssNode testNode2;
         ShittyAssNode testNode3;
         ShittyAssNode testNode4;
@@ -54,9 +54,9 @@ namespace NodeMonog
 
 
         Graph graph = new Graph();
-        
+
         //List<TickInfo> 
-        
+
 
         public MegaLoop()
         {
@@ -87,11 +87,11 @@ namespace NodeMonog
 
 
 
-            testNode = new ShittyAssNode(new Point(r.Next(0,64)));
-            testNode2 = new ShittyAssNode(new Point( 72 + r.Next(0, 64), r.Next(0,128)));
-            testNode3 = new ShittyAssNode(new Point(156 + r.Next(0, 64), r.Next(0,128)));
-            testNode4 = new ShittyAssNode(new Point(256 + r.Next(0, 64), r.Next(0,128)));
-            testNode5 = new ShittyAssNode(new Point( 326 + r.Next(0, 64), r.Next(0,128)));
+            testNode = new ShittyAssNode(new Point(r.Next(0, 64)));
+            testNode2 = new ShittyAssNode(new Point(72 + r.Next(0, 64), r.Next(0, 128)));
+            testNode3 = new ShittyAssNode(new Point(156 + r.Next(0, 64), r.Next(0, 128)));
+            testNode4 = new ShittyAssNode(new Point(256 + r.Next(0, 64), r.Next(0, 128)));
+            testNode5 = new ShittyAssNode(new Point(326 + r.Next(0, 64), r.Next(0, 128)));
 
 
             testNode.traits.Add("Age", 500);
@@ -126,15 +126,15 @@ namespace NodeMonog
             testNode5.NName = "Felix 2";
 
             //Doesn't work btw                                          
-            graph.AddConnection(testNode, testNode2, new ShittyAssKnect (2000, 1000));
-            graph.AddConnection(testNode, testNode3, new ShittyAssKnect (2000, 1000));
-            graph.AddConnection(testNode, testNode5, new ShittyAssKnect (2000, 1000));
-            graph.AddConnection(testNode, testNode4, new ShittyAssKnect (1000, 500));
+            graph.AddConnection(testNode, testNode2, new ShittyAssKnect(2000, 1000));
+            graph.AddConnection(testNode, testNode3, new ShittyAssKnect(2000, 1000));
+            graph.AddConnection(testNode, testNode5, new ShittyAssKnect(2000, 1000));
+            graph.AddConnection(testNode, testNode4, new ShittyAssKnect(1000, 500));
             graph.AddConnection(testNode2, testNode3, new ShittyAssKnect(2000, 1000));
-            graph.AddConnection(testNode2, testNode, new ShittyAssKnect (2000, 1000));
+            graph.AddConnection(testNode2, testNode, new ShittyAssKnect(2000, 1000));
             graph.AddConnection(testNode4, testNode3, new ShittyAssKnect(2000, 1000));
             graph.AddConnection(testNode4, testNode2, new ShittyAssKnect(2000, 1000));
-            graph.AddConnection(testNode4, testNode, new ShittyAssKnect (2000, 1000));
+            graph.AddConnection(testNode4, testNode, new ShittyAssKnect(2000, 1000));
 
             selectedNode = testNode;
             previosNode = testNode;
@@ -145,8 +145,8 @@ namespace NodeMonog
             //selectedNode.connections.Add(new ShittyAssKnect(4, 2));
             //selectedNode.connections.Add(new ShittyAssKnect(4, 2));
 
-           // cameraGoal = new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
-    
+            // cameraGoal = new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
+
 
             base.Initialize();
         }
@@ -167,7 +167,7 @@ namespace NodeMonog
             square = Content.Load<Texture2D>(@"transparantSquare");
             arrow = Content.Load<Texture2D>(@"Arrow");
 
-            
+
             // TODO: use this.Content to load your game content here
         }
 
@@ -220,34 +220,17 @@ namespace NodeMonog
                     {
                         cameraPress = nms.Position - cameraPosition;
 
-                        //if (new Rectangle(r.Height - 64, 0, 256, 64).Contains(nms.Position)) ; //Call Tick
-                        //else
-                        //{
-                        //    //float spinInterval = (float)Math.PI / selectedNode.connections.Count;
-                        //    //for (int i = 0; i < selectedNode.connections.Count; i++)
-                        //    //{
-                        //    //    if (new Rectangle((int)(x + Math.Cos(spinInterval * i) * x / 2) - x / 8, (int)(r.Height / 2 + Math.Sin(spinInterval * i) * x / 2) - x / 8, x / 4, x / 4)
-                        //    //        .Contains(nms.Position)) /*selectedNode = selectedNode.connections[i]*/;
-                        //    //
-                        //    //}
-                        //}
 
                         for (int i = 0; i < graph.GetNodes().Count; i++)
                         {
                             ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
 
-                            if (new Rectangle(
-                                x: (int)(currentNode.position.X * zoomlevel) + cameraPosition.X,
-                                y: (int)(currentNode.position.Y * zoomlevel) + cameraPosition.Y,
-                                width:  (int)(64 * zoomlevel),
-                                height: (int)(64 * zoomlevel)).Contains(nms.Position))
+                            if (new Rectangle(scale(currentNode.position), new Point(
+                                (int)(64 * zoomlevel),
+                                (int)(64 * zoomlevel))).Contains(nms.Position))
                             {
                                 selectedNode = currentNode;
-                                cameraGoal = new Point(x - selectedNode.position.X, r.Height / 2 - selectedNode.position.Y);
-                                //cameraPosition += new Point((int)((((x + Math.Cos(spinInterval * i) * x / 2f) - x / 8) + cameraPosition.X) * zoomlevel), (int)(((r.Height / 2 + Math.Sin(spinInterval * i) * x / 2) - x / 8 + cameraPosition.Y) * zoomlevel)) - new Point((int)((x - x / 6 + cameraPosition.X) * zoomlevel), (int)((r.Height / 2 - x / 6 + cameraPosition.Y) * zoomlevel));
-
-
                             };
 
 
@@ -270,26 +253,30 @@ namespace NodeMonog
                 {
                     dragtimer = 0;
                 }
-                if(nms.ScrollWheelValue != oms.ScrollWheelValue) { 
-                    zoomlevel *= ( (oms.ScrollWheelValue - nms.ScrollWheelValue )/ 2000f) + 1f;
-                    cameraGoal = new Point(x - selectedNode.position.X, r.Height / 2 - selectedNode.position.Y);
+                if (nms.ScrollWheelValue != oms.ScrollWheelValue)
+                {
+                    zoomlevel *= ((oms.ScrollWheelValue - nms.ScrollWheelValue) / 2000f) + 1f;
 
                 }
 
             }
-            
-            if(dragtimer == 0)
+
+
+            cameraGoal = new Point(selectedNode.position.X + circleDiameter / 4 * 3, selectedNode.position.Y + circleDiameter / 4 * 3);
+
+
+            if (dragtimer == 0)
             {
-cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
+                cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
+            }
+            if (!Keyboard.GetState().IsKeyDown(Keys.S))
+            {
+                cameraPosition += (cameraVelocity * gameTime.ElapsedGameTime.Milliseconds).ToPoint();
             }
 
-            
+            if (gameTime.ElapsedGameTime.Milliseconds != 0) frameRate = 1000 / gameTime.ElapsedGameTime.Milliseconds;
 
-            cameraPosition += (cameraVelocity * gameTime.ElapsedGameTime.Milliseconds).ToPoint();
-
-            if(gameTime.ElapsedGameTime.Milliseconds != 0)frameRate = 1000 / gameTime.ElapsedGameTime.Milliseconds; 
-
-            if(transitionAnimation < animThreshold)
+            if (transitionAnimation < animThreshold)
             {
                 transitionAnimation += gameTime.ElapsedGameTime.Milliseconds * 25;
             }
@@ -299,12 +286,41 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             if (animation > animationRepeat) animation = 0;
 
 
+
+
             oms = nms;
 
             // TODO: Add your update logic here
 
             base.Update(gameTime);
         }
+
+
+
+
+        //Methods to generalise and make more readable, aka make Theo happy
+
+        public Point scale(Point p)
+        {
+            return new Point((int)((p.X - cameraPosition.X) * zoomlevel), (int)((p.Y - cameraPosition.Y) * zoomlevel)) +
+                new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
+        }
+
+        public Vector2 scale(Vector2 v)
+        {
+            return (v - cameraPosition.ToVector2()) * (float)zoomlevel +
+                new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
+        }
+
+
+        public int scale(int i, bool xAxis)
+        {
+            if (xAxis) return (int)((i + cameraPosition.X) * zoomlevel);
+            else return (int)((i + cameraPosition.Y) * zoomlevel);
+        }
+
+
+
 
 
 
@@ -327,11 +343,11 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             spriteBatch.DrawString(arial, "Tick", new Vector2(16, r.Height - 48), Color.Black);
 
 
-            int x = r.Width / 3;
-            
+            int centerX = r.Width / 3;
 
 
-            spriteBatch.DrawString(arial, (animation % 1000).ToString() + "   :   " + transitionAnimation,  Vector2.Zero,Color.Black);
+
+            spriteBatch.DrawString(arial, (animation % 1000).ToString() + "   :   " + transitionAnimation, Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
 
@@ -346,38 +362,35 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
                 if (selectedNode == currentNode) selectcolour = Color.Black;
                 else selectcolour = new Color(0, 0, 0, 15);
 
-                foreach ((Connection c, Node n) in graph.GetConnections(currentNode))
+                foreach ((Connection c, ShittyAssNode n) in graph.GetConnections(currentNode).Select(parent => (parent.Item1, (ShittyAssNode)parent.Item2)))
                 {
-                    ShittyAssNode nConvert = (ShittyAssNode)n;
-                    Vector2 pointerKinda = (new Vector2(
-                        x: nConvert.position.X - currentNode.position.X,
-                        y: nConvert.position.Y - currentNode.position.Y));
-                    double rotation = Math.Atan(pointerKinda.Y / pointerKinda.X);
-                    if (pointerKinda.X < 0) rotation += Math.PI;
-                    Point offsetPoint = new Point((int)(32 + 16 * Math.Cos(rotation)), (int)(32 + 16 * Math.Sin(rotation)));
-                    
+                    Vector2 arrowVector = (n.position - currentNode.position).ToVector2();
+                    double rotation = Math.Atan(arrowVector.Y / arrowVector.X);
+                    if (arrowVector.X < 0) rotation += Math.PI;
 
-                    spriteBatch.Draw(pixel, 
-                        destinationRectangle: new Rectangle(
-                        x: (int)((currentNode.position.X + offsetPoint.X) * zoomlevel + cameraPosition.X),
-                        y: (int)((currentNode.position.Y + offsetPoint.Y) * zoomlevel + cameraPosition.Y),
-                        width: (int)(pointerKinda.Length() * zoomlevel),
-                        height: (int)(8 * zoomlevel)),
-                        sourceRectangle: new Rectangle(0, 0, 1, 1),
+                    Point offsetPoint = new Point((int)(circleDiameter / 2 + circleDiameter / 4 * Math.Cos(rotation)), (int)(circleDiameter / 2 + circleDiameter / 4 * Math.Sin(rotation)));
+
+
+                    spriteBatch.Draw(pixel,
+                        destinationRectangle: new Rectangle(scale(currentNode.position + offsetPoint),
+                        new Point(
+                        (int)(arrowVector.Length() * zoomlevel),
+                         (int)(8 * zoomlevel))),
+                        sourceRectangle: null,
                         color: selectcolour,
                         rotation: (float)rotation,
-                        origin: new Vector2(0,0.5f),
+                        origin: new Vector2(0, 0.5f),
                         effects: SpriteEffects.None,
                         layerDepth: 0.5f
                         );
 
                     spriteBatch.Draw(pixel,
-                        destinationRectangle: new Rectangle(
-                        x: (int)((currentNode.position.X + offsetPoint.X) * zoomlevel + cameraPosition.X),
-                        y: (int)((currentNode.position.Y + offsetPoint.Y) * zoomlevel + cameraPosition.Y),
-                        width: (int)(4 * zoomlevel),
-                        height: (int)(8 * zoomlevel)),
-                        sourceRectangle: new Rectangle(0,0,1,1),
+                        destinationRectangle:
+                        new Rectangle(scale(currentNode.position + offsetPoint),
+                        new Point(
+                         (int)(4 * zoomlevel),
+                         (int)(8 * zoomlevel))),
+                        sourceRectangle: null,
                         color: Color.Red,
                         rotation: (float)rotation,
                         origin: new Vector2(0, 0.5f),
@@ -385,10 +398,6 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
                         layerDepth: 0.5f
                         );
                 }
-
-
-
-
             }
 
 
@@ -397,15 +406,17 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             {
                 ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
-                spriteBatch.Draw(circle, destinationRectangle: new Rectangle(
-                    x: (int)(currentNode.position.X * zoomlevel) + cameraPosition.X,
-                    y: (int)(currentNode.position.Y * zoomlevel) + cameraPosition.Y,
-                    width: (int)(64 * zoomlevel),
-                    height: (int)(64 * zoomlevel)),
-                    sourceRectangle: new Rectangle(0, 0, 512, 512),
-                    color: Color.White); 
+                spriteBatch.Draw(circle,
+                    destinationRectangle: new Rectangle(scale(currentNode.position),
+                    new Point(
+                    (int)(circleDiameter * zoomlevel),
+                    (int)(circleDiameter * zoomlevel))),
+                    sourceRectangle: null,
+                    color: Color.White);
 
-                spriteBatch.DrawString(arial, currentNode.NName, (currentNode.position ).ToVector2() * (float)zoomlevel + cameraPosition.ToVector2(), Color.Black);
+                spriteBatch.DrawString(arial,
+                    currentNode.NName,
+                    scale(currentNode.position).ToVector2(), Color.Black);
 
             }
 
@@ -417,29 +428,17 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             time = 1 - (float)Math.Pow(1 - time, 3);
             var color = LabColor.LabToRgb(LabColor.LinearGradient(startColor, endColor, time));
 
-           // spriteBatch.Draw(circle, new Rectangle(
-           //         x: (int)((x - x / (8 - time * 2) + cameraPosition.X) * zoomlevel),
-           //         y: (int)((r.Height / 2 - x / (8 - time * 2) + cameraPosition.Y) * zoomlevel),
-           //         width: (int)(x / (4 - time) * zoomlevel),
-           //         height: (int)(x / (4 - time) * zoomlevel)
-           //     ),
-           //    color);
 
-                //new Color(
-                //    transitionAnimation / (float)animThreshold, 0, 1.0f - transitionAnimation / (float)animThreshold)
-                //);
-            
-            
-            
+
             spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
-           
 
-            spriteBatch.Draw(pixel, new Rectangle(x * 2, 16, x + 1, r.Height - 16), Color.DarkGray);
-            spriteBatch.Draw(topCurve, new Rectangle(x * 2 + x / 4 * selectedTab, 0, x / 4, 16), Color.DarkGray);
-            spriteBatch.DrawString(arial, "Global", new Vector2(x * 2 + 2, 0), Color.Black);
-            spriteBatch.DrawString(arial, "Group", new Vector2(x * 2.25f + 2, 0), Color.Black);
-            spriteBatch.DrawString(arial, "Person", new Vector2(x * 2.5f + 2, 0), Color.Black);
-            spriteBatch.DrawString(arial, "Stats", new Vector2(x * 2.75f + 2, 0), Color.Black);
+
+            spriteBatch.Draw(pixel, new Rectangle(centerX * 2, 16, centerX + 1, r.Height - 16), Color.DarkGray);
+            spriteBatch.Draw(topCurve, new Rectangle(centerX * 2 + centerX / 4 * selectedTab, 0, centerX / 4, 16), Color.DarkGray);
+            spriteBatch.DrawString(arial, "Global", new Vector2(centerX * 2 + 2, 0), Color.Black);
+            spriteBatch.DrawString(arial, "Group", new Vector2(centerX * 2.25f + 2, 0), Color.Black);
+            spriteBatch.DrawString(arial, "Person", new Vector2(centerX * 2.5f + 2, 0), Color.Black);
+            spriteBatch.DrawString(arial, "Stats", new Vector2(centerX * 2.75f + 2, 0), Color.Black);
 
 
             switch (selectedTab)
@@ -451,27 +450,23 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
 
                     break;
                 case 2:
-                    
+
                     int o = 0;
                     foreach (KeyValuePair<string, int> kv in selectedNode.traits)
                     {
-                        spriteBatch.DrawString(arial, kv.Key + ":   " + kv.Value, new Vector2(2 * x + 16, 64 + 32 * o++), Color.Black);
+                        spriteBatch.DrawString(arial, kv.Key + ":   " + kv.Value, new Vector2(2 * centerX + 16, 64 + 32 * o++), Color.Black);
 
                     }
-
-                    //for (int i = 0; i < selectedNode.traits.Count; i++)
-                    //{
-                    //    spriteBatch.DrawString(arial, selectedNode.traits[].ToString(), new Vector2(x + 16,64 + 32 * i), Color.Black);
-                    //}
 
                     break;
                 case 3:
                     if (r.Width > 720)
                     {
-                        for (int i = 0; i < (x / 32) - 1; i++)
+                        for (int i = 0; i < (centerX / 32) - 1; i++)
                         {
-                            for (int j = 0; j < (r.Height / 3) / 32; j++) {
-                                spriteBatch.Draw(square, new Rectangle(x * 2 + ((x % 32) + 32)/ 2 + i * 32, r.Height / 3 * 2 + j * 32 - 64, 32, 32), Color.Black);
+                            for (int j = 0; j < (r.Height / 3) / 32; j++)
+                            {
+                                spriteBatch.Draw(square, new Rectangle(centerX * 2 + ((centerX % 32) + 32) / 2 + i * 32, r.Height / 3 * 2 + j * 32 - 64, 32, 32), Color.Black);
                             }
                         }
                     }
@@ -481,9 +476,6 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             }
 
 
-
-
-
             spriteBatch.End();
 
             // TODO: Add your drawing code here
@@ -491,15 +483,4 @@ cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             base.Draw(gameTime);
         }
     }
-
-    //class TickInfo{
-    //    int dead, alive, sick;
-    //
-    //    public TickInfo(int dead, int alive, int sick)
-    //    {
-    //        this.dead = dead;
-    //        this.alive = alive;
-    //        this.sick = sick;
-    //    }
-    //}
 }
