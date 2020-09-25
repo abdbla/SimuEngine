@@ -147,6 +147,7 @@ namespace NodeMonog
 
             // cameraGoal = new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
 
+            ShittyAssNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
 
             base.Initialize();
         }
@@ -193,6 +194,8 @@ namespace NodeMonog
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            ShittyAssNode.simulation.Advance(gameTime.ElapsedGameTime.Milliseconds / 100f);
+
             Rectangle r = Window.ClientBounds;
             int x = r.Width / 3;
 
@@ -289,6 +292,9 @@ namespace NodeMonog
 
 
             oms = nms;
+
+            cameraGoal = new Point(x - selectedNode.position.X, r.Height / 2 - selectedNode.position.Y);
+
 
             // TODO: Add your update logic here
 
