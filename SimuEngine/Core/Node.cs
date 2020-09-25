@@ -24,6 +24,12 @@ namespace Core {
             get => connections.AsReadOnly();
         }
 
+        /// <summary>
+        /// The constructor for node. By default does nothing with NodeCreationInfo, but has the possibility
+        /// to do so for implementations of node, if they desire to change depending on said info.
+        /// Not an actual constructor as generic functions complain about constructors with parameters.
+        /// </summary>
+        /// <param name="info">The enum for whether it should create an empty node or pre-generate as part of the system</param>
         public Node() {
             SubGraph = new Graph();
             statuses = new List<string>();
@@ -31,13 +37,16 @@ namespace Core {
             groups = new List<Group>();
             connections = new List<Connection>();
         }
-
-        public abstract void OnGenerate();
-
-        public abstract void OnCreate();
-
+        public abstract void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty);
         public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph) {
             action(this, localGraph, worldGraph);
         }
+    }
+
+    public enum NodeCreationInfo
+    {
+        Empty,
+        SystemStart,
+        SystemRunning,
     }
 }

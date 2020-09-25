@@ -37,7 +37,7 @@ namespace SimuEngineTest
             GraphSystem graphSystem = new GraphSystem();
 
             //act
-            graphSystem.Generate<ExampleNode>();
+            graphSystem.Create<ExampleNode>();
 
             //assert
             Assert.AreEqual(1, graphSystem.graph.Nodes.Count);
@@ -418,13 +418,6 @@ namespace SimuEngineTest
             Name = ID++.ToString();
         }
 
-        public override void OnGenerate() {
-            return;
-        }
-        public override void OnCreate() {
-            return;
-        }
-
         bool IEquatable<ExampleNode>.Equals(ExampleNode other) {
             return Name == other.Name;
         }
@@ -437,6 +430,10 @@ namespace SimuEngineTest
             Assert.IsTrue(n1.Equals(n1));
             Assert.IsFalse(n1 == n2);
         }
+
+        public override void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty) {
+            return;
+        }
     }
 
     [TestClass]
@@ -446,11 +443,7 @@ namespace SimuEngineTest
         public ExampleNode2() {
             Name = ID++.ToString();
         }
-
-        public override void OnGenerate() {
-            return;
-        }
-        public override void OnCreate() {
+        public override void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty) {
             return;
         }
 

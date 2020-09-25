@@ -19,5 +19,10 @@ namespace Core {
             get => members.AsReadOnly();
         }
 
+        public Group() {
+            statuses = new List<string>();
+            traits = new Dictionary<string, int>();
+            members = new List<Node>();
+        }
     }
 }
