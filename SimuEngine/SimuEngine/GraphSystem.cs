@@ -16,16 +16,10 @@ namespace SimuEngine {
             graph = new Graph();
         }
 
-        public void Generate<T>() where T : Node, new() {
-            T node = new T();
-            graph.Add(node);
-            node.OnGenerate();
-        }
-
         public void Create<T>() where T : Node, new() {
             T node = new T();
             graph.Add(node);
-            node.OnCreate();
+            node.NodeCreation();
         }
 
         public void Serialize(string fileName) {
