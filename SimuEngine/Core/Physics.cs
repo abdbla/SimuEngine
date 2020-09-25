@@ -154,7 +154,7 @@ namespace Core.Physics {
                     var p2 = n2.Point;
                     var d = p1.Position - p2.Position;
                     var dist = d.Magnitude();
-                    dist *= dist;
+                    // dist *= dist;
                     var norm = d.Normalize();
                     if (n1.Pinned && n2.Pinned) { } else if (n1.Pinned) {
                         n2.ApplyForce(-norm * Repulsion / dist);
@@ -196,7 +196,7 @@ namespace Core.Physics {
                 if (!node.Pinned) {
                     var d = node.Point.Position;
                     var displacement = d.Magnitude();
-                    var direction = d.Normalize();
+                    var direction = -d.Normalize();
                     node.ApplyForce(direction * (Stiffness * displacement * Gravity));
                 }
             }

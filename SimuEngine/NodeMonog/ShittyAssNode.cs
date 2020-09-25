@@ -30,16 +30,9 @@ namespace NodeMonog
             this.position = position;
         }
 
-        public override void OnCreate()
-        {
-            //traits.Add("age", 50);
-            //traits.Add("Corona", 2);
-        }                                                   
-                                                            
-        public override void OnGenerate()                   
-        {                                                   
-            throw new NotImplementedException();            
-        }                                                   
+        public override void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty) {
+            throw new NotImplementedException();
+        }
     }     
     
     class ShittyAssKnect : Connection

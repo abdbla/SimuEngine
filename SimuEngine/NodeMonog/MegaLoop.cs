@@ -79,7 +79,7 @@ namespace NodeMonog
 
             //AA boy
             graphics.GraphicsProfile = GraphicsProfile.HiDef;
-            GraphicsDevice.PresentationParameters.MultiSampleCount = 8;
+            GraphicsDevice.PresentationParameters.MultiSampleCount = 32;
             graphics.PreparingDeviceSettings += Graphics_PreparingDeviceSettings;
             //RasterizerState = new RasterizerState { MultiSampleAntiAlias = true };
 
