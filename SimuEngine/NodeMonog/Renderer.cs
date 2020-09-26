@@ -16,7 +16,7 @@ namespace NodeMonog
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
-    public class MegaLoop : Game
+    public class Renderer : Game
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
@@ -46,11 +46,6 @@ namespace NodeMonog
         Random r = new Random();
 
 
-        ShittyAssNode testNode;
-        ShittyAssNode testNode2;
-        ShittyAssNode testNode3;
-        ShittyAssNode testNode4;
-        ShittyAssNode testNode5;
 
         ShittyAssNode selectedNode;
         ShittyAssNode hoverNode;
@@ -58,15 +53,17 @@ namespace NodeMonog
 
 
 
-        Graph graph = new Graph();
+        Graph graph;
 
         //List<TickInfo> 
 
 
-        public MegaLoop()
+
+        public Renderer(Graph graph)
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
+            this.graph = graph;
         }
 
         /// <summary>
@@ -92,107 +89,12 @@ namespace NodeMonog
 
 
 
-            testNode = new ShittyAssNode(new Vector2(r.Next(0, 64)));
-            testNode2 = new ShittyAssNode(new Vector2(72 + r.Next(0, 64), r.Next(0, 128)));
-            testNode3 = new ShittyAssNode(new Vector2(156 + r.Next(0, 64), r.Next(0, 128)));
-            testNode4 = new ShittyAssNode(new Vector2(256 + r.Next(0, 64), r.Next(0, 128)));
-            testNode5 = new ShittyAssNode(new Vector2(326 + r.Next(0, 64), r.Next(0, 128)));
 
-
-            testNode.traits.Add("Age", 500);
-            testNode.traits.Add("Corona", 200);
-
-            testNode2.traits.Add("Age", 100);
-            testNode2.traits.Add("Corona", 300);
-
-
-            testNode3.traits.Add("Age", 10);
-            testNode3.traits.Add("Corona", 200);
-
-
-            testNode4.traits.Add("Age", 10);
-            testNode4.traits.Add("Corona", 200);
-
-
-            testNode5.traits.Add("Age", 10);
-            testNode5.traits.Add("Corona", 200);
-
-
-            graph.Add(testNode);
-            graph.Add(testNode2);
-            graph.Add(testNode3);
-            graph.Add(testNode4);
-            graph.Add(testNode5);
-
-            testNode.NName = "billy";
-            testNode2.NName = "Steve";
-            testNode3.NName = "Felix";
-            testNode4.NName = "Felix But good";
-            testNode5.NName = "Felix 2";
-
-            //Doesn't work btw                                          
-            graph.AddConnection(testNode, testNode2, new ShittyAssKnect(2000, 1000));
-            graph.AddConnection(testNode, testNode3, new ShittyAssKnect(2000, 1000));
-            graph.AddConnection(testNode, testNode5, new ShittyAssKnect(2000, 1000));
-            graph.AddConnection(testNode, testNode4, new ShittyAssKnect(1000, 500));
-            graph.AddConnection(testNode2, testNode3, new ShittyAssKnect(2000, 1000));
-            graph.AddConnection(testNode2, testNode, new ShittyAssKnect(2000, 1000));
-            graph.AddConnection(testNode4, testNode3, new ShittyAssKnect(2000, 1000));
-            graph.AddConnection(testNode4, testNode2, new ShittyAssKnect(2000, 1000));
-            graph.AddConnection(testNode4, testNode, new ShittyAssKnect(2000, 1000));
-
-            selectedNode = testNode;
-            //selectedNode.connections.Add(new ShittyAssKnect(100, 20));
-            //selectedNode.connections.Add(new ShittyAssKnect(4, 2));
-            //selectedNode.connections.Add(new ShittyAssKnect(4, 2));
-            //selectedNode.connections.Add(new ShittyAssKnect(4, 2));
-            //selectedNode.connections.Add(new ShittyAssKnect(4, 2));
-            //selectedNode.connections.Add(new ShittyAssKnect(4, 2));
+            selectedNode = (ShittyAssNode)graph.GetNodes()[0];
 
             // cameraGoal = new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
 
-            List<ShittyAssNode> more = new List<ShittyAssNode>();
-            for (int i = 0; i < 500; i++) {
-                var n = new ShittyAssNode();
-                n.NName = i.ToString();
-                more.Add(n);
-                graph.Add(n);
-            }
 
-            Dictionary<ShittyAssNode, int> totalConns = new Dictionary<ShittyAssNode, int>();
-            Dictionary<ShittyAssNode, int> curConns = new Dictionary<ShittyAssNode, int>();
-            List<ShittyAssNode> remaining = new List<ShittyAssNode>();
-            remaining.AddRange(more);
-
-            var rng = new Random();
-            for (int i = 0; i < more.Count; i++) {
-                totalConns[more[i]] = rng.Next(2, 4);
-                curConns[more[i]] = 0;
-            }
-            
-            while (remaining.Count > 1) {
-                var x1 = rng.Next(remaining.Count);
-                var x2 = rng.Next(remaining.Count);
-                if (x1 == x2) {
-                    continue;
-                }
-                var node1 = remaining[x1];
-                var node2 = remaining[x2];
-                var strength = rng.Next(100, 400);
-                graph.AddConnection(node1, node2, new ShittyAssKnect(strength, 500));
-                graph.AddConnection(node2, node1, new ShittyAssKnect(strength, 500));
-                curConns[node1] += 1;
-                curConns[node2] += 1;
-                if (curConns[node1] == totalConns[node1]) {
-                    if (x1 < x2) {
-                        x2 -= 1;
-                    }
-                    remaining.RemoveAt(x1);
-                }
-                if (curConns[node2] == totalConns[node2]) {
-                    remaining.RemoveAt(x2);
-                }
-            }
 
             ShittyAssNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
 
@@ -482,17 +384,17 @@ namespace NodeMonog
                     0.25f);
 
                 
-                if(zoomlevel > 0.5f)
+                if(zoomlevel > 0.35f)
                 {
                     Color fadeColour = Color.Black;
-                    if (zoomlevel < 1f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.5f) * 255 * 2));
+                    if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
                     spriteBatch.DrawString(arial,
                         currentNode.NName,
                         cameraTransform(currentNode.Position),
                         fadeColour,
                         0,
                         Vector2.Zero,
-                        (float)(1 / zoomlevel / 8 + 1.2f),
+                        (float)(1 / zoomlevel / 32 + 1.2f),
                         SpriteEffects.None,
                         0.1f);
                 }
