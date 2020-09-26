@@ -25,7 +25,7 @@ namespace NodeMonog
         int selectedTab = 0;
 
         int dragtimer = 0;
-        Point cameraPosition = Point.Zero, cameraGoal = Point.Zero, cameraPress = Point.Zero;
+        Point cameraPosition = Point.Zero, cameraGoal = Point.Zero;
         Vector2 cameraVelocity = Vector2.Zero;
         double zoomlevel = 1f;
 
@@ -266,7 +266,6 @@ namespace NodeMonog
                     //Vänsta hud klick
                     else
                     {
-                        cameraPress = nms.Position - cameraPosition;
 
 
                         for (int i = 0; i < graph.GetNodes().Count; i++)
@@ -291,7 +290,7 @@ namespace NodeMonog
                     {
                         if (dragtimer > 20)
                         {
-                            cameraPosition = nms.Position - cameraPress;
+                            cameraPosition -=  (nms.Position - oms.Position);
                             cameraVelocity = Vector2.Zero;
                         }
                         else dragtimer += gameTime.ElapsedGameTime.Milliseconds;
@@ -309,7 +308,7 @@ namespace NodeMonog
 
             }
 
-
+           
             cameraGoal = new Vector2(
                 selectedNode.Position.X + circleDiameter / 4 * 3,
                 selectedNode.Position.Y + circleDiameter / 4 * 3).ToPoint();
@@ -336,12 +335,9 @@ namespace NodeMonog
             if (animation > animationRepeat) animation = 0;
 
 
-
-
             oms = nms;
 
-            cameraGoal = new Vector2(x - selectedNode.Position.X, r.Height / 2 - selectedNode.Position.Y).ToPoint();
-
+            
 
             // TODO: Add your update logic here
 
@@ -511,6 +507,20 @@ namespace NodeMonog
                     {
                         spriteBatch.DrawString(arial, kv.Key + ":   " + kv.Value, new Vector2(2 * centerX + 16, 64 + 32 * o++), Color.Black);
 
+                    }
+
+                    spriteBatch.DrawString(arial,
+                            "Connections:",
+                            new Vector2(centerX * 2.15f, r.Height / 2 - 32),
+                            Color.Black);
+
+                    List<(Connection, ShittyAssNode)> d = graph.GetConnections(selectedNode).Select(parent => (parent.Item1, (ShittyAssNode)parent.Item2)).ToList(); ;
+                    for (int i = 0; i < d.Count; i++)
+                    {
+                        spriteBatch.DrawString(arial,
+                            d[i].Item2.NName, 
+                            new Vector2(centerX * 2.1f, r.Height / 2 + i * 32),
+                            Color.Black);
                     }
 
                     break;
