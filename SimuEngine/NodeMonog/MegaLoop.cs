@@ -340,7 +340,6 @@ namespace NodeMonog
 
             oms = nms;
 
-            
 
             // TODO: Add your update logic here
 
@@ -398,7 +397,7 @@ namespace NodeMonog
 
             Rectangle r = Window.ClientBounds;
 
-            spriteBatch.Begin();
+            spriteBatch.Begin(SpriteSortMode.BackToFront);
 
 
             //spriteBatch.Draw(circle, new Rectangle(r.Width / 3 - r.Width / 18, r.Height / 2 - r.Width / 18, r.Width / 9, r.Width / 9), Color.Red);
@@ -415,14 +414,18 @@ namespace NodeMonog
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
 
 
-            //float spinInterval = (float)MathHelper.Pi / selectedNode.connections.Count * 2;
 
             for (int i = 0; i < graph.GetNodes().Count; i++)
             {
                 ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
                 Color selectcolour;
-                if (selectedNode == currentNode) selectcolour = Color.Black;
+                float depth = 0.5f;
+                if (selectedNode == currentNode)
+                {
+                    selectcolour = Color.Black;
+                    depth = 0.2f;
+                }
                 else selectcolour = new Color(0, 0, 0, 15);
 
                 foreach ((Connection c, ShittyAssNode n) in graph.GetConnections(currentNode).Select(parent => (parent.Item1, (ShittyAssNode)parent.Item2)))
@@ -432,36 +435,23 @@ namespace NodeMonog
                     if (arrowVector.X < 0) rotation += Math.PI;
 
                     Vector2 offsetPoint = new Vector2(
-                        (float)(circleDiameter / 2 + circleDiameter / 4 * Math.Cos(rotation)),
-                        (float)(circleDiameter / 2 + circleDiameter / 4 * Math.Sin(rotation)));
+                        (float)(circleDiameter / 2 + circleDiameter / 2 * Math.Cos(rotation)),
+                        (float)(circleDiameter / 2 + circleDiameter / 2 * Math.Sin(rotation)));
 
 
                     spriteBatch.Draw(pixel,
                         destinationRectangle: new Rectangle(cameraTransform((currentNode.Position + offsetPoint).ToPoint()),
                         new Point(
-                        (int)(arrowVector.Length() * zoomlevel),
+                        (int)((arrowVector.Length() - circleDiameter) * zoomlevel),
                          (int)(8 * zoomlevel))),
                         sourceRectangle: null,
                         color: selectcolour,
                         rotation: (float)rotation,
                         origin: new Vector2(0, 0.5f),
                         effects: SpriteEffects.None,
-                        layerDepth: 0.5f
+                        layerDepth: depth
                         );
 
-                    spriteBatch.Draw(pixel,
-                        destinationRectangle:
-                        new Rectangle(cameraTransform(currentNode.Position + offsetPoint).ToPoint(),
-                        new Point(
-                         (int)(4 * zoomlevel),
-                         (int)(8 * zoomlevel))),
-                        sourceRectangle: null,
-                        color: Color.Red,
-                        rotation: (float)rotation,
-                        origin: new Vector2(0, 0.5f),
-                        effects: SpriteEffects.None,
-                        layerDepth: 0.5f
-                        );
                 }
             }
 
@@ -477,11 +467,21 @@ namespace NodeMonog
                     (int)(circleDiameter * zoomlevel),
                     (int)(circleDiameter * zoomlevel))),
                     sourceRectangle: null,
-                    color: Color.White);
+                    color: Color.White,
+                    0,
+                    Vector2.Zero,
+                    SpriteEffects.None,
+                    0.25f);
 
                 spriteBatch.DrawString(arial,
                     currentNode.NName,
-                    cameraTransform(currentNode.Position), Color.Black);
+                    cameraTransform(currentNode.Position), 
+                    Color.Black,
+                    0,
+                    Vector2.Zero,
+                    1f,
+                    SpriteEffects.None,
+                    0.1f);
 
             }
 
@@ -520,8 +520,7 @@ namespace NodeMonog
                     foreach (KeyValuePair<string, int> kv in selectedNode.traits)
                     {
                         spriteBatch.DrawString(arial, kv.Key + ":   " + kv.Value, new Vector2(2 * centerX + 16, 64 + 32 * o++), Color.Black);
-
-                    }
+                     }
 
                     spriteBatch.DrawString(arial,
                             "Connections:",
