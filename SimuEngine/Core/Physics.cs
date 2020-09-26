@@ -25,6 +25,12 @@ namespace Core.Physics {
             Point = new Point(new Vector2(x, y));
         }
 
+        public PhysicsNode(Node node, Vector2 initialPosition) {
+            Inner = node;
+            Mass = 1.0f;
+            Point = new Point(initialPosition);
+        }
+
         public override void NodeCreation(NodeCreationInfo info) {
             Inner.NodeCreation(info);
         }
@@ -87,12 +93,14 @@ namespace Core.Physics {
     class Spring : Connection {
         public PhysicsNode n1;
         public PhysicsNode n2;
-        public float Length;
+        public float Length { get; set; }
         public float K;
 
         public Spring(PhysicsNode n1, PhysicsNode n2, float length, float k) {
             Length = length;
             K = k;
+            this.n1 = n1;
+            this.n2 = n2;
         }
 
         public override float Strength() => 0.0f;
@@ -114,33 +122,42 @@ namespace Core.Physics {
             Repulsion = repulsion;
             Damping = damping;
             Threshold = 0.01f;
-            Graph = new Graph();
+            var physicsGraph = new Graph();
 
-            var nodes = new Dictionary<Node, PhysicsNode>();
+            var nodeMap = new Dictionary<Node, PhysicsNode>();
             foreach (var node in graph.Nodes) {
                 var physicsNode = new PhysicsNode(node);
-                Graph.Add(physicsNode);
-                nodes.Add(node, physicsNode);
+                physicsGraph.Add(physicsNode);
+                nodeMap.Add(node, physicsNode);
             }
 
-            physicsNodes = nodes;
+            physicsNodes = nodeMap;
+            var rng = new Random();
 
-            foreach (var node in nodes.Values) {
-                foreach ((var conn1, var conn2, var other) in Graph.GetNeighbors(node)) {
-                    if (!Graph.TryGetDirectedConnection(other, node, out Connection conn)) {
+            foreach (PhysicsNode node in nodeMap.Values) {
+                foreach ((var conn1, var conn2, Node other) in graph.GetNeighbors(node.Inner)) {
+                    PhysicsNode node2 = nodeMap[other];
+                    if (physicsGraph.TryGetDirectedConnection(node2, node, out Connection conn)) {
                         var spring = (Spring)conn;
-                        Graph.AddConnection(node, other, new Spring(spring.n2, spring.n1, spring.Length, spring.K));
+                        physicsGraph.AddConnection(node, node2, new Spring(spring.n2, spring.n1, spring.Length, spring.K));
                     } else {
                         // one of these must be non-null, since we're iterating over all existing connections
                         var s1 = conn1?.Strength();
                         var s2 = conn2?.Strength();
                         s1 ??= s2;
                         s2 ??= s1;
-                        Graph.AddConnection(node, other, new Spring(node, nodes[other], (float)(s1 + s2) / 2f, Stiffness));
+                        physicsGraph.AddConnection(
+                            node,
+                            nodeMap[other],
+                            new Spring(node,
+                                       nodeMap[other],
+                                       (float)(s1 + s2) / 2f,
+                                       Stiffness));
                     }
                 }
             }
             Gravity = gravity;
+            Graph = physicsGraph;
         }
 
         void ApplyCoulombsLaw() {
@@ -173,8 +190,10 @@ namespace Core.Physics {
                 var n1 = spring.n1;
                 var n2 = spring.n2;
                 var d = spring.n1.Point.Position - spring.n2.Point.Position;
-                var displacement = d.Magnitude() * d.Magnitude() * Stiffness;
-                var direction = d.Normalize();
+                var dist = d.Magnitude();
+                dist -= spring.Length;
+                var displacement = dist * Stiffness;
+                var direction = (d * dist).Normalize();
 
                 var force = direction * spring.K * displacement;
 

@@ -228,8 +228,13 @@ namespace Core {
         }
 
         public bool TryGetDirectedConnection(Node src, Node target, out Connection connection) {
-            var index = FindSrcDstIndex(src, target);
-            return adjacencyMatrix.TryGetValue(index, out connection);
+            try {
+                var index = FindSrcDstIndex(src, target);
+                return adjacencyMatrix.TryGetValue(index, out connection);
+            } catch (NodeNotFoundException) {
+                connection = null;
+                return false;
+            }
         }
 
         /// <summary>
@@ -272,8 +277,10 @@ namespace Core {
             var ret = new List<(Connection, Connection, Node)>();
 
             foreach (var idx in indices) {
-                if (!adjacencyMatrix.TryGetValue((nIdx, idx), out var conn1)) conn1 = null;
-                if (!adjacencyMatrix.TryGetValue((idx, nIdx), out var conn2)) conn2 = null;
+                Connection conn1 = null;
+                Connection conn2 = null;
+                adjacencyMatrix.TryGetValue((nIdx, idx), out conn1);
+                adjacencyMatrix.TryGetValue((idx, nIdx), out conn2);
                 ret.Add((conn1, conn2, FindNodeIndex(idx)));
             }
 

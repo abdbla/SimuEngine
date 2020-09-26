@@ -6,6 +6,7 @@ using Core;
 using System.Linq;
 using System.Collections.Generic;
 using System;
+using SharpDX.MediaFoundation;
 
 namespace NodeMonog
 {
@@ -87,11 +88,11 @@ namespace NodeMonog
 
 
 
-            testNode = new ShittyAssNode(new Point(r.Next(0, 64)));
-            testNode2 = new ShittyAssNode(new Point(72 + r.Next(0, 64), r.Next(0, 128)));
-            testNode3 = new ShittyAssNode(new Point(156 + r.Next(0, 64), r.Next(0, 128)));
-            testNode4 = new ShittyAssNode(new Point(256 + r.Next(0, 64), r.Next(0, 128)));
-            testNode5 = new ShittyAssNode(new Point(326 + r.Next(0, 64), r.Next(0, 128)));
+            testNode = new ShittyAssNode(new Vector2(r.Next(0, 64)));
+            testNode2 = new ShittyAssNode(new Vector2(72 + r.Next(0, 64), r.Next(0, 128)));
+            testNode3 = new ShittyAssNode(new Vector2(156 + r.Next(0, 64), r.Next(0, 128)));
+            testNode4 = new ShittyAssNode(new Vector2(256 + r.Next(0, 64), r.Next(0, 128)));
+            testNode5 = new ShittyAssNode(new Vector2(326 + r.Next(0, 64), r.Next(0, 128)));
 
 
             testNode.traits.Add("Age", 500);
@@ -147,6 +148,22 @@ namespace NodeMonog
 
             // cameraGoal = new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
 
+            List<ShittyAssNode> more = new List<ShittyAssNode>();
+            for (int i = 0; i < 50; i++) {
+                var n = new ShittyAssNode();
+                more.Add(n);
+                // graph.Add(n);
+            }
+
+            Dictionary<ShittyAssNode, int> totalConns = new Dictionary<ShittyAssNode, int>();
+            Dictionary<ShittyAssNode, int> curConns = new Dictionary<ShittyAssNode, int>();
+
+            var rng = new Random();
+            for (int i = 0; i < more.Count; i++) {
+                totalConns[more[i]] = rng.Next(3, 2);
+            }
+            
+
             ShittyAssNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
 
             base.Initialize();
@@ -194,7 +211,10 @@ namespace NodeMonog
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            ShittyAssNode.simulation.Advance(gameTime.ElapsedGameTime.Milliseconds / 100f);
+
+            var timeFactor = 100f;
+            if (Keyboard.GetState().IsKeyDown(Keys.Space)) timeFactor = 25f;
+            ShittyAssNode.simulation.Advance(gameTime.ElapsedGameTime.Milliseconds / timeFactor);
 
             Rectangle r = Window.ClientBounds;
             int x = r.Width / 3;
@@ -229,7 +249,7 @@ namespace NodeMonog
                             ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
 
-                            if (new Rectangle(scale(currentNode.position), new Point(
+                            if (new Rectangle(scale(currentNode.Position).ToPoint(), new Point(
                                 (int)(64 * zoomlevel),
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
                             {
@@ -265,7 +285,9 @@ namespace NodeMonog
             }
 
 
-            cameraGoal = new Point(selectedNode.position.X + circleDiameter / 4 * 3, selectedNode.position.Y + circleDiameter / 4 * 3);
+            cameraGoal = new Vector2(
+                selectedNode.Position.X + circleDiameter / 4 * 3,
+                selectedNode.Position.Y + circleDiameter / 4 * 3).ToPoint();
 
 
             if (dragtimer == 0)
@@ -293,7 +315,7 @@ namespace NodeMonog
 
             oms = nms;
 
-            cameraGoal = new Point(x - selectedNode.position.X, r.Height / 2 - selectedNode.position.Y);
+            cameraGoal = new Vector2(x - selectedNode.Position.X, r.Height / 2 - selectedNode.Position.Y).ToPoint();
 
 
             // TODO: Add your update logic here
@@ -370,15 +392,17 @@ namespace NodeMonog
 
                 foreach ((Connection c, ShittyAssNode n) in graph.GetConnections(currentNode).Select(parent => (parent.Item1, (ShittyAssNode)parent.Item2)))
                 {
-                    Vector2 arrowVector = (n.position - currentNode.position).ToVector2();
+                    Vector2 arrowVector = (n.Position - currentNode.Position);
                     double rotation = Math.Atan(arrowVector.Y / arrowVector.X);
                     if (arrowVector.X < 0) rotation += Math.PI;
 
-                    Point offsetPoint = new Point((int)(circleDiameter / 2 + circleDiameter / 4 * Math.Cos(rotation)), (int)(circleDiameter / 2 + circleDiameter / 4 * Math.Sin(rotation)));
+                    Vector2 offsetPoint = new Vector2(
+                        (float)(circleDiameter / 2 + circleDiameter / 4 * Math.Cos(rotation)),
+                        (float)(circleDiameter / 2 + circleDiameter / 4 * Math.Sin(rotation)));
 
 
                     spriteBatch.Draw(pixel,
-                        destinationRectangle: new Rectangle(scale(currentNode.position + offsetPoint),
+                        destinationRectangle: new Rectangle(scale((currentNode.Position + offsetPoint).ToPoint()),
                         new Point(
                         (int)(arrowVector.Length() * zoomlevel),
                          (int)(8 * zoomlevel))),
@@ -392,7 +416,7 @@ namespace NodeMonog
 
                     spriteBatch.Draw(pixel,
                         destinationRectangle:
-                        new Rectangle(scale(currentNode.position + offsetPoint),
+                        new Rectangle(scale(currentNode.Position + offsetPoint).ToPoint(),
                         new Point(
                          (int)(4 * zoomlevel),
                          (int)(8 * zoomlevel))),
@@ -413,7 +437,7 @@ namespace NodeMonog
                 ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
                 spriteBatch.Draw(circle,
-                    destinationRectangle: new Rectangle(scale(currentNode.position),
+                    destinationRectangle: new Rectangle(scale(currentNode.Position).ToPoint(),
                     new Point(
                     (int)(circleDiameter * zoomlevel),
                     (int)(circleDiameter * zoomlevel))),
@@ -422,7 +446,7 @@ namespace NodeMonog
 
                 spriteBatch.DrawString(arial,
                     currentNode.NName,
-                    scale(currentNode.position).ToVector2(), Color.Black);
+                    scale(currentNode.Position), Color.Black);
 
             }
 

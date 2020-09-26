@@ -7,27 +7,41 @@ using SimuEngine;
 using Core;
 using Microsoft.Xna.Framework;
 using SharpDX.DirectWrite;
+using SharpDX.DXGI;
 
 namespace NodeMonog
 {
     class ShittyAssNode : Node
     {
-        public Point position { get {
+        Vector2? position;
+
+        public Vector2 Position {
+            get {
                 var point = simulation.physicsNodes[this].Point.Position;
-                return new Point((int)(point.X * 50) + 300, (int)(point.Y * 50) + 300);
+                return new Vector2((point.X * 50) + 300, (point.Y * 50) + 300);
             }
-            set { }
+            set {
+                if (simulation == null) position = value;
+                else {
+                    var point = simulation.physicsNodes[this].Point;
+                    point.Position = new Core.Physics.Vector2(value.X, value.Y);
+                }
+            }
         }
-        public static Core.Physics.System simulation;
+        public static Core.Physics.System simulation = null;
         public string NName
         {
             get { return Name; }
             set { Name = value; }
         }
 
-        public ShittyAssNode(Point position)
+        public ShittyAssNode(Vector2 position)
         {
             this.position = position;
+        }
+
+        public ShittyAssNode() {
+
         }
 
         public override void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty) {
