@@ -14,7 +14,7 @@ namespace SimuEngine
         List<Event> actions;
         Graph localGraph;
         Graph worldGraph;
-        public List<Event> GetEvents()
+        public List<Event> GetActions()
         {
             return actions;
         }

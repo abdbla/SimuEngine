@@ -4,10 +4,10 @@ using System.Collections.ObjectModel;
 
 namespace Core {
     public abstract class Node {
-        public Dictionary<string, int> traits;
-        public List<string> statuses;
-        public List<Group> groups;
-        public List<Connection> connections;
+        protected Dictionary<string, int> traits;
+        protected List<string> statuses;
+        protected List<Group> groups;
+        protected List<Connection> connections;
 
         public string Name { get; protected set; }
         public Graph SubGraph { get; protected set; }
@@ -37,7 +37,7 @@ namespace Core {
             groups = new List<Group>();
             connections = new List<Connection>();
         }
-        public abstract void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty);
+        protected abstract void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty);
         public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph) {
             action(this, localGraph, worldGraph);
         }
