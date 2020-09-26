@@ -151,6 +151,7 @@ namespace NodeMonog
             List<ShittyAssNode> more = new List<ShittyAssNode>();
             for (int i = 0; i < 50; i++) {
                 var n = new ShittyAssNode();
+                n.NName = i.ToString();
                 more.Add(n);
                 // graph.Add(n);
             }
@@ -160,7 +161,7 @@ namespace NodeMonog
 
             var rng = new Random();
             for (int i = 0; i < more.Count; i++) {
-                totalConns[more[i]] = rng.Next(3, 2);
+                totalConns[more[i]] = rng.Next(1, 5);
             }
             
 
