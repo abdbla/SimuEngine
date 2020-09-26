@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System;
 using SharpDX.MediaFoundation;
+using SharpDX.Direct2D1.Effects;
 
 namespace NodeMonog
 {
@@ -275,7 +276,7 @@ namespace NodeMonog
                             ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
 
-                            if (new Rectangle(scale(currentNode.Position).ToPoint(), new Point(
+                            if (new Rectangle(cameraTransform(currentNode.Position).ToPoint(), new Point(
                                 (int)(64 * zoomlevel),
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
                             {
@@ -351,20 +352,31 @@ namespace NodeMonog
 
         //Methods to generalise and make more readable, aka make Theo happy
 
-        public Point scale(Point p)
+        public Point cameraTransform(Point p)
         {
             return new Point((int)((p.X - cameraPosition.X) * zoomlevel), (int)((p.Y - cameraPosition.Y) * zoomlevel)) +
                 new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
         }
 
-        public Vector2 scale(Vector2 v)
+        public Vector2 cameraTransform(Vector2 v)
         {
             return (v - cameraPosition.ToVector2()) * (float)zoomlevel +
                 new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
         }
 
+        public Rectangle cameraTransform(Rectangle r) {
+            var newPoint = cameraTransform(r.Location);
+            var newScale = (r.Size.ToVector2() * (float)zoomlevel).ToPoint();
+            return new Rectangle(newPoint, newScale);
+        }
 
-        public int scale(int i, bool xAxis)
+        public Rectangle cameraTransform(Vector2 location, Vector2 size) {
+            var newLocation = cameraTransform(location);
+            var newSize = size * (float)zoomlevel;
+            return new Rectangle(newLocation.ToPoint(), newSize.ToPoint());
+        }
+
+        public int cameraTransform(int i, bool xAxis)
         {
             if (xAxis) return (int)((i + cameraPosition.X) * zoomlevel);
             else return (int)((i + cameraPosition.Y) * zoomlevel);
@@ -425,7 +437,7 @@ namespace NodeMonog
 
 
                     spriteBatch.Draw(pixel,
-                        destinationRectangle: new Rectangle(scale((currentNode.Position + offsetPoint).ToPoint()),
+                        destinationRectangle: new Rectangle(cameraTransform((currentNode.Position + offsetPoint).ToPoint()),
                         new Point(
                         (int)(arrowVector.Length() * zoomlevel),
                          (int)(8 * zoomlevel))),
@@ -439,7 +451,7 @@ namespace NodeMonog
 
                     spriteBatch.Draw(pixel,
                         destinationRectangle:
-                        new Rectangle(scale(currentNode.Position + offsetPoint).ToPoint(),
+                        new Rectangle(cameraTransform(currentNode.Position + offsetPoint).ToPoint(),
                         new Point(
                          (int)(4 * zoomlevel),
                          (int)(8 * zoomlevel))),
@@ -460,7 +472,7 @@ namespace NodeMonog
                 ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
                 spriteBatch.Draw(circle,
-                    destinationRectangle: new Rectangle(scale(currentNode.Position).ToPoint(),
+                    destinationRectangle: new Rectangle(cameraTransform(currentNode.Position).ToPoint(),
                     new Point(
                     (int)(circleDiameter * zoomlevel),
                     (int)(circleDiameter * zoomlevel))),
@@ -469,7 +481,7 @@ namespace NodeMonog
 
                 spriteBatch.DrawString(arial,
                     currentNode.NName,
-                    scale(currentNode.Position), Color.Black);
+                    cameraTransform(currentNode.Position), Color.Black);
 
             }
 
