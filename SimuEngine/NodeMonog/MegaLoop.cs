@@ -153,17 +153,41 @@ namespace NodeMonog
                 var n = new ShittyAssNode();
                 n.NName = i.ToString();
                 more.Add(n);
-                // graph.Add(n);
+                graph.Add(n);
             }
 
             Dictionary<ShittyAssNode, int> totalConns = new Dictionary<ShittyAssNode, int>();
             Dictionary<ShittyAssNode, int> curConns = new Dictionary<ShittyAssNode, int>();
+            List<ShittyAssNode> remaining = new List<ShittyAssNode>();
+            remaining.AddRange(more);
 
             var rng = new Random();
             for (int i = 0; i < more.Count; i++) {
-                totalConns[more[i]] = rng.Next(1, 5);
+                totalConns[more[i]] = rng.Next(1, 4);
+                curConns[more[i]] = 0;
             }
             
+            while (remaining.Count > 1) {
+                var x1 = rng.Next(remaining.Count);
+                var x2 = rng.Next(remaining.Count);
+                if (x1 == x2) {
+                    continue;
+                }
+                var node1 = remaining[x1];
+                var node2 = remaining[x2];
+                graph.AddConnection(node1, node2, new ShittyAssKnect(rng.Next(100, 400), 500));
+                curConns[node1] += 1;
+                curConns[node2] += 1;
+                if (curConns[node1] == totalConns[node1]) {
+                    if (x1 < x2) {
+                        x2 -= 1;
+                    }
+                    remaining.RemoveAt(x1);
+                }
+                if (curConns[node2] == totalConns[node2]) {
+                    remaining.RemoveAt(x2);
+                }
+            }
 
             ShittyAssNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
 
