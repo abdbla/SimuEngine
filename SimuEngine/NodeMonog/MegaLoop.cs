@@ -302,7 +302,7 @@ namespace NodeMonog
                 }
                 if (nms.ScrollWheelValue != oms.ScrollWheelValue)
                 {
-                    zoomlevel *= ((oms.ScrollWheelValue - nms.ScrollWheelValue) / 2000f) + 1f;
+                    zoomlevel *= ((nms.ScrollWheelValue - oms.ScrollWheelValue) / 2000f) + 1f;
 
                 }
 
