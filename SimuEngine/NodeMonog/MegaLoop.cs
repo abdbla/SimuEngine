@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System;
 using SharpDX.MediaFoundation;
 using SharpDX.Direct2D1.Effects;
+using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace NodeMonog
 {
@@ -150,7 +152,7 @@ namespace NodeMonog
             // cameraGoal = new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
 
             List<ShittyAssNode> more = new List<ShittyAssNode>();
-            for (int i = 0; i < 50; i++) {
+            for (int i = 0; i < 500; i++) {
                 var n = new ShittyAssNode();
                 n.NName = i.ToString();
                 more.Add(n);
@@ -194,7 +196,21 @@ namespace NodeMonog
 
             ShittyAssNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
 
+            // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
+            RunSimulation();
+
             base.Initialize();
+        }
+
+        async Task RunSimulation() {
+            await Task.Run(() => {
+                for (int i = 0; i < 1000; i++) {
+                    ShittyAssNode.simulation.Advance(1.0f);
+                    if (ShittyAssNode.simulation.WithinThreshold) {
+                        break;
+                    }
+                }
+            });
         }
 
         /// <summary>
@@ -239,10 +255,9 @@ namespace NodeMonog
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-
             var timeFactor = 100f;
             if (Keyboard.GetState().IsKeyDown(Keys.Space)) timeFactor = 25f;
-            ShittyAssNode.simulation.Advance(gameTime.ElapsedGameTime.Milliseconds / timeFactor);
+            //ShittyAssNode.simulation.Advance(gameTime.ElapsedGameTime.Milliseconds / timeFactor);
 
             Rectangle r = Window.ClientBounds;
             int x = r.Width / 3;
