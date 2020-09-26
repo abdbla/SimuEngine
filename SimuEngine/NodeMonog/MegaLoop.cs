@@ -467,16 +467,20 @@ namespace NodeMonog
                     0.25f);
 
                 
-                if(zoomlevel > 0.25f)
-                spriteBatch.DrawString(arial,
-                    currentNode.NName,
-                    cameraTransform(currentNode.Position),
-                    Color.Black,
-                    0,
-                    Vector2.Zero,
-                    (float)zoomlevel,
-                    SpriteEffects.None,
-                    0.1f);
+                if(zoomlevel > 0.5f)
+                {
+                    Color fadeColour = Color.Black;
+                    if (zoomlevel < 1f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.5f) * 255 * 2));
+                    spriteBatch.DrawString(arial,
+                        currentNode.NName,
+                        cameraTransform(currentNode.Position),
+                        fadeColour,
+                        0,
+                        Vector2.Zero,
+                        (float)(1 / zoomlevel / 8 + 1.2f),
+                        SpriteEffects.None,
+                        0.1f);
+                }
             }
 
             //Theos lab colours
