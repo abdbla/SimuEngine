@@ -71,7 +71,7 @@ namespace NodeMonog
             g.AddConnection(testNode4, testNode, new ShittyAssKnect(2000, 1000));
 
             List<ShittyAssNode> more = new List<ShittyAssNode>();
-            for (int i = 0; i < 500; i++)
+            for (int i = 0; i < 150; i++)
             {
                 var n = new ShittyAssNode();
                 n.NName = i.ToString();

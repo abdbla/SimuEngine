@@ -21,6 +21,7 @@ namespace NodeMonog
 
     class StatusWrapper {
         public Status inner;
+        public float timestep;
         public StatusWrapper(Status init) {
             inner = init;
         }
@@ -37,6 +38,18 @@ namespace NodeMonog
             set {
                 lock (status) {
                     status.inner = value;
+                }
+            }
+        }
+        public float TimeStep {
+            get {
+                lock (status) {
+                    return status.timestep;
+                }
+            }
+            set {
+                lock (status) {
+                    status.timestep = value;
                 }
             }
         }
@@ -139,12 +152,17 @@ namespace NodeMonog
 
         async Task RunSimulation() {
             await Task.Run(() => {
-                for (int i = 0; i < 1000; i++) {
-                    ShittyAssNode.simulation.Advance(1.0f / (i > 500 ? 2 : 1));
+                float timeStep = -1;
+                for (int i = 0; i < 10000; i++) {
+                    ShittyAssNode.simulation.Advance((float)Math.Pow(10, timeStep));
                     if (ShittyAssNode.simulation.WithinThreshold) {
                         simulationStatus.Status = Status.MinimaReached;
                         return;
                     }
+
+                    var total = ShittyAssNode.simulation.GetTotalEnergy();
+                    timeStep = -((float)Math.Truncate(Math.Log10(ShittyAssNode.simulation.GetTotalEnergy())) + 1);
+                    simulationStatus.TimeStep = (float)Math.Pow(10, timeStep);
                 }
                 simulationStatus.Status = Status.IterationCap;
             });
@@ -366,7 +384,8 @@ namespace NodeMonog
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
             string simStatusString = simulationStatus.Status switch
             {
-                Status.Running => $"Running\ntotal energy: {ShittyAssNode.simulation.GetTotalEnergy()}",
+                Status.Running => $"Running\ntotal energy: {ShittyAssNode.simulation.GetTotalEnergy()}" +
+                $"\ntimestep: {simulationStatus.TimeStep}",
                 Status.IterationCap => "Iteration cap reached",
                 Status.MinimaReached => "Local minima reached",
                 _ => "This should never happen"
