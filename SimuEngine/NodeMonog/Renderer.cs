@@ -89,20 +89,16 @@ namespace NodeMonog
         const int circleDiameter = 64;
 
 
-        Random r = new Random();
-
-
-
         ShittyAssNode selectedNode;
+
+
         ShittyAssNode hoverNode;
-        int hoverTime;
+        int hoverTime = 0;
+        const int hoverLimit = 1000;
 
         TaskStatus simulationStatus;
 
         Graph graph;
-
-        //List<TickInfo> 
-
 
 
         public Renderer(Graph graph)
@@ -132,7 +128,6 @@ namespace NodeMonog
             //RasterizerState = new RasterizerState { MultiSampleAntiAlias = true };
 
             graphics.ApplyChanges();
-
 
 
 
@@ -236,6 +231,7 @@ namespace NodeMonog
                         else if (new Rectangle((int)(x * 2.4f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 2;
                         else if (new Rectangle((int)(x * 2.6f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 3;
                         else if (new Rectangle((int)(x * 2.8f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 4;
+
                     }
                     //Vänsta hud klick
                     else
@@ -415,14 +411,14 @@ namespace NodeMonog
                     if (arrowVector.X < 0) rotation += Math.PI;
 
                     Vector2 offsetPoint = new Vector2(
-                        (float)(circleDiameter / 2 + circleDiameter / 2 * Math.Cos(rotation)),
-                        (float)(circleDiameter / 2 + circleDiameter / 2 * Math.Sin(rotation)));
+                        (float)(circleDiameter / 2 ),
+                        (float)(circleDiameter / 2 ));
 
 
                     spriteBatch.Draw(pixel,
                         destinationRectangle: new Rectangle(cameraTransform((currentNode.Position + offsetPoint).ToPoint()),
                         new Point(
-                        (int)((arrowVector.Length() - circleDiameter) * zoomlevel),
+                        (int)((arrowVector.Length()) * zoomlevel),
                          (int)(8 * zoomlevel))),
                         sourceRectangle: null,
                         color: selectcolour,
@@ -434,6 +430,9 @@ namespace NodeMonog
 
                 }
 
+
+                if (graph.GetConnections(selectedNode).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
+                //Draws circles
                 spriteBatch.Draw(circle,
                     destinationRectangle: new Rectangle(cameraTransform(currentNode.Position).ToPoint(),
                     new Point(
@@ -444,9 +443,9 @@ namespace NodeMonog
                     0,
                     Vector2.Zero,
                     SpriteEffects.None,
-                    0.25f);
+                    depth / 2 + 0.01f);
 
-                
+                //Draws node text
                 if(zoomlevel > 0.35f)
                 {
                     Color fadeColour = Color.Black;
@@ -540,7 +539,7 @@ namespace NodeMonog
 
                     spriteBatch.DrawString(arial,
                             "Connections:",
-                            new Vector2(centerX * 2.15f, r.Height / 2 - 32),
+                            new Vector2(centerX * 2 + 32, r.Height / 2 - 32),
                             Color.Black);
 
                     List<(Connection, ShittyAssNode)> d = graph.GetConnections(selectedNode).Select(parent => (parent.Item1, (ShittyAssNode)parent.Item2)).ToList(); ;
@@ -548,7 +547,7 @@ namespace NodeMonog
                     {
                         spriteBatch.DrawString(arial,
                             d[i].Item2.NName, 
-                            new Vector2(centerX * 2.1f, r.Height / 2 + i * 32),
+                            new Vector2(centerX * 2 + 16, r.Height / 2 + i * 32),
                             Color.Black);
                     }
 
