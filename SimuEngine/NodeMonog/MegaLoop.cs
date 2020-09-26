@@ -482,17 +482,17 @@ namespace NodeMonog
                     0.25f);
 
                 
-                if(zoomlevel > 0.5f)
+                if(zoomlevel > 0.35f)
                 {
                     Color fadeColour = Color.Black;
-                    if (zoomlevel < 1f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.5f) * 255 * 2));
+                    if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
                     spriteBatch.DrawString(arial,
                         currentNode.NName,
                         cameraTransform(currentNode.Position),
                         fadeColour,
                         0,
                         Vector2.Zero,
-                        (float)(1 / zoomlevel / 8 + 1.2f),
+                        (float)(1 / zoomlevel / 32 + 1.2f),
                         SpriteEffects.None,
                         0.1f);
                 }
