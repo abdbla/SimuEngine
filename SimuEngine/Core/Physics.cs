@@ -232,7 +232,7 @@ namespace Core.Physics {
             }
         }
 
-        float GetTotalEnergy() {
+        public float GetTotalEnergy() {
             var total = 0.0f;
             foreach (var node in Graph.Nodes.Cast<PhysicsNode>()) {
                 var speed = node.Point.Velocity.Magnitude();

@@ -13,6 +13,39 @@ using System.Runtime.CompilerServices;
 
 namespace NodeMonog
 {
+    enum Status {
+        Running,
+        IterationCap,
+        MinimaReached
+    }
+
+    class StatusWrapper {
+        public Status inner;
+        public StatusWrapper(Status init) {
+            inner = init;
+        }
+    }
+
+    class TaskStatus {
+        private StatusWrapper status;
+        public Status Status {
+            get {
+                lock (status) {
+                    return status.inner;
+                }
+            }
+            set {
+                lock (status) {
+                    status.inner = value;
+                }
+            }
+        }
+
+        public TaskStatus(Status status) {
+            this.status = new StatusWrapper(status);
+        }
+    }
+
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
@@ -51,7 +84,7 @@ namespace NodeMonog
         ShittyAssNode hoverNode;
         int hoverTime;
 
-
+        TaskStatus simulationStatus;
 
         Graph graph;
 
@@ -97,7 +130,7 @@ namespace NodeMonog
 
 
             ShittyAssNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
-
+            simulationStatus = new TaskStatus(Status.Running);
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
             RunSimulation();
 
@@ -107,11 +140,13 @@ namespace NodeMonog
         async Task RunSimulation() {
             await Task.Run(() => {
                 for (int i = 0; i < 1000; i++) {
-                    ShittyAssNode.simulation.Advance(1.0f);
+                    ShittyAssNode.simulation.Advance(1.0f / (i > 500 ? 2 : 1));
                     if (ShittyAssNode.simulation.WithinThreshold) {
-                        break;
+                        simulationStatus.Status = Status.MinimaReached;
+                        return;
                     }
                 }
+                simulationStatus.Status = Status.IterationCap;
             });
         }
 
@@ -329,6 +364,15 @@ namespace NodeMonog
             spriteBatch.DrawString(arial, (animation % 1000).ToString() + "   :   " + transitionAnimation, Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
+            string simStatusString = simulationStatus.Status switch
+            {
+                Status.Running => $"Running\ntotal energy: {ShittyAssNode.simulation.GetTotalEnergy()}",
+                Status.IterationCap => "Iteration cap reached",
+                Status.MinimaReached => "Local minima reached",
+                _ => "This should never happen"
+            };
+
+            spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
 
 
 
@@ -470,7 +514,7 @@ namespace NodeMonog
                 case 2:
 
                     int o = 0;
-                    foreach (KeyValuePair<string, int> kv in selectedNode.traits)
+                    foreach (KeyValuePair<string, int> kv in selectedNode.Traits)
                     {
                         spriteBatch.DrawString(arial, kv.Key + ":   " + kv.Value, new Vector2(2 * centerX + 16, 64 + 32 * o++), Color.Black);
                      }
