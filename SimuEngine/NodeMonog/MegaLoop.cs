@@ -293,7 +293,7 @@ namespace NodeMonog
                     {
                         if (dragtimer > 20)
                         {
-                            cameraPosition -=  (nms.Position - oms.Position);
+                            cameraPosition -=  ((nms.Position - oms.Position).ToVector2() / (float)zoomlevel).ToPoint();
                             cameraVelocity = Vector2.Zero;
                         }
                         else dragtimer += gameTime.ElapsedGameTime.Milliseconds;
