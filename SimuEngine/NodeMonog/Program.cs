@@ -28,23 +28,23 @@ namespace NodeMonog
             ShittyAssNode testNode5 = new ShittyAssNode(new Vector2(326 + r.Next(0, 64), r.Next(0, 128)));
 
 
-            testNode.traits.Add("Age", 500);
-            testNode.traits.Add("Corona", 200);
+            testNode.TraitsWorkaround.Add("Age", 500);
+            testNode.TraitsWorkaround.Add("Corona", 200);
 
-            testNode2.traits.Add("Age", 100);
-            testNode2.traits.Add("Corona", 300);
-
-
-            testNode3.traits.Add("Age", 10);
-            testNode3.traits.Add("Corona", 200);
+            testNode2.TraitsWorkaround.Add("Age", 100);
+            testNode2.TraitsWorkaround.Add("Corona", 300);
 
 
-            testNode4.traits.Add("Age", 10);
-            testNode4.traits.Add("Corona", 200);
+            testNode3.TraitsWorkaround.Add("Age", 10);
+            testNode3.TraitsWorkaround.Add("Corona", 200);
 
 
-            testNode5.traits.Add("Age", 10);
-            testNode5.traits.Add("Corona", 200);
+            testNode4.TraitsWorkaround.Add("Age", 10);
+            testNode4.TraitsWorkaround.Add("Corona", 200);
+
+
+            testNode5.TraitsWorkaround.Add("Age", 10);
+            testNode5.TraitsWorkaround.Add("Corona", 200);
 
 
             g.Add(testNode);
