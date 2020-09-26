@@ -16,13 +16,13 @@ namespace Core.Physics {
         public Node Inner { get; private set; }
         private static Random rng = new Random();
         public bool Pinned;
-
         public PhysicsNode(Node node) {
             var x = (float)((rng.NextDouble() - .5) * 10.0);
             var y = (float)((rng.NextDouble() - .5) * 10.0);
             Inner = node;
             Mass = 1.0f;
             Point = new Point(new Vector2(x, y));
+            Name = node.Name;
         }
 
         public PhysicsNode(Node node, Vector2 initialPosition) {
@@ -90,6 +90,7 @@ namespace Core.Physics {
         }
     }
 
+    [DebuggerDisplay("{n1.Name}--{n2.Name}")]
     class Spring : Connection {
         public PhysicsNode n1;
         public PhysicsNode n2;

@@ -294,10 +294,10 @@ namespace Core {
         }
     }
 
+    [System.Diagnostics.DebuggerDisplay("V = {Nodes}, E = {Connections}")]
     public readonly struct GraphCount {
         public readonly int Nodes;
         public readonly int Connections;
-
         public GraphCount(int nodes, int connections) {
             Nodes = nodes;
             Connections = connections;

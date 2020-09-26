@@ -163,7 +163,7 @@ namespace NodeMonog
 
             var rng = new Random();
             for (int i = 0; i < more.Count; i++) {
-                totalConns[more[i]] = rng.Next(1, 4);
+                totalConns[more[i]] = rng.Next(2, 4);
                 curConns[more[i]] = 0;
             }
             
@@ -175,7 +175,9 @@ namespace NodeMonog
                 }
                 var node1 = remaining[x1];
                 var node2 = remaining[x2];
-                graph.AddConnection(node1, node2, new ShittyAssKnect(rng.Next(100, 400), 500));
+                var strength = rng.Next(100, 400);
+                graph.AddConnection(node1, node2, new ShittyAssKnect(strength, 500));
+                graph.AddConnection(node2, node1, new ShittyAssKnect(strength, 500));
                 curConns[node1] += 1;
                 curConns[node2] += 1;
                 if (curConns[node1] == totalConns[node1]) {
@@ -529,7 +531,6 @@ namespace NodeMonog
                 default:
                     break;
             }
-
 
             spriteBatch.End();
 
