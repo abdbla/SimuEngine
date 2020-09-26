@@ -24,6 +24,11 @@ namespace Core {
             get => connections.AsReadOnly();
         }
 
+        public Dictionary<string, int> TraitsWorkaround {
+            get => traits;
+            set => traits = value;
+        }
+
         /// <summary>
         /// The constructor for node. By default does nothing with NodeCreationInfo, but has the possibility
         /// to do so for implementations of node, if they desire to change depending on said info.
