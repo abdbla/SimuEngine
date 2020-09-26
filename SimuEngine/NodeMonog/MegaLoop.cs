@@ -51,7 +51,8 @@ namespace NodeMonog
         ShittyAssNode testNode5;
 
         ShittyAssNode selectedNode;
-        ShittyAssNode previosNode;
+        ShittyAssNode hoverNode;
+        int hoverTime;
 
 
 
@@ -139,7 +140,6 @@ namespace NodeMonog
             graph.AddConnection(testNode4, testNode, new ShittyAssKnect(2000, 1000));
 
             selectedNode = testNode;
-            previosNode = testNode;
             //selectedNode.connections.Add(new ShittyAssKnect(100, 20));
             //selectedNode.connections.Add(new ShittyAssKnect(4, 2));
             //selectedNode.connections.Add(new ShittyAssKnect(4, 2));
@@ -262,9 +262,10 @@ namespace NodeMonog
                     if (new Rectangle(x * 2, 0, x, r.Height).Contains(nms.Position))
                     {
                         if (new Rectangle(x * 2, 0, r.Width / 12, 16).Contains(nms.Position)) selectedTab = 0;
-                        else if (new Rectangle((int)(x * 2.25f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 1;
-                        else if (new Rectangle((int)(x * 2.5f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 2;
-                        else if (new Rectangle((int)(x * 2.75f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 3;
+                        else if (new Rectangle((int)(x * 2.2f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 1;
+                        else if (new Rectangle((int)(x * 2.4f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 2;
+                        else if (new Rectangle((int)(x * 2.6f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 3;
+                        else if (new Rectangle((int)(x * 2.8f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 4;
                     }
                     //Vänsta hud klick
                     else
@@ -400,7 +401,6 @@ namespace NodeMonog
             spriteBatch.Begin(SpriteSortMode.BackToFront);
 
 
-            //spriteBatch.Draw(circle, new Rectangle(r.Width / 3 - r.Width / 18, r.Height / 2 - r.Width / 18, r.Width / 9, r.Width / 9), Color.Red);
             spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
             spriteBatch.DrawString(arial, "Tick", new Vector2(16, r.Height - 48), Color.Black);
 
@@ -453,13 +453,6 @@ namespace NodeMonog
                         );
 
                 }
-            }
-
-
-            //A repeat becaue of the bitch ass alyers not working
-            for (int i = 0; i < graph.GetNodes().Count; i++)
-            {
-                ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
 
                 spriteBatch.Draw(circle,
                     destinationRectangle: new Rectangle(cameraTransform(currentNode.Position).ToPoint(),
@@ -473,19 +466,20 @@ namespace NodeMonog
                     SpriteEffects.None,
                     0.25f);
 
+                
+                if(zoomlevel > 0.25f)
                 spriteBatch.DrawString(arial,
                     currentNode.NName,
-                    cameraTransform(currentNode.Position), 
+                    cameraTransform(currentNode.Position),
                     Color.Black,
                     0,
                     Vector2.Zero,
-                    1f,
+                    (float)zoomlevel,
                     SpriteEffects.None,
                     0.1f);
-
             }
 
-
+            //Theos lab colours
             var startColor = LabColor.RgbToLab(new Color(0xA5, 0xD7, 0xC8));
             Console.WriteLine(startColor);
             var endColor = LabColor.RgbToLab(new Color(0x48, 0x73, 0x66));
@@ -498,12 +492,50 @@ namespace NodeMonog
             spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
 
 
-            spriteBatch.Draw(pixel, new Rectangle(centerX * 2, 16, centerX + 1, r.Height - 16), Color.DarkGray);
-            spriteBatch.Draw(topCurve, new Rectangle(centerX * 2 + centerX / 4 * selectedTab, 0, centerX / 4, 16), Color.DarkGray);
-            spriteBatch.DrawString(arial, "Global", new Vector2(centerX * 2 + 2, 0), Color.Black);
-            spriteBatch.DrawString(arial, "Group", new Vector2(centerX * 2.25f + 2, 0), Color.Black);
-            spriteBatch.DrawString(arial, "Person", new Vector2(centerX * 2.5f + 2, 0), Color.Black);
-            spriteBatch.DrawString(arial, "Stats", new Vector2(centerX * 2.75f + 2, 0), Color.Black);
+            spriteBatch.Draw(pixel, new Rectangle(centerX * 2, 16, centerX + 1, r.Height - 16), null,Color.DarkGray,
+                    0,
+                    Vector2.Zero,
+                    SpriteEffects.None,
+                    0.08f);
+            spriteBatch.Draw(topCurve, new Rectangle(centerX * 2 + centerX / 5 * selectedTab, 0, centerX / 5, 16), null,Color.DarkGray,
+                    0,
+                    Vector2.Zero,
+                    SpriteEffects.None,
+                    0.08f);
+
+
+
+            spriteBatch.DrawString(arial, "Global", new Vector2(centerX * 2 + 2, 0), Color.Black,
+                    0,
+                    Vector2.Zero,
+                    1f,
+                    SpriteEffects.None,
+                    0.05f);
+            spriteBatch.DrawString(arial, "Group", new Vector2(centerX * 2.2f + 2, 0), Color.Black,
+                    0,
+                    Vector2.Zero,
+                    1f,
+                    SpriteEffects.None,
+                    0.05f);
+            spriteBatch.DrawString(arial, "Person", new Vector2(centerX * 2.4f + 2, 0), Color.Black,
+                    0,
+                    Vector2.Zero,
+                    1f,
+                    SpriteEffects.None,
+                    0.05f);
+            spriteBatch.DrawString(arial, "Stats", new Vector2(centerX * 2.6f + 2, 0), Color.Black,
+                    0,
+                    Vector2.Zero,
+                    1f,
+                    SpriteEffects.None,
+                    0.05f);
+
+            spriteBatch.DrawString(arial, "Options", new Vector2(centerX * 2.80f + 2, 0), Color.Black,
+                    0,
+                    Vector2.Zero,
+                    1f,
+                    SpriteEffects.None,
+                    0.05f);
 
 
             switch (selectedTab)
