@@ -4,11 +4,13 @@ using System.Collections.ObjectModel;
 
 namespace Core {
     public abstract class Node {
-        protected Dictionary<string, int> traits;
-        protected List<string> statuses;
-        protected List<Group> groups;
-        protected List<Connection> connections;
+        //Internal fields, only meant to be accessed by internal functions, such as Events and the PlayerObject.
+        public Dictionary<string, int> traits;
+        public List<string> statuses;
+        public List<Group> groups;
+        public List<Connection> connections;
 
+        //External properties, which can be accessed by any object or function.
         public string Name { get; protected set; }
         public Graph SubGraph { get; protected set; }
         public ReadOnlyDictionary<string, int> Traits {
@@ -22,11 +24,6 @@ namespace Core {
         }
         public ReadOnlyCollection<Connection> Connections {
             get => connections.AsReadOnly();
-        }
-
-        public Dictionary<string, int> TraitsWorkaround {
-            get => traits;
-            set => traits = value;
         }
 
         /// <summary>

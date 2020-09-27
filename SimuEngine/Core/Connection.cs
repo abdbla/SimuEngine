@@ -4,9 +4,11 @@ using System.Collections.ObjectModel;
 
 namespace Core {
     public abstract class Connection {
-        protected List<string> statuses;
-        protected Dictionary<string, int> traits;
+        //Internal fields, see Node
+        public List<string> statuses;
+        public Dictionary<string, int> traits;
 
+        //External properties, see Node.
         public ReadOnlyDictionary<string, int> Traits {
             get => new ReadOnlyDictionary<string, int>(traits);
         }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using Core;
+using SharpDX.Direct3D11;
 
 namespace SimuEngine {
     public class EventListContainer {
@@ -14,7 +15,9 @@ namespace SimuEngine {
         public List<Event> GetEventList(Type type) {
             return eventLists[type];
         }
-
+        public void AddEventList(Type type, List<Event> events) {
+            eventLists[type] = events;
+        }
         public static EventListContainer LoadFromSerial() {
             throw new NotImplementedException();
         }
@@ -37,6 +40,16 @@ namespace SimuEngine {
         public List<Action<Node, Graph, Graph>> Outcome {
             get { return outcome; }
             set { }
+        }
+
+        public void AddReqPossible(Func<Node, Graph, Graph, double> req) {
+            reqPossible.Add(req);
+        }
+        public void AddReqGuaranteed(Func<Node, Graph, Graph, bool> req) {
+            reqGuaranteed.Add(req);
+        }
+        public void AddOutcome(Action<Node, Graph, Graph> ev) {
+            outcome.Add(ev);
         }
 
         public Event() {

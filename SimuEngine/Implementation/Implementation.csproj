@@ -35,5 +35,22 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Core.csproj">
+      <Project>{8a50e188-69ef-4734-b173-54be3a86b8ae}</Project>
+      <Name>Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NodeMonog\NodeMonog.csproj">
+      <Project>{4dba22c1-1a21-4d29-b5bc-920705a2c9d3}</Project>
+      <Name>NodeMonog</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SimuEngine\SimuEngine.csproj">
+      <Project>{8273bbbd-7fb2-4e9b-8814-3c9c2a4a52a8}</Project>
+      <Name>SimuEngine</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -5,10 +5,12 @@ using System.Collections.ObjectModel;
 namespace Core {
     public abstract class Group
     {
+        //Internal fields, see Node.
         protected List<string> statuses;
         protected Dictionary<string, int> traits;
         protected List<Node> members;
 
+        //External properties, see Node.
         public ReadOnlyDictionary<string, int> Traits {
             get => new ReadOnlyDictionary<string, int>(traits);
         }

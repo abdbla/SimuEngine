@@ -39,7 +39,10 @@ namespace NodeMonog
         {
             this.position = position;
         }
-
+        public Dictionary<string, int> TraitsWorkaround {
+            get => traits;
+            set => traits = value;
+        }
         public ShittyAssNode() {
 
         }
