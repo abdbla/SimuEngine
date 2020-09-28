@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace SimuEngine {
     public class Engine {
-        GraphSystem system;
+        public GraphSystem system;
         public Handler handler;
         public PlayerObject player;
 
