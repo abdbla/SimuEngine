@@ -47,7 +47,7 @@ namespace NodeMonog
 
         }
 
-        public override void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty) {
+        public override void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty) {
             throw new NotImplementedException();
         }
     }     

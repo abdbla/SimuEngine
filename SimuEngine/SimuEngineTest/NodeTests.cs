@@ -25,7 +25,7 @@ namespace SimuEngineTest
             GraphSystem graphSystem = new GraphSystem();
 
             //act
-            graphSystem.Create<ExampleNode>();
+            graphSystem.Create<ExampleNode>(NodeCreationInfo.Empty);
 
             //assert
             Assert.AreEqual(1, graphSystem.graph.Nodes.Count);
@@ -37,7 +37,7 @@ namespace SimuEngineTest
             GraphSystem graphSystem = new GraphSystem();
 
             //act
-            graphSystem.Create<ExampleNode>();
+            graphSystem.Create<ExampleNode>(NodeCreationInfo.Empty);
 
             //assert
             Assert.AreEqual(1, graphSystem.graph.Nodes.Count);
@@ -47,8 +47,8 @@ namespace SimuEngineTest
         public void CreateConnection_Connection_Succeed() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
-            graphSystem.Create<ExampleNode>();
-            graphSystem.Create<ExampleNode>();
+            graphSystem.Create<ExampleNode>(NodeCreationInfo.Empty);
+            graphSystem.Create<ExampleNode>(NodeCreationInfo.Empty);
             Node node1 = graphSystem.graph.Nodes[0];
             Node node2 = graphSystem.graph.Nodes[1];
             Connection connection = new ExampleConnection();
@@ -64,11 +64,11 @@ namespace SimuEngineTest
         public void GetConnections_ConnectionList_Success() {
             //arrange
             GraphSystem graphSystem = new GraphSystem();
-            graphSystem.Create<ExampleNode>();
-            graphSystem.Create<ExampleNode>();
-            graphSystem.Create<ExampleNode>();
-            graphSystem.Create<ExampleNode>();
-            graphSystem.Create<ExampleNode>();
+            graphSystem.Create<ExampleNode>(NodeCreationInfo.Empty);
+            graphSystem.Create<ExampleNode>(NodeCreationInfo.Empty);
+            graphSystem.Create<ExampleNode>(NodeCreationInfo.Empty);
+            graphSystem.Create<ExampleNode>(NodeCreationInfo.Empty);
+            graphSystem.Create<ExampleNode>(NodeCreationInfo.Empty);
             Node node1 = graphSystem.graph.Nodes[0];
             Node node2 = graphSystem.graph.Nodes[1];
             Node node3 = graphSystem.graph.Nodes[2];
@@ -431,7 +431,7 @@ namespace SimuEngineTest
             Assert.IsFalse(n1 == n2);
         }
 
-        public override void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty) {
+        public override void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty) {
             return;
         }
     }
@@ -443,7 +443,7 @@ namespace SimuEngineTest
         public ExampleNode2() {
             Name = ID++.ToString();
         }
-        public override void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty) {
+        public override void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty) {
             return;
         }
 
