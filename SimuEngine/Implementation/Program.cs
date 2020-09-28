@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
 
 using Core;
 using SimuEngine;
@@ -15,9 +16,17 @@ namespace Implementation
         List<Event> actions = new List<Event>();
         EventListContainer eventList = new EventListContainer();
         Engine engine;
+
         static void Main() {
+            Program p = new Program();
             //TODO: Create implementation running code
-            
+            p.InitializeEngine();
+            for (int i = 0; i < 150; i++) {
+                p.engine.system.Create<Person>(NodeCreationInfo.SystemStart);
+            }
+            using (Renderer renderer = new Renderer(p.engine.system.graph)) {
+                renderer.Run();
+            }
         }
 
         private void InitializeEngine() {
@@ -78,19 +87,27 @@ namespace Implementation
     class Person : Node
     {
 
-        public Person(NodeCreationInfo info) : base() {
-            NodeCreation(info);
+        public Person() : base() {
             return;
         }
 
-        public override void NodeCreation(NodeCreationInfo info) {
+        public override void NodeCreation(Graph g, NodeCreationInfo info) {
             if (info == NodeCreationInfo.SystemStart) {
+                Random rng = new Random();
                 statuses.Add("Healthy");
-                traits.Add("Hygiene", new Random().Next(1, 101));
-                traits.Add("Age", new Random().Next(1, 101));
+                traits.Add("Hygiene", rng.Next(1, 101));
+                traits.Add("Age", rng.Next(1, 101));
                 traits.Add("Infected Time", 0);
-                if (new Random().NextDouble() <= 0.3) {
+                if (rng.NextDouble() <= 0.3) {
                     statuses.Add("Asthmatic");
+                }
+                for (int i = 0; i < Math.Min(rng.Next(1, 3), g.Nodes.Count()); i++) {
+                    int t = rng.Next(g.Nodes.Count());
+                    if (g.Nodes[t] == this) continue;
+                    PersonConnection temp = new PersonConnection();
+                    g.AddConnection(this, g.Nodes[t], temp);
+                    temp = new PersonConnection();
+                    g.AddConnection(g.Nodes[t], this, temp);
                 }
             }
             return;

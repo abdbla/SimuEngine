@@ -39,7 +39,7 @@ namespace Core {
             groups = new List<Group>();
             connections = new List<Connection>();
         }
-        public abstract void NodeCreation(NodeCreationInfo info = NodeCreationInfo.Empty);
+        public abstract void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty);
         public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph) {
             action(this, localGraph, worldGraph);
         }
