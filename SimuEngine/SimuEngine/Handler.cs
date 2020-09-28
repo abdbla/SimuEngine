@@ -7,7 +7,7 @@ using Core;
 
 namespace SimuEngine
 {
-    class Handler
+    public class Handler
     {
         EventListContainer events;
         // TODO: merge documentation
