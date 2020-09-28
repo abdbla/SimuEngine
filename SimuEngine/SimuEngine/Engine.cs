@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace SimuEngine {
-    class Engine {
+    public class Engine {
         GraphSystem system;
-        Handler handler;
-        PlayerObject player;
+        public Handler handler;
+        public PlayerObject player;
 
         /// <summary>
         /// Where the application starts the engine.
