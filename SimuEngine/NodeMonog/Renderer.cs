@@ -130,6 +130,7 @@ namespace NodeMonog
 
             graphics.ApplyChanges();
 
+            UserInterface.Initialize(Content, theme: "editorSourceCodePro");
 
 
             selectedNode = (ShittyAssNode)graph.GetNodes()[0];
