@@ -17,10 +17,11 @@ namespace Implementation
         Engine engine;
         static void Main() {
             //TODO: Create implementation running code
+            
         }
 
         private void InitializeEngine() {
-            actions.Add(new Event);
+            actions.Add(new Event());
             actions[0].ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
                 return 1;
             });
@@ -32,7 +33,7 @@ namespace Implementation
                 tStatus.Remove("Recovered");
             });
 
-            actions.Add(new Event);
+            actions.Add(new Event());
             actions[1].ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
                 return 1;
             });
@@ -43,7 +44,7 @@ namespace Implementation
                 tStatus.Remove("Dead");
                 tStatus.Remove("Recovered");
             });
-            actions.Add(new Event);
+            actions.Add(new Event());
             actions[2].ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
                 return 1;
             });
@@ -56,7 +57,7 @@ namespace Implementation
                 tStatus.Remove("Recovered");
             });
 
-            actions.Add(new Event);
+            actions.Add(new Event());
             actions[3].ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
                 return 1;
             });
