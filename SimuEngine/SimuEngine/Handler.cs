@@ -36,7 +36,7 @@ namespace SimuEngine
                     var worldGraph = graphs[0];
                     var localGraph = graphs[graphs.Count - 1];
                     for (int j = 0; j < ev.ReqGuaranteed.Count; j++) { // Check each requirement
-                        if (!ev.ReqGuaranteed[i](graph.Nodes[i], localGraph, worldGraph)) {
+                        if (!ev.ReqGuaranteed[j](graph.Nodes[i], localGraph, worldGraph)) {
                             req = false; //if any are false, dont fire the event.
                         }
                     }
@@ -45,8 +45,8 @@ namespace SimuEngine
                             graph.Nodes[i].InvokeAction(act, localGraph, worldGraph); //seperate loop so as to not fire event for each requirement.
                         }
                     } else {
-                        for (int j = 0; j < ev.ReqGuaranteed.Count; j++) {
-                            if (rng.NextDouble() <= ev.ReqPossible[i](graph.Nodes[i], localGraph, worldGraph)) {
+                        for (int j = 0; j < ev.ReqPossible.Count; j++) {
+                            if (rng.NextDouble() <= ev.ReqPossible[j](graph.Nodes[i], localGraph, worldGraph)) {
                                 pos = false; //same over here as before, though the possible req returns a modifier on the chance to fire the event
                             }
                         }

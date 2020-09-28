@@ -74,8 +74,8 @@ namespace Implementation
                 List<string> tStatus = engine.player.selectedNode.statuses;
                 tStatus.Remove("Healthy");
                 tStatus.Remove("Infected");
-                tStatus.Add("Dead");
-                tStatus.Remove("Recovered");
+                tStatus.Remove("Dead");
+                tStatus.Add("Recovered");
             });
 
             List<Event> personEvents = Person.InitializeEvents();
@@ -86,8 +86,9 @@ namespace Implementation
 
     class Person : Node
     {
-
+        static int id = 0;
         public Person() : base() {
+            this.Name = id++.ToString();
             return;
         }
 
@@ -100,14 +101,6 @@ namespace Implementation
                 traits.Add("Infected Time", 0);
                 if (rng.NextDouble() <= 0.3) {
                     statuses.Add("Asthmatic");
-                }
-                for (int i = 0; i < Math.Min(rng.Next(1, 3), g.Nodes.Count()); i++) {
-                    int t = rng.Next(g.Nodes.Count());
-                    if (g.Nodes[t] == this) continue;
-                    PersonConnection temp = new PersonConnection();
-                    g.AddConnection(this, g.Nodes[t], temp);
-                    temp = new PersonConnection();
-                    g.AddConnection(g.Nodes[t], this, temp);
                 }
             }
             return;
