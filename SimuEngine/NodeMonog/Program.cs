@@ -1,5 +1,6 @@
 ﻿using System;
 using Core;
+using SimuEngine;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 
@@ -18,6 +19,10 @@ namespace NodeMonog
         static void Main()
         {
             Graph g = new Graph();
+            EventListContainer c = new EventListContainer();
+            c.AddEventList(typeof(ShittyAssNode), new List<Event>());
+            Engine e = new Engine(new List<Event>(), c);
+
             Random r = new Random();
 
 
@@ -87,7 +92,7 @@ namespace NodeMonog
             var rng = new Random();
             for (int i = 0; i < more.Count; i++)
             {
-                totalConns[more[i]] = rng.Next(2, 4);
+                totalConns[more[i]] = rng.Next(2, 10);
                 curConns[more[i]] = 0;
             }
 
@@ -121,7 +126,7 @@ namespace NodeMonog
             }
 
 
-            using (var game = new Renderer(g))
+            using (var game = new Renderer(g,e))
                 game.Run();
         }
     }

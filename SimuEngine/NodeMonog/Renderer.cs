@@ -95,18 +95,21 @@ namespace NodeMonog
 
         ShittyAssNode hoverNode;
         int hoverTime = 0;
+
         const int hoverLimit = 1000;
 
         TaskStatus simulationStatus;
 
         Graph graph;
+        Engine engine;
 
 
-        public Renderer(Graph graph)
+        public Renderer(Graph graph, Engine engine)
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             this.graph = graph;
+            this.engine = engine;
         }
 
         /// <summary>
@@ -130,9 +133,9 @@ namespace NodeMonog
 
             graphics.ApplyChanges();
 
-            UserInterface.Initialize(Content, theme: "editorSourceCodePro");
+            UserInterface.Initialize(Content, BuiltinThemes.lowres);
 
-
+            
             selectedNode = (ShittyAssNode)graph.GetNodes()[0];
 
             // cameraGoal = new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
@@ -234,6 +237,49 @@ namespace NodeMonog
                         else if (new Rectangle((int)(x * 2.6f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 3;
                         else if (new Rectangle((int)(x * 2.8f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 4;
 
+                        switch (selectedTab)
+                        {
+                            case 0:
+
+                                break;
+                            case 1:
+
+                                break;
+                            case 2:
+
+                                bool allMiss = true;
+                                for (int i = 0; i < graph.GetConnections(selectedNode).Count; i++)
+                                {
+
+                                    if (
+                            new Rectangle(x * 2 + 16, r.Height / 2 + i * 32, x, 32).Contains(nms.Position))
+                                    {
+
+                                        ShittyAssNode n = (ShittyAssNode)graph.GetConnections(selectedNode)[i].Item2;
+                                        if (n == hoverNode)
+                                        {
+                                            hoverTime += gameTime.ElapsedGameTime.Milliseconds;
+                                            break;
+                                        }
+                                        hoverNode = n;
+                                        hoverTime = 0;
+                                        allMiss = false;
+                                    }
+                                }
+                                if (allMiss)
+                                {
+                                    hoverTime = 0;
+                                    hoverNode = null;
+                                }
+                                break;
+                            case 3:
+
+                                break;
+
+                            default:
+                                break;
+                        }
+
                     }
                     //Vänsta hud klick
                     else
@@ -254,13 +300,15 @@ namespace NodeMonog
 
 
                         }
+
+                        if (new Rectangle(0, r.Height - 256, 256, 256).Contains(nms.Position)) engine.handler.Tick(graph);
                     }
                 }
                 if (nms.LeftButton == ButtonState.Pressed)
                 {
                     if (!new Rectangle(x * 2, 0, x, r.Height).Contains(nms.Position))
                     {
-                        if (dragtimer > 20)
+                        if (dragtimer > 50)
                         {
                             cameraPosition -=  ((nms.Position - oms.Position).ToVector2() / (float)zoomlevel).ToPoint();
                             cameraVelocity = Vector2.Zero;
@@ -375,9 +423,11 @@ namespace NodeMonog
 
             int centerX = r.Width / 3;
 
-
-
-            spriteBatch.DrawString(arial, (animation % 1000).ToString() + "   :   " + transitionAnimation, Vector2.Zero, Color.Black);
+            string s;
+            if (hoverNode == null) s = "Not hovering";
+            else s = hoverNode.ToString();
+            
+            spriteBatch.DrawString(arial, s + "   :   " + transitionAnimation, Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
             string simStatusString = simulationStatus.Status switch
@@ -402,6 +452,11 @@ namespace NodeMonog
                 if (selectedNode == currentNode)
                 {
                     selectcolour = Color.Black;
+                    depth = 0.2f;
+                }
+                else if(hoverNode == currentNode)
+                {
+                    selectcolour = Color.Red;
                     depth = 0.2f;
                 }
                 else selectcolour = new Color(0, 0, 0, 15);
