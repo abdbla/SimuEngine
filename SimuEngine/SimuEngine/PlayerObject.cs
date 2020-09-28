@@ -15,10 +15,6 @@ namespace SimuEngine
         Graph localGraph;
         Graph worldGraph;
         public Node selectedNode { get; private set; }
-
-        public List<Event> GetActions() {
-            return actions;
-        }
         public void ActivateAction(Event ev) {
             foreach (Event act in actions) {
                 if (act == ev) {
