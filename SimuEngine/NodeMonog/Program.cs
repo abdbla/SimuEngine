@@ -20,17 +20,17 @@ namespace NodeMonog
         {
             Graph g = new Graph();
             EventListContainer c = new EventListContainer();
-            c.AddEventList(typeof(ShittyAssNode), new List<Event>());
+            c.AddEventList(typeof(DrawNode), new List<Event>());
             Engine e = new Engine(new List<Event>(), c);
 
             Random r = new Random();
 
 
-            ShittyAssNode testNode =  new ShittyAssNode(new Vector2(r.Next(0, 64)));
-            ShittyAssNode testNode2 = new ShittyAssNode(new Vector2(72 + r.Next(0, 64), r.Next(0, 128)));
-            ShittyAssNode testNode3 = new ShittyAssNode(new Vector2(156 + r.Next(0, 64), r.Next(0, 128)));
-            ShittyAssNode testNode4 = new ShittyAssNode(new Vector2(256 + r.Next(0, 64), r.Next(0, 128)));
-            ShittyAssNode testNode5 = new ShittyAssNode(new Vector2(326 + r.Next(0, 64), r.Next(0, 128)));
+           /* DrawNode testNode =  new DrawNode(new Vector2(r.Next(0, 64)));
+            DrawNode testNode2 = new DrawNode(new Vector2(72 + r.Next(0, 64), r.Next(0, 128)));
+            DrawNode testNode3 = new DrawNode(new Vector2(156 + r.Next(0, 64), r.Next(0, 128)));
+            DrawNode testNode4 = new DrawNode(new Vector2(256 + r.Next(0, 64), r.Next(0, 128)));
+            DrawNode testNode5 = new DrawNode(new Vector2(326 + r.Next(0, 64), r.Next(0, 128)));
 
 
             testNode.TraitsWorkaround.Add("Age", 500);
@@ -75,18 +75,18 @@ namespace NodeMonog
             g.AddConnection(testNode4, testNode2, new ShittyAssKnect(2000, 1000));
             g.AddConnection(testNode4, testNode, new ShittyAssKnect(2000, 1000));
 
-            List<ShittyAssNode> more = new List<ShittyAssNode>();
+            List<Node> more = new List<Node>();
             for (int i = 0; i < 150; i++)
             {
-                var n = new ShittyAssNode();
-                n.NName = i.ToString();
+                var n = new DrawNode(NodeCreationInfo.Empty);
+                n.Name = i.ToString();
                 more.Add(n);
                 g.Add(n);
             }
 
-            Dictionary<ShittyAssNode, int> totalConns = new Dictionary<ShittyAssNode, int>();
-            Dictionary<ShittyAssNode, int> curConns = new Dictionary<ShittyAssNode, int>();
-            List<ShittyAssNode> remaining = new List<ShittyAssNode>();
+            Dictionary<DrawNode, int> totalConns = new Dictionary<DrawNode, int>();
+            Dictionary<DrawNode, int> curConns = new Dictionary<DrawNode, int>();
+            List<DrawNode> remaining = new List<DrawNode>();
             remaining.AddRange(more);
 
             var rng = new Random();
@@ -127,7 +127,7 @@ namespace NodeMonog
 
 
             using (var game = new Renderer(g,e))
-                game.Run();
+                game.Run();*/
         }
     }
 #endif

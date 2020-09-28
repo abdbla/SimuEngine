@@ -90,10 +90,11 @@ namespace NodeMonog
         const int circleDiameter = 64;
 
 
-        ShittyAssNode selectedNode;
+        DrawNode selectedNode;
+        List<DrawNode> drawNodes = new List<DrawNode>();
 
 
-        ShittyAssNode hoverNode;
+        DrawNode hoverNode;
         int hoverTime = 0;
 
         const int hoverLimit = 1000;
@@ -102,6 +103,7 @@ namespace NodeMonog
 
         Graph graph;
         Engine engine;
+
 
 
         public Renderer(Graph graph, Engine engine)
@@ -135,14 +137,16 @@ namespace NodeMonog
 
             UserInterface.Initialize(Content, theme: "editorSourceCodePro");
 
+
+            foreach (Node item in graph.GetNodes())
+            {
+                drawNodes.Add(new DrawNode(new Vector2(),item));
+            }
             
-            selectedNode = (ShittyAssNode)graph.GetNodes()[0];
-
-            // cameraGoal = new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
+            //selectedNode = new DrawNode(graph.GetNodes()[0]);
 
 
-
-            ShittyAssNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
+            DrawNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
             simulationStatus = new TaskStatus(Status.Running);
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
             _ = RunSimulation();
@@ -154,14 +158,14 @@ namespace NodeMonog
             await Task.Run(() => {
                 float timeStep = -1;
                 for (int i = 0; i < 10000; i++) {
-                    ShittyAssNode.simulation.Advance((float)Math.Pow(10, timeStep));
-                    if (ShittyAssNode.simulation.WithinThreshold) {
+                    DrawNode.simulation.Advance((float)Math.Pow(10, timeStep));
+                    if (DrawNode.simulation.WithinThreshold) {
                         simulationStatus.Status = Status.MinimaReached;
                         return;
                     }
 
-                    var total = ShittyAssNode.simulation.GetTotalEnergy();
-                    timeStep = -((float)Math.Truncate(Math.Log10(ShittyAssNode.simulation.GetTotalEnergy())) + 1);
+                    var total = DrawNode.simulation.GetTotalEnergy();
+                    timeStep = -((float)Math.Truncate(Math.Log10(DrawNode.simulation.GetTotalEnergy())) + 1);
                     simulationStatus.TimeStep = (float)Math.Pow(10, timeStep);
                 }
                 simulationStatus.Status = Status.IterationCap;
@@ -248,20 +252,20 @@ namespace NodeMonog
                             case 2:
 
                                 bool allMiss = true;
-                                for (int i = 0; i < graph.GetConnections(selectedNode).Count; i++)
+                                for (int i = 0; i < graph.GetConnections(selectedNode.node).Count; i++)
                                 {
 
                                     if (
                             new Rectangle(x * 2 + 16, r.Height / 2 + i * 32, x, 32).Contains(nms.Position))
                                     {
 
-                                        ShittyAssNode n = (ShittyAssNode)graph.GetConnections(selectedNode)[i].Item2;
-                                        if (n == hoverNode)
+                                        Node n = graph.GetConnections(selectedNode.node)[i].Item2;
+                                        if (n == hoverNode.node)
                                         {
                                             hoverTime += gameTime.ElapsedGameTime.Milliseconds;
                                             break;
                                         }
-                                        hoverNode = n;
+                                        hoverNode = new DrawNode(drawNodes.Find(x => x.node == n).Position, n);
                                         hoverTime = 0;
                                         allMiss = false;
                                     }
@@ -288,8 +292,8 @@ namespace NodeMonog
 
                         for (int i = 0; i < graph.GetNodes().Count; i++)
                         {
-                            ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
-
+                            DrawNode currentNode = new DrawNode(drawNodes.Find(x => x.node == graph.GetNodes()[i]).Position, graph.GetNodes()[i]);
+                            
 
                             if (new Rectangle(cameraTransform(currentNode.Position).ToPoint(), new Point(
                                 (int)(64 * zoomlevel),
@@ -432,7 +436,7 @@ namespace NodeMonog
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
             string simStatusString = simulationStatus.Status switch
             {
-                Status.Running => $"Running\ntotal energy: {ShittyAssNode.simulation.GetTotalEnergy()}" +
+                Status.Running => $"Running\ntotal energy: {DrawNode.simulation.GetTotalEnergy()}" +
                 $"\ntimestep: {simulationStatus.TimeStep}",
                 Status.IterationCap => "Iteration cap reached",
                 Status.MinimaReached => "Local minima reached",
@@ -445,25 +449,26 @@ namespace NodeMonog
 
             for (int i = 0; i < graph.GetNodes().Count; i++)
             {
-                ShittyAssNode currentNode = (ShittyAssNode)graph.GetNodes()[i];
+                Node currentNode = graph.GetConnections(selectedNode.node)[i].Item2;
+                Vector2 currentNodePoistion = drawNodes.Find(x => x.node == currentNode).Position;
 
                 Color selectcolour;
                 float depth = 0.5f;
-                if (selectedNode == currentNode)
+                if (selectedNode.node == currentNode)
                 {
                     selectcolour = Color.Black;
                     depth = 0.2f;
                 }
-                else if(hoverNode == currentNode)
+                else if(hoverNode.node == currentNode)
                 {
                     selectcolour = Color.Red;
                     depth = 0.2f;
                 }
                 else selectcolour = new Color(0, 0, 0, 15);
 
-                foreach ((Connection c, ShittyAssNode n) in graph.GetConnections(currentNode).Select(parent => (parent.Item1, (ShittyAssNode)parent.Item2)))
+                foreach ((Connection c, Node n) in graph.GetConnections(currentNode))
                 {
-                    Vector2 arrowVector = (n.Position - currentNode.Position);
+                    Vector2 arrowVector = (drawNodes.Find(x => x.node == n).Position - currentNodePoistion);
                     double rotation = Math.Atan(arrowVector.Y / arrowVector.X);
                     if (arrowVector.X < 0) rotation += Math.PI;
 
@@ -473,7 +478,7 @@ namespace NodeMonog
 
 
                     spriteBatch.Draw(pixel,
-                        destinationRectangle: new Rectangle(cameraTransform((currentNode.Position + offsetPoint).ToPoint()),
+                        destinationRectangle: new Rectangle(cameraTransform((currentNodePoistion + offsetPoint).ToPoint()),
                         new Point(
                         (int)((arrowVector.Length()) * zoomlevel),
                          (int)(8 * zoomlevel))),
@@ -488,10 +493,10 @@ namespace NodeMonog
                 }
 
 
-                if (graph.GetConnections(selectedNode).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
+                if (graph.GetConnections(selectedNode.node).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
                 //Draws circles
                 spriteBatch.Draw(circle,
-                    destinationRectangle: new Rectangle(cameraTransform(currentNode.Position).ToPoint(),
+                    destinationRectangle: new Rectangle(cameraTransform(currentNodePoistion).ToPoint(),
                     new Point(
                     (int)(circleDiameter * zoomlevel),
                     (int)(circleDiameter * zoomlevel))),
@@ -508,8 +513,8 @@ namespace NodeMonog
                     Color fadeColour = Color.Black;
                     if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
                     spriteBatch.DrawString(arial,
-                        currentNode.NName,
-                        cameraTransform(currentNode.Position),
+                        currentNode.Name,
+                        cameraTransform(currentNodePoistion),
                         fadeColour,
                         0,
                         Vector2.Zero,
@@ -589,7 +594,7 @@ namespace NodeMonog
                 case 2:
 
                     int o = 0;
-                    foreach (KeyValuePair<string, int> kv in selectedNode.Traits)
+                    foreach (KeyValuePair<string, int> kv in selectedNode.node.Traits)
                     {
                         spriteBatch.DrawString(arial, kv.Key + ":   " + kv.Value, new Vector2(2 * centerX + 16, 64 + 32 * o++), Color.Black);
                      }
@@ -599,11 +604,11 @@ namespace NodeMonog
                             new Vector2(centerX * 2 + 32, r.Height / 2 - 32),
                             Color.Black);
 
-                    List<(Connection, ShittyAssNode)> d = graph.GetConnections(selectedNode).Select(parent => (parent.Item1, (ShittyAssNode)parent.Item2)).ToList(); ;
+                    List<(Connection, Node)> d = graph.GetConnections(selectedNode.node).Select(parent => (parent.Item1, parent.Item2)).ToList(); ;
                     for (int i = 0; i < d.Count; i++)
                     {
                         spriteBatch.DrawString(arial,
-                            d[i].Item2.NName, 
+                            d[i].Item2.Name, 
                             new Vector2(centerX * 2 + 16, r.Height / 2 + i * 32),
                             Color.Black);
                     }
@@ -632,4 +637,6 @@ namespace NodeMonog
             base.Draw(gameTime);
         }
     }
+
+
 }
