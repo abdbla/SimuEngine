@@ -24,8 +24,8 @@ namespace Implementation
             for (int i = 0; i < 150; i++) {
                 p.engine.system.Create<Person>(NodeCreationInfo.SystemStart);
             }
-            using (Renderer renderer = new Renderer(p.engine.system.graph, p.engine)) {
-                
+            using (Renderer renderer = new Renderer(p.engine.system.graph)) {
+                renderer.Run();
             }
         }
 
