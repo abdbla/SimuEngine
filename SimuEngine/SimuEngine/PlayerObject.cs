@@ -40,7 +40,7 @@ namespace SimuEngine
         public List<Event> Actions {
             get { return actions; }
         }
-        public override void NodeCreation(NodeCreationInfo info) {
+        public override void NodeCreation(Graph g, NodeCreationInfo info) {
             throw new Exception("Attempted to call NodeCreation on PlayerObject.");
         }
 

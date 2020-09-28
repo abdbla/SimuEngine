@@ -31,8 +31,8 @@ namespace Core.Physics {
             Point = new Point(initialPosition);
         }
 
-        public override void NodeCreation(NodeCreationInfo info) {
-            Inner.NodeCreation(info);
+        public override void NodeCreation(Graph g, NodeCreationInfo info) {
+            Inner.NodeCreation(g, info);
         }
 
         public void ApplyForce(Vector2 force) {
