@@ -106,6 +106,10 @@ namespace NodeMonog
         Engine engine;
 
 
+        PanelTabs tabs;
+        Panel outsidePanel;
+
+
 
         public Renderer(Graph graph, Engine engine)
         {
@@ -137,14 +141,31 @@ namespace NodeMonog
             graphics.ApplyChanges();
 
             UserInterface.Initialize(Content, theme: "editorSourceCodePro");
-            //Panel panel = new Panel(new Vector2(500, 500));
-            //
-            //Paragraph paragraph = new Paragraph("Hello world!");
-            //panel.AddChild(paragraph);
-            //UserInterface.Active.AddEntity(panel);
-            //
-            UserInterface.Active.ShowCursor = false;
+
+
+
+            outsidePanel = new Panel(new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height));
+            outsidePanel.Anchor = Anchor.TopRight;
+
+            tabs = new PanelTabs();
+
+            tabs.AddTab("Tab 1");
+            tabs.AddTab("Tab 2");
+            tabs.AddTab("Tab 3");
+            tabs.AddTab("Tab 4");
+            tabs.AddTab("Tab 5");
+
+
+            outsidePanel.AddChild(tabs);
+
             
+
+            
+            UserInterface.Active.AddEntity(outsidePanel);
+            UserInterface.Active.ShowCursor = false;
+
+
+            Window.ClientSizeChanged += resize;
 
 
             foreach (Node item in graph.GetNodes())
@@ -162,6 +183,12 @@ namespace NodeMonog
             _ = RunSimulation();
 
             base.Initialize();
+        }
+
+        void resize(object sender, EventArgs e)
+        {
+            outsidePanel.Size = new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height);
+            outsidePanel.Anchor = Anchor.TopRight;
         }
 
         async Task RunSimulation() {
@@ -251,7 +278,7 @@ namespace NodeMonog
                         else if (new Rectangle((int)(x * 2.6f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 3;
                         else if (new Rectangle((int)(x * 2.8f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 4;
 
-                        switch (selectedTab)
+                        /*switch (selectedTab)
                         {
                             case 0:
 
@@ -292,7 +319,9 @@ namespace NodeMonog
 
                             default:
                                 break;
-                        }
+                        }*/
+
+                    
 
                     }
                     //Vänsta hud klick
@@ -309,6 +338,10 @@ namespace NodeMonog
                                 (int)(64 * zoomlevel),
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
                             {
+                                engine.player.SelectNode(currentNode.node);
+
+
+
                                 selectedNode = currentNode;
                             };
 
@@ -372,6 +405,25 @@ namespace NodeMonog
 
             oms = nms;
 
+
+            if (Keyboard.GetState().IsKeyDown(Keys.B))
+            {
+                SelectList list = new SelectList(new Vector2(0, 280));
+                list.AddItem("item1");
+                list.AddItem("item2");
+                list.AddItem("item3");
+                list.AddItem("item4");
+                list.AddItem("item5");
+                list.AddItem("item6");
+                list.AddItem("item7");
+                list.OnRightClick = (Entity btn) =>
+                {
+
+                };
+                tabs.ActiveTab.panel.AddChild(list);
+
+                
+            }
 
             // TODO: Add your update logic here
 
@@ -442,7 +494,7 @@ namespace NodeMonog
             if (hoverNode == null) s = "Not hovering";
             else s = hoverNode.ToString();
             
-            spriteBatch.DrawString(arial, s + "   :   " + transitionAnimation, Vector2.Zero, Color.Black);
+            spriteBatch.DrawString(arial, s + "   :   " + UserInterface.Active.ActiveEntity , Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
             string simStatusString = simulationStatus.Status switch
