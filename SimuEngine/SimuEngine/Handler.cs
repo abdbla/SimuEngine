@@ -40,6 +40,9 @@ namespace SimuEngine
                             req = false; //if any are false, dont fire the event.
                         }
                     }
+                    if (ev.ReqGuaranteed.Count == 0) {
+                        req = false; //dont fire if it has no guaranteed requirements.
+                    }
                     if (req) {
                         foreach (var act in ev.Outcome) {
                             graph.Nodes[i].InvokeAction(act, localGraph, worldGraph); //seperate loop so as to not fire event for each requirement.
@@ -49,6 +52,9 @@ namespace SimuEngine
                             if (rng.NextDouble() <= ev.ReqPossible[j](graph.Nodes[i], localGraph, worldGraph)) {
                                 pos = false; //same over here as before, though the possible req returns a modifier on the chance to fire the event
                             }
+                        }
+                        if (ev.ReqPossible.Count == 0) {
+                            pos = false; //same as before
                         }
                     }
                     if (pos) {

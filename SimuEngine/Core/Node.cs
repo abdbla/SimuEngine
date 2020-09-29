@@ -11,8 +11,8 @@ namespace Core {
         public List<Connection> connections;
 
         //External properties, which can be accessed by any object or function.
-        public string Name { get; protected set; }
-        public Graph SubGraph { get; protected set; }
+        public string Name { get; set; }
+        public Graph SubGraph { get; set; }
         public ReadOnlyDictionary<string, int> Traits {
             get => new ReadOnlyDictionary<string, int>(traits);
         }
