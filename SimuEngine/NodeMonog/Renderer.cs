@@ -11,6 +11,7 @@ using SharpDX.Direct2D1.Effects;
 using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using GeonBit.UI;
+using GeonBit.UI.Entities;
 
 namespace NodeMonog
 {
@@ -136,6 +137,14 @@ namespace NodeMonog
             graphics.ApplyChanges();
 
             UserInterface.Initialize(Content, theme: "editorSourceCodePro");
+            //Panel panel = new Panel(new Vector2(500, 500));
+            //
+            //Paragraph paragraph = new Paragraph("Hello world!");
+            //panel.AddChild(paragraph);
+            //UserInterface.Active.AddEntity(panel);
+            //
+            UserInterface.Active.ShowCursor = false;
+            
 
 
             foreach (Node item in graph.GetNodes())
@@ -143,7 +152,7 @@ namespace NodeMonog
                 drawNodes.Add(new DrawNode(new Vector2(),item));
             }
             
-            //selectedNode = new DrawNode(graph.GetNodes()[0]);
+            selectedNode = new DrawNode(Vector2.Zero,graph.GetNodes()[0]);
 
 
             DrawNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
@@ -358,6 +367,7 @@ namespace NodeMonog
             animation += gameTime.ElapsedGameTime.Milliseconds;
             if (animation > animationRepeat) animation = 0;
 
+            UserInterface.Active.Update(gameTime);
 
             oms = nms;
 
@@ -449,7 +459,7 @@ namespace NodeMonog
 
             for (int i = 0; i < graph.GetNodes().Count; i++)
             {
-                Node currentNode = graph.GetConnections(selectedNode.node)[i].Item2;
+                Node currentNode = graph.GetNodes()[i];
                 Vector2 currentNodePoistion = drawNodes.Find(x => x.node == currentNode).Position;
 
                 Color selectcolour;
@@ -459,7 +469,7 @@ namespace NodeMonog
                     selectcolour = Color.Black;
                     depth = 0.2f;
                 }
-                else if(hoverNode.node == currentNode)
+                else if(hoverNode != null && hoverNode.node == currentNode)
                 {
                     selectcolour = Color.Red;
                     depth = 0.2f;
@@ -598,6 +608,10 @@ namespace NodeMonog
                     {
                         spriteBatch.DrawString(arial, kv.Key + ":   " + kv.Value, new Vector2(2 * centerX + 16, 64 + 32 * o++), Color.Black);
                      }
+                    foreach (string status in selectedNode.node.Statuses)
+                    {
+                        spriteBatch.DrawString(arial, status, new Vector2(2 * centerX + 16, 64 + 32 * o++), Color.Black);
+                    }
 
                     spriteBatch.DrawString(arial,
                             "Connections:",
@@ -630,7 +644,10 @@ namespace NodeMonog
                     break;
             }
 
+
             spriteBatch.End();
+
+            UserInterface.Active.Draw(spriteBatch);
 
             // TODO: Add your drawing code here
 

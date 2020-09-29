@@ -38,6 +38,7 @@ namespace Core {
             traits = new Dictionary<string, int>();
             groups = new List<Group>();
             connections = new List<Connection>();
+            Name = "";
         }
         public abstract void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty);
         public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph) {
