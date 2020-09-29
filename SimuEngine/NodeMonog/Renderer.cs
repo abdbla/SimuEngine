@@ -149,7 +149,7 @@ namespace NodeMonog
             DrawNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
             simulationStatus = new TaskStatus(Status.Running);
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
-            RunSimulation();
+            _ = RunSimulation();
 
             base.Initialize();
         }
