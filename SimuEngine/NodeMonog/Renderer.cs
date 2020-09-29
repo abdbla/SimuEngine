@@ -152,7 +152,8 @@ namespace NodeMonog
                 drawNodes.Add(new DrawNode(new Vector2(),item));
             }
             
-            selectedNode = new DrawNode(Vector2.Zero,graph.GetNodes()[0]);
+
+            selectedNode = new DrawNode(Vector2.Zero, graph.GetNodes()[0]);
 
 
             DrawNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
@@ -469,11 +470,12 @@ namespace NodeMonog
                     selectcolour = Color.Black;
                     depth = 0.2f;
                 }
-                else if(hoverNode != null && hoverNode.node == currentNode)
+                //else if(hoverNode != null && hoverNode.node == currentNode)
+                /*else if(hoverNode.node == currentNode)
                 {
                     selectcolour = Color.Red;
                     depth = 0.2f;
-                }
+                }*/
                 else selectcolour = new Color(0, 0, 0, 15);
 
                 foreach ((Connection c, Node n) in graph.GetConnections(currentNode))
