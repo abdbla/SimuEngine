@@ -65,7 +65,6 @@ namespace Implementation
             }
             using (Renderer renderer = new Renderer(p.engine.system.graph, p.engine)) {
                 renderer.Run();
-
             }
         }
 
@@ -127,6 +126,7 @@ namespace Implementation
     class Person : Node
     {
         static int id = 0;
+        static Random rng = new Random();
         public Person() : base() {
             this.Name = id++.ToString();
             return;
@@ -134,7 +134,6 @@ namespace Implementation
 
         public override void NodeCreation(Graph g, NodeCreationInfo info) {
             if (info == NodeCreationInfo.SystemStart) {
-                Random rng = new Random();
                 statuses.Add("Healthy");
                 traits.Add("Hygiene", rng.Next(1, 101));
                 traits.Add("Age", rng.Next(1, 101));
@@ -209,7 +208,7 @@ namespace Implementation
         }
 
         public override float Strength() {
-            return 100f - (float)Traits["Proximity"];
+            return (float)Traits["Proximity"] / 5f;
         }
     }
 }

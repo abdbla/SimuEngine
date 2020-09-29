@@ -49,7 +49,7 @@ namespace SimuEngine
                         }
                     } else {
                         for (int j = 0; j < ev.ReqPossible.Count; j++) {
-                            if (rng.NextDouble() <= ev.ReqPossible[j](graph.Nodes[i], localGraph, worldGraph)) {
+                            if (!(rng.NextDouble() <= ev.ReqPossible[j](graph.Nodes[i], localGraph, worldGraph))) {
                                 pos = false; //same over here as before, though the possible req returns a modifier on the chance to fire the event
                             }
                         }
