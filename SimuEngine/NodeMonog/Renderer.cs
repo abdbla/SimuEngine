@@ -402,7 +402,11 @@ namespace NodeMonog
 
                         }
 
-                        if (new Rectangle(0, r.Height - 256, 256, 256).Contains(nms.Position)) engine.handler.Tick(graph);
+                        if (new Rectangle(0, r.Height - 256, 256, 256).Contains(nms.Position))
+                        {
+                            engine.handler.Tick(graph);
+                            InitializeHud();
+                        }
 
 
                     }
