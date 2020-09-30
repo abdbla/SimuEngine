@@ -110,7 +110,6 @@ namespace NodeMonog
         Panel outsidePanel;
 
 
-
         public Renderer(Graph graph, Engine engine)
         {
             graphics = new GraphicsDeviceManager(this);
@@ -149,11 +148,17 @@ namespace NodeMonog
 
             tabs = new PanelTabs();
 
-            tabs.AddTab("Tab 1");
-            tabs.AddTab("Tab 2");
-            tabs.AddTab("Tab 3");
-            tabs.AddTab("Tab 4");
-            tabs.AddTab("Tab 5");
+            tabs.AddTab("Global");
+
+
+            tabs.AddTab("Group");
+            tabs.AddTab("Person");
+            tabs.AddTab("Options");
+            tabs.AddTab("Stats");
+
+            engine.player.SelectNode(graph.GetNodes()[0]);
+
+            InitializeHud();
 
 
             outsidePanel.AddChild(tabs);
@@ -185,6 +190,65 @@ namespace NodeMonog
             base.Initialize();
         }
 
+        public void InitializeHud()
+        {
+
+            Panel currentPanel;
+
+            tabs.SelectTab("Global");
+            currentPanel = tabs.ActiveTab.panel;
+            currentPanel.ClearChildren();
+
+
+
+            tabs.SelectTab("Group");
+            currentPanel = tabs.ActiveTab.panel;
+            currentPanel.AddChild(new Paragraph("Not implemented yet"));
+
+
+
+            tabs.SelectTab("Person");
+            currentPanel = tabs.ActiveTab.panel;
+            currentPanel.ClearChildren();
+
+            currentPanel.AddChild(new Header("Person"));
+            SelectList list = new SelectList(Anchor.TopCenter);
+            foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
+            {
+                list.AddItem(n.Name);
+                list.OnValueChange += delegate (Entity target)
+                {
+                    Node clickedNode = graph.GetNodes().Find(x => x.Name == list.SelectedValue);
+                    engine.player.SelectNode(clickedNode);
+                    selectedNode = drawNodes.Find(x => x.node == clickedNode);
+                    Console.WriteLine();
+                    InitializeHud();
+                    return;
+                };
+            }
+            currentPanel.AddChild(list);
+
+
+
+            tabs.SelectTab("Options");
+            currentPanel = tabs.ActiveTab.panel;
+            currentPanel.ClearChildren();
+            currentPanel.AddChild(new Header("Choices"));
+            
+
+
+            tabs.SelectTab("Stats");
+            currentPanel = tabs.ActiveTab.panel;
+            currentPanel = tabs.ActiveTab.panel;
+
+
+            //tabs.OnClick += delegate (Entity target) { return; };
+
+
+        }
+
+
+
         void resize(object sender, EventArgs e)
         {
             outsidePanel.Size = new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height);
@@ -207,6 +271,11 @@ namespace NodeMonog
                 }
                 simulationStatus.Status = Status.IterationCap;
             });
+        }
+
+        public void testDelegate(object sender, EventArgs e)
+        {
+            Console.WriteLine("called");
         }
 
         /// <summary>
@@ -339,9 +408,6 @@ namespace NodeMonog
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
                             {
                                 engine.player.SelectNode(currentNode.node);
-
-
-
                                 selectedNode = currentNode;
                             };
 
@@ -406,30 +472,32 @@ namespace NodeMonog
             oms = nms;
 
 
-            if (Keyboard.GetState().IsKeyDown(Keys.B))
-            {
-                SelectList list = new SelectList(new Vector2(0, 280));
-                list.AddItem("item1");
-                list.AddItem("item2");
-                list.AddItem("item3");
-                list.AddItem("item4");
-                list.AddItem("item5");
-                list.AddItem("item6");
-                list.AddItem("item7");
-                list.OnRightClick = (Entity btn) =>
-                {
-
-                };
-                tabs.ActiveTab.panel.AddChild(list);
-
-                
-            }
+            //if (Keyboard.GetState().IsKeyDown(Keys.B))
+            //{
+            //    SelectList list = new SelectList(new Vector2(0, 280));
+            //    list.AddItem("item1");
+            //    list.AddItem("item2");
+            //    list.AddItem("item3");
+            //    list.AddItem("item4");
+            //    list.AddItem("item5");
+            //    list.AddItem("item6");
+            //    list.AddItem("item7");
+            //    list.OnRightClick = (Entity btn) =>
+            //    {
+            //
+            //    };
+            //    tabs.ActiveTab.panel.AddChild(list);
+            //
+            //    
+            //}
 
             // TODO: Add your update logic here
+
 
             base.Update(gameTime);
         }
 
+        
 
 
 
