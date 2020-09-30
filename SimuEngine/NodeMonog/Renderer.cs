@@ -146,6 +146,11 @@ namespace NodeMonog
             outsidePanel = new Panel(new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height));
             outsidePanel.Anchor = Anchor.TopRight;
 
+            foreach (Node item in graph.GetNodes())
+            {
+                drawNodes.Add(new DrawNode(new Vector2(), item));
+            }
+
             tabs = new PanelTabs();
 
             tabs.AddTab("Global");
@@ -155,8 +160,14 @@ namespace NodeMonog
             tabs.AddTab("Person");
             tabs.AddTab("Options");
             tabs.AddTab("Stats");
+            //drawNodes.Find(x => x.node ==
+            selectedNode =  new DrawNode(Vector2.Zero,graph.GetNodes()[0]);
 
-            engine.player.SelectNode(graph.GetNodes()[0]);
+
+            engine.player.SelectNode(selectedNode.node);
+
+
+
 
             InitializeHud();
 
@@ -173,13 +184,9 @@ namespace NodeMonog
             Window.ClientSizeChanged += resize;
 
 
-            foreach (Node item in graph.GetNodes())
-            {
-                drawNodes.Add(new DrawNode(new Vector2(),item));
-            }
+            
             
 
-            selectedNode = new DrawNode(Vector2.Zero, graph.GetNodes()[0]);
 
 
             DrawNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
@@ -192,17 +199,34 @@ namespace NodeMonog
 
         public void InitializeHud()
         {
+            TabData selectedTab = tabs.ActiveTab;
+            
 
             Panel currentPanel;
 
             tabs.SelectTab("Global");
             currentPanel = tabs.ActiveTab.panel;
             currentPanel.ClearChildren();
+            SelectList eventList = new SelectList(Anchor.TopCenter);
+            foreach (Event e in engine.player.Actions)
+            {
+                eventList.AddItem(e.ToString());
+            }
+            eventList.OnValueChange += delegate (Entity target)
+            {
+                engine.player.ActivateAction(engine.player.Actions[eventList.SelectedIndex]);
+                Console.WriteLine();
+                InitializeHud();
+                return;
+            };
+
+            currentPanel.AddChild(eventList);
 
 
 
             tabs.SelectTab("Group");
             currentPanel = tabs.ActiveTab.panel;
+            currentPanel.ClearChildren();
             currentPanel.AddChild(new Paragraph("Not implemented yet"));
 
 
@@ -212,21 +236,33 @@ namespace NodeMonog
             currentPanel.ClearChildren();
 
             currentPanel.AddChild(new Header("Person"));
-            SelectList list = new SelectList(Anchor.TopCenter);
+            SelectList connectionList = new SelectList(Anchor.TopCenter);
             foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
             {
-                list.AddItem(n.Name);
-                list.OnValueChange += delegate (Entity target)
-                {
-                    Node clickedNode = graph.GetNodes().Find(x => x.Name == list.SelectedValue);
-                    engine.player.SelectNode(clickedNode);
-                    selectedNode = drawNodes.Find(x => x.node == clickedNode);
-                    Console.WriteLine();
-                    InitializeHud();
-                    return;
-                };
+                connectionList.AddItem(n.Name);
             }
-            currentPanel.AddChild(list);
+            connectionList.OnValueChange += delegate (Entity target)
+            {
+                Node clickedNode = graph.GetNodes().Find(x => x.Name == connectionList.SelectedValue);
+                engine.player.SelectNode(clickedNode);
+                selectedNode = drawNodes.Find(x => x.node == clickedNode);
+                Console.WriteLine();
+                InitializeHud();
+                return;
+            };
+            currentPanel.AddChild(connectionList);
+
+            SelectList traitList = new SelectList(Anchor.BottomCenter);
+            foreach (KeyValuePair<string, int> kv in selectedNode.node.Traits)
+            {
+                traitList.AddItem(kv.Key + ":   " + kv.Value);
+            }
+            foreach (string status in selectedNode.node.Statuses)
+            {
+                traitList.AddItem(status);
+            }
+
+            currentPanel.AddChild(traitList);
 
 
 
@@ -239,10 +275,11 @@ namespace NodeMonog
 
             tabs.SelectTab("Stats");
             currentPanel = tabs.ActiveTab.panel;
-            currentPanel = tabs.ActiveTab.panel;
+            currentPanel.ClearChildren();
 
 
-            //tabs.OnClick += delegate (Entity target) { return; };
+
+            tabs.SelectTab(selectedTab.name);
 
 
         }
@@ -334,63 +371,39 @@ namespace NodeMonog
             if (nms != oms)
             {
 
-                if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released)
+
+
+
+                //Vänsta hud
+                if (new Rectangle(0, 0, x * 2, r.Height).Contains(nms.Position))
                 {
-
-
-                    //Högra hud klick
-                    if (new Rectangle(x * 2, 0, x, r.Height).Contains(nms.Position))
-                    {
-                        if (new Rectangle(x * 2, 0, r.Width / 12, 16).Contains(nms.Position)) selectedTab = 0;
-                        else if (new Rectangle((int)(x * 2.2f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 1;
-                        else if (new Rectangle((int)(x * 2.4f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 2;
-                        else if (new Rectangle((int)(x * 2.6f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 3;
-                        else if (new Rectangle((int)(x * 2.8f), 0, x / 4, 16).Contains(nms.Position)) selectedTab = 4;
-
-                        /*switch (selectedTab)
-                        {
-                            case 0:
-
-                                break;
-                            case 1:
-
-                                break;
-                            case 2:
-
-                                bool allMiss = true;
-                                for (int i = 0; i < graph.GetConnections(selectedNode.node).Count; i++)
-                                {
-
-                                    if (
-                            new Rectangle(x * 2 + 16, r.Height / 2 + i * 32, x, 32).Contains(nms.Position))
-                                    {
-
-                                        Node n = graph.GetConnections(selectedNode.node)[i].Item2;
-                                        if (n == hoverNode.node)
-                                        {
-                                            hoverTime += gameTime.ElapsedGameTime.Milliseconds;
-                                            break;
-                                        }
-                                        hoverNode = new DrawNode(drawNodes.Find(x => x.node == n).Position, n);
-                                        hoverTime = 0;
-                                        allMiss = false;
-                                    }
-                                }
-                                if (allMiss)
-                                {
-                                    hoverTime = 0;
-                                    hoverNode = null;
-                                }
-                                break;
-                            case 3:
-
-                                break;
-
-                            default:
-                                break;
-                        }*/
-
                     
+                    if (nms.ScrollWheelValue != oms.ScrollWheelValue)
+                    {
+                        zoomlevel *= ((nms.ScrollWheelValue - oms.ScrollWheelValue) / 2000f) + 1f;
+                    }
+
+                    if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released)
+                    {
+
+                        for (int i = 0; i < graph.GetNodes().Count; i++)
+                        {
+                            DrawNode currentNode = new DrawNode(drawNodes.Find(x => x.node == graph.GetNodes()[i]).Position, graph.GetNodes()[i]);
+
+
+                            if (new Rectangle(CameraTransform(currentNode.Position).ToPoint(), new Point(
+                                (int)(64 * zoomlevel),
+                                (int)(64 * zoomlevel))).Contains(nms.Position))
+                            {
+                                engine.player.SelectNode(currentNode.node);
+                                selectedNode = currentNode;
+                                InitializeHud();
+                            };
+
+                        }
+
+                        if (new Rectangle(0, r.Height - 256, 256, 256).Contains(nms.Position)) engine.handler.Tick(graph);
+
 
                     }
                     //Vänsta hud klick
@@ -398,23 +411,7 @@ namespace NodeMonog
                     {
 
 
-                        for (int i = 0; i < graph.GetNodes().Count; i++)
-                        {
-                            DrawNode currentNode = new DrawNode(drawNodes.Find(x => x.node == graph.GetNodes()[i]).Position, graph.GetNodes()[i]);
-                            
 
-                            if (new Rectangle(cameraTransform(currentNode.Position).ToPoint(), new Point(
-                                (int)(64 * zoomlevel),
-                                (int)(64 * zoomlevel))).Contains(nms.Position))
-                            {
-                                engine.player.SelectNode(currentNode.node);
-                                selectedNode = currentNode;
-                            };
-
-
-                        }
-
-                        if (new Rectangle(0, r.Height - 256, 256, 256).Contains(nms.Position)) engine.handler.Tick(graph);
                     }
                 }
                 if (nms.LeftButton == ButtonState.Pressed)
@@ -433,11 +430,7 @@ namespace NodeMonog
                 {
                     dragtimer = 0;
                 }
-                if (nms.ScrollWheelValue != oms.ScrollWheelValue)
-                {
-                    zoomlevel *= ((nms.ScrollWheelValue - oms.ScrollWheelValue) / 2000f) + 1f;
-
-                }
+                
 
             }
 
@@ -472,24 +465,10 @@ namespace NodeMonog
             oms = nms;
 
 
-            //if (Keyboard.GetState().IsKeyDown(Keys.B))
-            //{
-            //    SelectList list = new SelectList(new Vector2(0, 280));
-            //    list.AddItem("item1");
-            //    list.AddItem("item2");
-            //    list.AddItem("item3");
-            //    list.AddItem("item4");
-            //    list.AddItem("item5");
-            //    list.AddItem("item6");
-            //    list.AddItem("item7");
-            //    list.OnRightClick = (Entity btn) =>
-            //    {
-            //
-            //    };
-            //    tabs.ActiveTab.panel.AddChild(list);
-            //
-            //    
-            //}
+            if (Keyboard.GetState().IsKeyDown(Keys.B))
+            {
+                engine.player.ActivateAction(engine.player.Actions[0]);
+            }
 
             // TODO: Add your update logic here
 
@@ -503,31 +482,31 @@ namespace NodeMonog
 
         //Methods to generalise and make more readable, aka make Theo happy
 
-        public Point cameraTransform(Point p)
+        public Point CameraTransform(Point p)
         {
             return new Point((int)((p.X - cameraPosition.X) * zoomlevel), (int)((p.Y - cameraPosition.Y) * zoomlevel)) +
                 new Point(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
         }
 
-        public Vector2 cameraTransform(Vector2 v)
+        public Vector2 CameraTransform(Vector2 v)
         {
             return (v - cameraPosition.ToVector2()) * (float)zoomlevel +
                 new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
         }
 
-        public Rectangle cameraTransform(Rectangle r) {
-            var newPoint = cameraTransform(r.Location);
+        public Rectangle CameraTransform(Rectangle r) {
+            var newPoint = CameraTransform(r.Location);
             var newScale = (r.Size.ToVector2() * (float)zoomlevel).ToPoint();
             return new Rectangle(newPoint, newScale);
         }
 
-        public Rectangle cameraTransform(Vector2 location, Vector2 size) {
-            var newLocation = cameraTransform(location);
+        public Rectangle CameraTransform(Vector2 location, Vector2 size) {
+            var newLocation = CameraTransform(location);
             var newSize = size * (float)zoomlevel;
             return new Rectangle(newLocation.ToPoint(), newSize.ToPoint());
         }
 
-        public int cameraTransform(int i, bool xAxis)
+        public int CameraTransform(int i, bool xAxis)
         {
             if (xAxis) return (int)((i + cameraPosition.X) * zoomlevel);
             else return (int)((i + cameraPosition.Y) * zoomlevel);
@@ -561,8 +540,8 @@ namespace NodeMonog
             string s;
             if (hoverNode == null) s = "Not hovering";
             else s = hoverNode.ToString();
-            
-            spriteBatch.DrawString(arial, s + "   :   " + UserInterface.Active.ActiveEntity , Vector2.Zero, Color.Black);
+
+            spriteBatch.DrawString(arial, s + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
             string simStatusString = simulationStatus.Status switch
@@ -610,7 +589,7 @@ namespace NodeMonog
 
 
                     spriteBatch.Draw(pixel,
-                        destinationRectangle: new Rectangle(cameraTransform((currentNodePoistion + offsetPoint).ToPoint()),
+                        destinationRectangle: new Rectangle(CameraTransform((currentNodePoistion + offsetPoint).ToPoint()),
                         new Point(
                         (int)((arrowVector.Length()) * zoomlevel),
                          (int)(8 * zoomlevel))),
@@ -628,7 +607,7 @@ namespace NodeMonog
                 if (graph.GetConnections(selectedNode.node).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
                 //Draws circles
                 spriteBatch.Draw(circle,
-                    destinationRectangle: new Rectangle(cameraTransform(currentNodePoistion).ToPoint(),
+                    destinationRectangle: new Rectangle(CameraTransform(currentNodePoistion).ToPoint(),
                     new Point(
                     (int)(circleDiameter * zoomlevel),
                     (int)(circleDiameter * zoomlevel))),
@@ -646,7 +625,7 @@ namespace NodeMonog
                     if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
                     spriteBatch.DrawString(arial,
                         currentNode.Name,
-                        cameraTransform(currentNodePoistion),
+                        CameraTransform(currentNodePoistion),
                         fadeColour,
                         0,
                         Vector2.Zero,
