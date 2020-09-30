@@ -11,14 +11,14 @@ namespace SimuEngine
 {
     public class PlayerObject : Node
     {
-        List<Event> actions;
+        List<(string, Event)> actions;
         Graph localGraph;
         Graph worldGraph;
         public Node selectedNode { get; private set; }
         public void ActivateAction(Event ev) {
-            foreach (Event act in actions) {
-                if (act == ev) {
-                    foreach (Action<Node, Graph, Graph> action in act.Outcome) {
+            foreach ((string, Event) act in actions) {
+                if (act.Item2 == ev) {
+                    foreach (Action<Node, Graph, Graph> action in act.Item2.Outcome) {
                         action(this, localGraph, worldGraph);
                     }
                 }
@@ -37,7 +37,7 @@ namespace SimuEngine
         public ReadOnlyCollection<Node> TopLevelNodes {
             get { return worldGraph.Nodes; }
         }
-        public List<Event> Actions {
+        public List<(string, Event)> Actions {
             get { return actions; }
         }
         public override void NodeCreation(Graph g, NodeCreationInfo info) {
@@ -50,7 +50,7 @@ namespace SimuEngine
         /// <param name="_localGraph">The graph it's started out looking at. Usually the same as worldGraph.</param>
         /// <param name="_worldGraph">The top-level graph, belongning to the GraphSystem.</param>
         /// <param name="_actions">the list of actions the PlayerObject can take.</param>
-        public PlayerObject(Graph _localGraph, Graph _worldGraph, List<Event> _actions) {
+        public PlayerObject(Graph _localGraph, Graph _worldGraph, List<(string, Event)> _actions) {
             localGraph = _localGraph;
             worldGraph = _worldGraph;
             actions = _actions;

@@ -13,7 +13,7 @@ namespace SimuEngine {
         /// </summary>
         /// <param name="actions">The actions that the PlayerObject can take.</param>
         /// <param name="eventListContainer">The events that different nodes can experience.</param>
-        public Engine(List<Event> actions, EventListContainer eventListContainer) {
+        public Engine(List<(string, Event)> actions, EventListContainer eventListContainer) {
             system = new GraphSystem();
             handler = new Handler(eventListContainer);
             player = new PlayerObject(system.graph, system.graph, actions);
