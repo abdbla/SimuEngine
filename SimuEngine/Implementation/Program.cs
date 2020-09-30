@@ -181,7 +181,7 @@ namespace Implementation
             personEvents[2].AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
-                chance = Math.Pow(101 - n.Traits["Age"], 14 - n.Traits["Infected Tíme"]);
+                chance = Math.Pow(101 - n.Traits["Age"], 14 - n.Traits["Infected Time"]);
                 return chance;
             });
             personEvents[2].AddOutcome(delegate (Node n, Graph l, Graph w) {
