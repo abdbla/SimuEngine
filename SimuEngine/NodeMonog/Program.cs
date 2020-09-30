@@ -21,7 +21,7 @@ namespace NodeMonog
             Graph g = new Graph();
             EventListContainer c = new EventListContainer();
             c.AddEventList(typeof(DrawNode), new List<Event>());
-            Engine e = new Engine(new List<Event>(), c);
+            Engine e = new Engine(new List<(string, Event)>(), c);
 
             Random r = new Random();
 

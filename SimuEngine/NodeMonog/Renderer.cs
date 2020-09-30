@@ -208,13 +208,13 @@ namespace NodeMonog
             currentPanel = tabs.ActiveTab.panel;
             currentPanel.ClearChildren();
             SelectList eventList = new SelectList(Anchor.TopCenter);
-            foreach (Event e in engine.player.Actions)
+            foreach ((string, Event) e in engine.player.Actions)
             {
-                eventList.AddItem(e.ToString());
+                eventList.AddItem(e.Item1);
             }
             eventList.OnValueChange += delegate (Entity target)
             {
-                engine.player.ActivateAction(engine.player.Actions[eventList.SelectedIndex]);
+                engine.player.ActivateAction(engine.player.Actions[eventList.SelectedIndex].Item2);
                 Console.WriteLine();
                 InitializeHud();
                 return;
@@ -467,12 +467,6 @@ namespace NodeMonog
             UserInterface.Active.Update(gameTime);
 
             oms = nms;
-
-
-            if (Keyboard.GetState().IsKeyDown(Keys.B))
-            {
-                engine.player.ActivateAction(engine.player.Actions[0]);
-            }
 
             // TODO: Add your update logic here
 

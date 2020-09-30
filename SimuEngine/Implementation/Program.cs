@@ -13,7 +13,7 @@ namespace Implementation
 {
     class Program
     {
-        List<Event> actions = new List<Event>();
+        List<(string, Event)> actions = new List<(string, Event)>();
         EventListContainer eventList = new EventListContainer();
         Engine engine;
 
@@ -69,11 +69,11 @@ namespace Implementation
         }
 
         private void InitializeEngine() {
-            actions.Add(new Event());
-            actions[0].ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
+            actions.Add(("Make healthy", new Event()));
+            actions[0].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
                 return 1;
             });
-            actions[0].Outcome.Add(delegate (Node n, Graph l, Graph w) {
+            actions[0].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
                 List<string> tStatus = engine.player.selectedNode.statuses;
                 tStatus.Add("Healthy");
                 tStatus.Remove("Infected");
@@ -81,23 +81,23 @@ namespace Implementation
                 tStatus.Remove("Recovered");
             });
 
-            actions.Add(new Event());
-            actions[1].ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
+            actions.Add(("Make infected", new Event()));
+            actions[1].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
                 return 1;
             });
-            actions[1].Outcome.Add(delegate (Node n, Graph l, Graph w) {
+            actions[1].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
                 List<string> tStatus = engine.player.selectedNode.statuses;
                 tStatus.Remove("Healthy");
                 tStatus.Add("Infected");
                 tStatus.Remove("Dead");
                 tStatus.Remove("Recovered");
             });
-            actions.Add(new Event());
-            actions[2].ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
+            actions.Add(("Make dead", new Event()));
+            actions[2].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
                 return 1;
             });
 
-            actions[2].Outcome.Add(delegate (Node n, Graph l, Graph w) {
+            actions[2].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
                 List<string> tStatus = engine.player.selectedNode.statuses;
                 tStatus.Remove("Healthy");
                 tStatus.Remove("Infected");
@@ -105,11 +105,11 @@ namespace Implementation
                 tStatus.Remove("Recovered");
             });
 
-            actions.Add(new Event());
-            actions[3].ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
+            actions.Add(("Make recovered", new Event()));
+            actions[3].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
                 return 1;
             });
-            actions[3].Outcome.Add(delegate (Node n, Graph l, Graph w) {
+            actions[3].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
                 List<string> tStatus = engine.player.selectedNode.statuses;
                 tStatus.Remove("Healthy");
                 tStatus.Remove("Infected");
@@ -151,10 +151,10 @@ namespace Implementation
             personEvents.Add(new Event());
             personEvents[0].AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
-                if (n.Statuses.Contains("Dead") || n.Statuses.Contains("Recovered")) return 0;
+                if (!n.Statuses.Contains("Healthy")) return 0;
                 foreach ((Connection, Node) m in l.GetConnections(n)) {
                     if (m.Item2.Statuses.Contains("Infected")) {
-                        chance += (double)(m.Item1.Traits["Proximity"] / 100) * (double)((100 - m.Item2.Traits["Hygiene"]) / 100) * (double)((100 - n.Traits["Hygiene"]) / 100);
+                        chance += (double)((m.Item1.Traits["Proximity"]) + (double)((100 - m.Item2.Traits["Hygiene"])) + (double)((100 - n.Traits["Hygiene"])) / 300);
                     }
                 }
                 return chance;
@@ -181,7 +181,7 @@ namespace Implementation
             personEvents[2].AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
-                chance = Math.Pow(101 - n.Traits["Age"], 14 - n.Traits["Infected Time"]);
+                chance = Math.Pow((101 - n.Traits["Age"]) / 100, 14 - n.Traits["Infected Time"]);
                 return chance;
             });
             personEvents[2].AddOutcome(delegate (Node n, Graph l, Graph w) {
