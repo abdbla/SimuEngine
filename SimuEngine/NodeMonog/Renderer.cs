@@ -474,10 +474,6 @@ namespace NodeMonog
             base.Update(gameTime);
         }
 
-        
-
-
-
         //Methods to generalise and make more readable, aka make Theo happy
 
         public Point CameraTransform(Point p)
@@ -604,13 +600,17 @@ namespace NodeMonog
 
                 if (graph.GetConnections(selectedNode.node).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
                 //Draws circles
+                var _color = Color.White;
+                if (currentNode.Statuses.Contains("Infected")) _color = Color.Red;
+                if (currentNode.Statuses.Contains("Dead")) _color = Color.Black;
+                if (currentNode.Statuses.Contains("Recovered")) _color = Color.Green;
                 spriteBatch.Draw(circle,
                     destinationRectangle: new Rectangle(CameraTransform(currentNodePoistion).ToPoint(),
                     new Point(
                     (int)(circleDiameter * zoomlevel),
                     (int)(circleDiameter * zoomlevel))),
                     sourceRectangle: null,
-                    color: Color.White,
+                    color: _color,
                     0,
                     Vector2.Zero,
                     SpriteEffects.None,
