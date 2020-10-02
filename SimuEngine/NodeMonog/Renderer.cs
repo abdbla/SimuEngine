@@ -659,7 +659,6 @@ namespace NodeMonog
 
             //Theos lab colours
             var startColor = LabColor.RgbToLab(new Color(0xA5, 0xD7, 0xC8));
-            Console.WriteLine(startColor);
             var endColor = LabColor.RgbToLab(new Color(0x48, 0x73, 0x66));
             float time = transitionAnimation / (float)animThreshold;
             time = 1 - (float)Math.Pow(1 - time, 3);

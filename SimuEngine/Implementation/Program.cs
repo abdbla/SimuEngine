@@ -154,7 +154,7 @@ namespace Implementation
                 if (!n.Statuses.Contains("Healthy")) return 0;
                 foreach ((Connection, Node) m in l.GetConnections(n)) {
                     if (m.Item2.Statuses.Contains("Infected")) {
-                        chance += (double)((m.Item1.Traits["Proximity"]) + (double)((100 - m.Item2.Traits["Hygiene"])) + (double)((100 - n.Traits["Hygiene"])) / 300);
+                        chance += (double)(m.Item1.Traits["Proximity"] + (double)(100 - m.Item2.Traits["Hygiene"]) + (double)(100 - n.Traits["Hygiene"]) / 300);
                     }
                 }
                 return chance;
@@ -169,7 +169,7 @@ namespace Implementation
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
                 if (n.Statuses.Contains("Asthmatic")) chance += 0.1;
-                chance += (double)(n.Traits["Age"] / 150);
+                chance += ((double)n.Traits["Age"] / (double)200);
                 return chance;
             });
             personEvents[1].AddOutcome(delegate (Node n, Graph l, Graph w) {
