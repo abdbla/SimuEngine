@@ -109,6 +109,14 @@ namespace NodeMonog
         PanelTabs tabs;
         Panel outsidePanel;
 
+        List<TabData> allTabs;
+
+        TabData global;
+        TabData group;
+        TabData person;
+        TabData stats;
+        TabData options;
+
 
         public Renderer(Graph graph, Engine engine)
         {
@@ -153,13 +161,16 @@ namespace NodeMonog
 
             tabs = new PanelTabs();
 
-            tabs.AddTab("Global");
+            global = tabs.AddTab("Global");
+            group = tabs.AddTab("Group");
+            person = tabs.AddTab("Person");
+            options = tabs.AddTab("Options");
+            stats = tabs.AddTab("Stats");
 
+            person.button.ButtonParagraph.WrapWords = false;
 
-            tabs.AddTab("Group");
-            tabs.AddTab("Person");
-            tabs.AddTab("Options");
-            tabs.AddTab("Stats");
+            allTabs = new List<TabData>() { global, group, person, options, stats };
+
             //drawNodes.Find(x => x.node ==
             selectedNode =  new DrawNode(Vector2.Zero,graph.GetNodes()[0]);
 
@@ -199,6 +210,11 @@ namespace NodeMonog
 
         public void InitializeHud()
         {
+            foreach (var tab in allTabs)
+            {
+                tab.button.ButtonParagraph.WrapWords = false;
+            }
+
             TabData selectedTab = tabs.ActiveTab;
             
 
@@ -230,11 +246,10 @@ namespace NodeMonog
             currentPanel.AddChild(new Paragraph("Not implemented yet"));
 
 
-
-            tabs.SelectTab("Person");
-            currentPanel = tabs.ActiveTab.panel;
+            currentPanel = stats.panel;
             currentPanel.ClearChildren();
 
+            currentPanel = person.panel;
             currentPanel.AddChild(new Header("Person"));
             SelectList connectionList = new SelectList(Anchor.TopCenter);
             foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
@@ -266,16 +281,14 @@ namespace NodeMonog
 
 
 
-            tabs.SelectTab("Options");
-            currentPanel = tabs.ActiveTab.panel;
-            currentPanel.ClearChildren();
-            currentPanel.AddChild(new Header("Choices"));
+            options.panel.ClearChildren();
+            options.panel.AddChild(new Header("Choices"));
             
 
 
             tabs.SelectTab("Stats");
             currentPanel = tabs.ActiveTab.panel;
-            currentPanel.ClearChildren();
+            stats.panel.ClearChildren();
 
 
 
