@@ -101,6 +101,7 @@ namespace NodeMonog
         const int hoverLimit = 1000;
 
         TaskStatus simulationStatus;
+        List<gameState> history = new List<gameState>();
 
         Graph graph;
         Engine engine;
@@ -167,16 +168,26 @@ namespace NodeMonog
             options = tabs.AddTab("Options");
             stats = tabs.AddTab("Stats");
 
-            person.button.ButtonParagraph.WrapWords = false;
+            
+
 
             allTabs = new List<TabData>() { global, group, person, options, stats };
 
-            //drawNodes.Find(x => x.node ==
+            foreach (var tab in allTabs)
+            {
+                tab.button.ButtonParagraph.WrapWords = false;
+            }
+
             selectedNode =  new DrawNode(Vector2.Zero,graph.GetNodes()[0]);
 
 
             engine.player.SelectNode(selectedNode.node);
 
+            history.Add(new gameState(
+                                alive: graph.FindAllNodes(x => x.statuses.Contains("Healthy")).Count,
+                                dead: graph.FindAllNodes(x => x.statuses.Contains("Dead")).Count,
+                                recovered: graph.FindAllNodes(x => x.statuses.Contains("Recovered")).Count,
+                                infected: graph.FindAllNodes(x => x.statuses.Contains("Infected")).Count));
 
 
 
@@ -192,7 +203,7 @@ namespace NodeMonog
             UserInterface.Active.ShowCursor = false;
 
 
-            Window.ClientSizeChanged += resize;
+            Window.ClientSizeChanged += resizeMenu;
 
 
             
@@ -210,16 +221,13 @@ namespace NodeMonog
 
         public void InitializeHud()
         {
-            foreach (var tab in allTabs)
-            {
-                tab.button.ButtonParagraph.WrapWords = false;
-            }
+            
 
-            TabData selectedTab = tabs.ActiveTab;
             Panel currentPanel;
 
-            tabs.SelectTab("Global");
-            currentPanel = tabs.ActiveTab.panel;
+
+
+            currentPanel = global.panel;
             currentPanel.ClearChildren();
             SelectList eventList = new SelectList(Anchor.TopCenter);
             foreach ((string, Event) e in engine.player.Actions)
@@ -238,14 +246,13 @@ namespace NodeMonog
 
 
 
-            tabs.SelectTab("Group");
-            currentPanel = tabs.ActiveTab.panel;
+            currentPanel = group.panel;
             currentPanel.ClearChildren();
             currentPanel.AddChild(new Paragraph("Not implemented yet"));
 
 
             currentPanel = stats.panel;
-            currentPanel.ClearChildren();
+            stats.panel.ClearChildren();
 
             currentPanel = person.panel;
             currentPanel.ClearChildren();
@@ -280,26 +287,25 @@ namespace NodeMonog
             currentPanel.AddChild(traitList);
 
 
-
-            options.panel.ClearChildren();
-            options.panel.AddChild(new Header("Choices"));
+            currentPanel = options.panel;
+            currentPanel.ClearChildren();
+            currentPanel.AddChild(new Header("Choices"));
             
 
 
-            tabs.SelectTab("Stats");
-            currentPanel = tabs.ActiveTab.panel;
-            stats.panel.ClearChildren();
-
-
-
-            tabs.SelectTab(selectedTab.name);
-
+            currentPanel = stats.panel;
+            currentPanel.ClearChildren();
+            currentPanel.AddChild(new Paragraph($"Ticks: {history.Count}"));
+            currentPanel.AddChild(new Paragraph($"Alive people {history.Last().alive}"));
+            currentPanel.AddChild(new Paragraph($"Infected {history.Last().infected}"));
+            currentPanel.AddChild(new Paragraph($"Dead people {history.Last().dead}"));
+            currentPanel.AddChild(new Paragraph($"Recovered people {history.Last().recovered}"));
 
         }
 
 
 
-        void resize(object sender, EventArgs e)
+        void resizeMenu(object sender, EventArgs e)
         {
             outsidePanel.Size = new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height);
             outsidePanel.Anchor = Anchor.TopRight;
@@ -415,9 +421,14 @@ namespace NodeMonog
 
                         }
 
-                        if (new Rectangle(0, r.Height - 256, 256, 256).Contains(nms.Position))
+                        if (new Rectangle(0, r.Height - 128, 128, 256).Contains(nms.Position))
                         {
                             engine.handler.Tick(graph);
+                            history.Add(new gameState(
+                                alive: graph.FindAllNodes(x => x.statuses.Contains("Healthy")).Count,
+                                dead: graph.FindAllNodes(x => x.statuses.Contains("Dead")).Count,
+                                recovered: graph.FindAllNodes(x => x.statuses.Contains("Recovered")).Count,
+                                infected: graph.FindAllNodes(x => x.statuses.Contains("Infected")).Count));
                             InitializeHud();
                         }
 
@@ -764,6 +775,23 @@ namespace NodeMonog
             // TODO: Add your drawing code here
 
             base.Draw(gameTime);
+        }
+    }
+
+
+    public class gameState
+    {
+        public int alive;
+        public int dead;
+        public int recovered;
+        public int infected;
+
+        public gameState(int alive, int dead, int recovered, int infected)
+        {
+            this.alive = alive;
+            this.dead = dead;
+            this.recovered = recovered;
+            this.infected = infected;
         }
     }
 
