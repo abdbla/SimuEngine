@@ -118,6 +118,9 @@ namespace NodeMonog
         TabData stats;
         TabData options;
 
+        //Options
+        bool cameraLock = true;
+
 
         public Renderer(Graph graph, Engine engine)
         {
@@ -162,13 +165,24 @@ namespace NodeMonog
 
             tabs = new PanelTabs();
 
-            global = tabs.AddTab("Global");
-            group = tabs.AddTab("Group");
-            person = tabs.AddTab("Person");
-            options = tabs.AddTab("Options");
-            stats = tabs.AddTab("Stats");
 
-            
+            global = tabs.AddTab("Global");
+            Vector2 offset = new Vector2(0, -global.button.CalcDestRect().Height / 3);
+            global.button.AddChild(new Icon(IconType.Map,Anchor.TopCenter, offset: offset));
+
+            group = tabs.AddTab("Group");
+            group.button.AddChild(new Icon(IconType.Map, Anchor.TopCenter, offset: offset));
+
+            person = tabs.AddTab("Person");
+            person.button.AddChild(new Icon(IconType.Map, Anchor.TopCenter, offset: offset));
+
+            options = tabs.AddTab("Options");
+            options.button.AddChild(new Icon(IconType.Map, Anchor.TopCenter, offset: offset));
+
+            stats = tabs.AddTab("Stats");
+            stats.button.AddChild(new Icon(IconType.Map, Anchor.TopCenter, offset: offset));
+
+
 
 
             allTabs = new List<TabData>() { global, group, person, options, stats };
@@ -189,6 +203,7 @@ namespace NodeMonog
                                 recovered: graph.FindAllNodes(x => x.statuses.Contains("Recovered")).Count,
                                 infected: graph.FindAllNodes(x => x.statuses.Contains("Infected")).Count));
 
+            resizeMenu(new object(), new EventArgs());
 
 
             InitializeHud();
@@ -205,7 +220,7 @@ namespace NodeMonog
 
             Window.ClientSizeChanged += resizeMenu;
 
-
+           
             
             
 
@@ -225,7 +240,8 @@ namespace NodeMonog
 
             Panel currentPanel;
 
-
+            Icon icon = new Icon(IconType.Sword);
+            tabs.AddChild(icon);
 
             currentPanel = global.panel;
             currentPanel.ClearChildren();
@@ -256,7 +272,7 @@ namespace NodeMonog
 
             currentPanel = person.panel;
             currentPanel.ClearChildren();
-            currentPanel.AddChild(new Header("Person"));
+            currentPanel.AddChild(new Header($"Person: {engine.player.selectedNode.Name}"));
             SelectList connectionList = new SelectList();
             foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
             {
@@ -271,6 +287,7 @@ namespace NodeMonog
                 InitializeHud();
                 return;
             };
+
             currentPanel.AddChild(new HorizontalLine());
             currentPanel.AddChild(connectionList);
 
@@ -289,7 +306,14 @@ namespace NodeMonog
 
             currentPanel = options.panel;
             currentPanel.ClearChildren();
-            currentPanel.AddChild(new Header("Choices"));
+            //currentPanel.AddChild(new VerticalScrollbar(1,10));
+            CheckBox box = new CheckBox("Camera Lock");
+            box.Checked = cameraLock;
+            box.OnValueChange += delegate (Entity target)
+            {
+                cameraLock = box.Checked;
+            };
+            currentPanel.AddChild(box);
             
 
 
@@ -300,7 +324,6 @@ namespace NodeMonog
             currentPanel.AddChild(new Paragraph($"Infected {history.Last().infected}"));
             currentPanel.AddChild(new Paragraph($"Dead people {history.Last().dead}"));
             currentPanel.AddChild(new Paragraph($"Recovered people {history.Last().recovered}"));
-
         }
 
 
@@ -309,6 +332,24 @@ namespace NodeMonog
         {
             outsidePanel.Size = new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height);
             outsidePanel.Anchor = Anchor.TopRight;
+            if(Window.ClientBounds.Width < 1500)
+            {
+                for (int i = 0; i < allTabs.Count; i++)
+                {
+                    allTabs[i].button.ButtonParagraph.Visible = false;
+                    allTabs[i].button.Children.First(x => x.GetType() == typeof(Icon)).Visible = true;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < allTabs.Count; i++)
+                {
+
+                    allTabs[i].button.ButtonParagraph.Visible = true;
+                    allTabs[i].button.Children.First(x => x.GetType() == typeof(Icon)).Visible = false;
+
+                }
+            }
         }
 
         async Task RunSimulation() {
@@ -387,10 +428,9 @@ namespace NodeMonog
                 Exit();
             MouseState nms = Mouse.GetState();
 
+            //Mouse is moved/pressed/Scrolled
             if (nms != oms)
             {
-
-
 
 
                 //Vänsta hud
@@ -421,8 +461,10 @@ namespace NodeMonog
 
                         }
 
-                        if (new Rectangle(0, r.Height - 128, 128, 256).Contains(nms.Position))
+                        
+                        if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position))
                         {
+                            //The tickbutton is pressed
                             engine.handler.Tick(graph);
                             history.Add(new gameState(
                                 alive: graph.FindAllNodes(x => x.statuses.Contains("Healthy")).Count,
@@ -434,32 +476,24 @@ namespace NodeMonog
 
 
                     }
-                    //Vänsta hud klick
-                    else
+
+                    if (nms.LeftButton == ButtonState.Pressed)
                     {
-
-
-
-                    }
-                }
-                if (nms.LeftButton == ButtonState.Pressed)
-                {
-                    if (!new Rectangle(x * 2, 0, x, r.Height).Contains(nms.Position))
-                    {
-                        if (dragtimer > 50)
+                        if (!new Rectangle(x * 2, 0, x, r.Height).Contains(nms.Position))
                         {
-                            cameraPosition -=  ((nms.Position - oms.Position).ToVector2() / (float)zoomlevel).ToPoint();
-                            cameraVelocity = Vector2.Zero;
+                            if (dragtimer > 50)
+                            {
+                                cameraPosition -= ((nms.Position - oms.Position).ToVector2() / (float)zoomlevel).ToPoint();
+                                cameraVelocity = Vector2.Zero;
+                            }
+                            else dragtimer += gameTime.ElapsedGameTime.Milliseconds;
                         }
-                        else dragtimer += gameTime.ElapsedGameTime.Milliseconds;
+                    }
+                    else if (oms.LeftButton == ButtonState.Pressed && nms.LeftButton == ButtonState.Released)
+                    {
+                        dragtimer = 0;
                     }
                 }
-                else if (oms.LeftButton == ButtonState.Pressed && nms.LeftButton == ButtonState.Released)
-                {
-                    dragtimer = 0;
-                }
-                
-
             }
 
            
@@ -472,7 +506,7 @@ namespace NodeMonog
             {
                 cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             }
-            if (!Keyboard.GetState().IsKeyDown(Keys.S))
+            if (cameraLock)
             {
                 cameraPosition += (cameraVelocity * gameTime.ElapsedGameTime.Milliseconds).ToPoint();
             }
@@ -532,10 +566,6 @@ namespace NodeMonog
 
 
 
-
-
-
-
         /// <summary>
         /// This is called when the game should draw itself.
         /// </summary>
@@ -555,11 +585,8 @@ namespace NodeMonog
 
             int centerX = r.Width / 3;
 
-            string s;
-            if (hoverNode == null) s = "Not hovering";
-            else s = hoverNode.ToString();
 
-            spriteBatch.DrawString(arial, s + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
+            spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
             string simStatusString = simulationStatus.Status switch
@@ -587,12 +614,6 @@ namespace NodeMonog
                     selectcolour = Color.Black;
                     depth = 0.2f;
                 }
-                //else if(hoverNode != null && hoverNode.node == currentNode)
-                /*else if(hoverNode.node == currentNode)
-                {
-                    selectcolour = Color.Red;
-                    depth = 0.2f;
-                }*/
                 else selectcolour = new Color(0, 0, 0, 15);
 
                 foreach ((Connection c, Node n) in graph.GetConnections(currentNode))
@@ -659,7 +680,7 @@ namespace NodeMonog
 
             //Theos lab colours
             var startColor = LabColor.RgbToLab(new Color(0xA5, 0xD7, 0xC8));
-            Console.WriteLine(startColor);
+            //Console.WriteLine(startColor);
             var endColor = LabColor.RgbToLab(new Color(0x48, 0x73, 0x66));
             float time = transitionAnimation / (float)animThreshold;
             time = 1 - (float)Math.Pow(1 - time, 3);
@@ -667,106 +688,7 @@ namespace NodeMonog
 
 
 
-            spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
-
-
-            spriteBatch.Draw(pixel, new Rectangle(centerX * 2, 16, centerX + 1, r.Height - 16), null,Color.DarkGray,
-                    0,
-                    Vector2.Zero,
-                    SpriteEffects.None,
-                    0.08f);
-            spriteBatch.Draw(topCurve, new Rectangle(centerX * 2 + centerX / 5 * selectedTab, 0, centerX / 5, 16), null,Color.DarkGray,
-                    0,
-                    Vector2.Zero,
-                    SpriteEffects.None,
-                    0.08f);
-
-
-
-            spriteBatch.DrawString(arial, "Global", new Vector2(centerX * 2 + 2, 0), Color.Black,
-                    0,
-                    Vector2.Zero,
-                    1f,
-                    SpriteEffects.None,
-                    0.05f);
-            spriteBatch.DrawString(arial, "Group", new Vector2(centerX * 2.2f + 2, 0), Color.Black,
-                    0,
-                    Vector2.Zero,
-                    1f,
-                    SpriteEffects.None,
-                    0.05f);
-            spriteBatch.DrawString(arial, "Person", new Vector2(centerX * 2.4f + 2, 0), Color.Black,
-                    0,
-                    Vector2.Zero,
-                    1f,
-                    SpriteEffects.None,
-                    0.05f);
-            spriteBatch.DrawString(arial, "Stats", new Vector2(centerX * 2.6f + 2, 0), Color.Black,
-                    0,
-                    Vector2.Zero,
-                    1f,
-                    SpriteEffects.None,
-                    0.05f);
-
-            spriteBatch.DrawString(arial, "Options", new Vector2(centerX * 2.80f + 2, 0), Color.Black,
-                    0,
-                    Vector2.Zero,
-                    1f,
-                    SpriteEffects.None,
-                    0.05f);
-
-
-            switch (selectedTab)
-            {
-                case 0:
-
-                    break;
-                case 1:
-
-                    break;
-                case 2:
-
-                    int o = 0;
-                    foreach (KeyValuePair<string, int> kv in selectedNode.node.Traits)
-                    {
-                        spriteBatch.DrawString(arial, kv.Key + ":   " + kv.Value, new Vector2(2 * centerX + 16, 64 + 32 * o++), Color.Black);
-                     }
-                    foreach (string status in selectedNode.node.Statuses)
-                    {
-                        spriteBatch.DrawString(arial, status, new Vector2(2 * centerX + 16, 64 + 32 * o++), Color.Black);
-                    }
-
-                    spriteBatch.DrawString(arial,
-                            "Connections:",
-                            new Vector2(centerX * 2 + 32, r.Height / 2 - 32),
-                            Color.Black);
-
-                    List<(Connection, Node)> d = graph.GetConnections(selectedNode.node).Select(parent => (parent.Item1, parent.Item2)).ToList(); ;
-                    for (int i = 0; i < d.Count; i++)
-                    {
-                        spriteBatch.DrawString(arial,
-                            d[i].Item2.Name, 
-                            new Vector2(centerX * 2 + 16, r.Height / 2 + i * 32),
-                            Color.Black);
-                    }
-
-                    break;
-                case 3:
-                    if (r.Width > 720)
-                    {
-                        for (int i = 0; i < (centerX / 32) - 1; i++)
-                        {
-                            for (int j = 0; j < (r.Height / 3) / 32; j++)
-                            {
-                                spriteBatch.Draw(square, new Rectangle(centerX * 2 + ((centerX % 32) + 32) / 2 + i * 32, r.Height / 3 * 2 + j * 32 - 64, 32, 32), Color.Black);
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-
+            
 
             spriteBatch.End();
 
