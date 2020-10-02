@@ -216,8 +216,6 @@ namespace NodeMonog
             }
 
             TabData selectedTab = tabs.ActiveTab;
-            
-
             Panel currentPanel;
 
             tabs.SelectTab("Global");
@@ -250,8 +248,9 @@ namespace NodeMonog
             currentPanel.ClearChildren();
 
             currentPanel = person.panel;
+            currentPanel.ClearChildren();
             currentPanel.AddChild(new Header("Person"));
-            SelectList connectionList = new SelectList(Anchor.TopCenter);
+            SelectList connectionList = new SelectList();
             foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
             {
                 connectionList.AddItem(n.Name);
@@ -265,9 +264,10 @@ namespace NodeMonog
                 InitializeHud();
                 return;
             };
+            currentPanel.AddChild(new HorizontalLine());
             currentPanel.AddChild(connectionList);
 
-            SelectList traitList = new SelectList(Anchor.BottomCenter);
+            SelectList traitList = new SelectList();
             foreach (KeyValuePair<string, int> kv in selectedNode.node.Traits)
             {
                 traitList.AddItem(kv.Key + ":   " + kv.Value);
