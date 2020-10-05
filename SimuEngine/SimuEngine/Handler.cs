@@ -56,10 +56,10 @@ namespace SimuEngine
                         if (ev.ReqPossible.Count == 0) {
                             pos = false; //same as before
                         }
-                        if (pos) {
-                            foreach (var act in ev.Outcome) {
-                                graph.Nodes[i].InvokeAction(act, localGraph, worldGraph);
-                            }
+                    }
+                    if (pos) {
+                        foreach (var act in ev.Outcome) {
+                            graph.Nodes[i].InvokeAction(act, localGraph, worldGraph);
                         }
                     }
                 }
