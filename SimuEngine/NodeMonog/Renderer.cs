@@ -71,7 +71,7 @@ namespace NodeMonog
         MouseState oms = Mouse.GetState();
 
         // hud elements:
-        Texture2D circle, pixel, topCurve, tickButton, square, arrow;
+        Texture2D circle, pixel, tickButton, square, arrow;
         SpriteFont arial;
         int selectedTab = 0;
 
@@ -168,19 +168,32 @@ namespace NodeMonog
 
             global = tabs.AddTab("Global");
             Vector2 offset = new Vector2(0, -global.button.CalcDestRect().Height / 3);
-            global.button.AddChild(new Icon(IconType.Map,Anchor.TopCenter, offset: offset));
+            Vector2 size =   new Vector2(global.button.CalcDestRect().Height / 3, global.button.CalcDestRect().Height / 3);
+            Image globalI = new Image(Content.Load<Texture2D>(@"GlobeIcon"), size: size * 2.25f, offset: offset, anchor: Anchor.TopCenter);
+            globalI.ClickThrough = true;
+            global.button.AddChild(globalI);
+
 
             group = tabs.AddTab("Group");
-            group.button.AddChild(new Icon(IconType.Map, Anchor.TopCenter, offset: offset));
-
+            Image groupI = new Image(Content.Load<Texture2D>(@"GroupIcon"), size: size * 2.25f, offset: offset, anchor: Anchor.TopCenter);
+            groupI.ClickThrough = true;
+            group.button.AddChild(groupI);
+            
             person = tabs.AddTab("Person");
-            person.button.AddChild(new Icon(IconType.Map, Anchor.TopCenter, offset: offset));
-
+            Image personI = new Image(Content.Load<Texture2D>(@"PersonIcon") , size: size * 2.25f,offset: offset,anchor: Anchor.TopCenter);
+            personI.ClickThrough = true;
+            person.button.AddChild(personI);
+            
             options = tabs.AddTab("Options");
-            options.button.AddChild(new Icon(IconType.Map, Anchor.TopCenter, offset: offset));
+            Image optI = new Image(Content.Load<Texture2D>(@"GearIcon"), size: size * 2.25f, anchor: Anchor.TopCenter, offset: offset);
+            optI.ClickThrough = true;
+            options.button.AddChild(optI);
+
 
             stats = tabs.AddTab("Stats");
-            stats.button.AddChild(new Icon(IconType.Map, Anchor.TopCenter, offset: offset));
+            Image satsI = new Image(Content.Load<Texture2D>(@"StatsIcon"), size: size * 2.25f, anchor: Anchor.TopCenter, offset: offset);
+            satsI.ClickThrough = true;
+            stats.button.AddChild(satsI);
 
 
 
@@ -189,7 +202,8 @@ namespace NodeMonog
 
             foreach (var tab in allTabs)
             {
-                tab.button.ButtonParagraph.WrapWords = false;
+                tab.button.ButtonParagraph.Visible = false;
+                tab.button.Children.First(x => x.GetType() == typeof(Image) || x.GetType() == typeof(Icon)).Visible = true;
             }
 
             selectedNode =  new DrawNode(Vector2.Zero,graph.GetNodes()[0]);
@@ -240,8 +254,6 @@ namespace NodeMonog
 
             Panel currentPanel;
 
-            Icon icon = new Icon(IconType.Sword);
-            tabs.AddChild(icon);
 
             currentPanel = global.panel;
             currentPanel.ClearChildren();
@@ -272,7 +284,7 @@ namespace NodeMonog
 
             currentPanel = person.panel;
             currentPanel.ClearChildren();
-            currentPanel.AddChild(new Header($"Person: {engine.player.selectedNode.Name}"));
+            currentPanel.AddChild(new Header(engine.player.selectedNode.Name));
             SelectList connectionList = new SelectList();
             foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
             {
@@ -332,24 +344,7 @@ namespace NodeMonog
         {
             outsidePanel.Size = new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height);
             outsidePanel.Anchor = Anchor.TopRight;
-            if(Window.ClientBounds.Width < 1500)
-            {
-                for (int i = 0; i < allTabs.Count; i++)
-                {
-                    allTabs[i].button.ButtonParagraph.Visible = false;
-                    allTabs[i].button.Children.First(x => x.GetType() == typeof(Icon)).Visible = true;
-                }
-            }
-            else
-            {
-                for (int i = 0; i < allTabs.Count; i++)
-                {
-
-                    allTabs[i].button.ButtonParagraph.Visible = true;
-                    allTabs[i].button.Children.First(x => x.GetType() == typeof(Icon)).Visible = false;
-
-                }
-            }
+            
         }
 
         async Task RunSimulation() {
@@ -386,10 +381,10 @@ namespace NodeMonog
             arial = Content.Load<SpriteFont>(@"Arial");
             circle = Content.Load<Texture2D>(@"circle");
             pixel = Content.Load<Texture2D>(@"pixel");
-            topCurve = Content.Load<Texture2D>(@"topCurve");
             tickButton = Content.Load<Texture2D>(@"TickButton");
             square = Content.Load<Texture2D>(@"transparantSquare");
             arrow = Content.Load<Texture2D>(@"Arrow");
+
 
 
             // TODO: use this.Content to load your game content here
