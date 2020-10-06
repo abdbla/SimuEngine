@@ -169,7 +169,7 @@ namespace Implementation
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
                 if (n.Statuses.Contains("Asthmatic")) chance += 0.1;
-                chance += (double)(n.Traits["Age"] / 150);
+                chance += ((double)n.Traits["Age"] / 150d);
                 return chance;
             });
             personEvents[1].AddOutcome(delegate (Node n, Graph l, Graph w) {
