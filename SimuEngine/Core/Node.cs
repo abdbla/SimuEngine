@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 
 namespace Core {
     public abstract class Node {
+        public static Random rng = new Random(); 
         //Internal fields, only meant to be accessed by internal functions, such as Events and the PlayerObject.
         public Dictionary<string, int> traits;
         public List<string> statuses;

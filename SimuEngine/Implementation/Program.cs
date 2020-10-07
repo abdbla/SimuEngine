@@ -22,12 +22,17 @@ namespace Implementation
             //TODO: Create implementation running code
             p.InitializeEngine();
             List<Person> more = new List<Person>();
-            for (int i = 0; i < 150; i++) {
-                p.engine.system.Create<Person>(NodeCreationInfo.SystemStart);
-                more.Add((Person)p.engine.system.graph.Nodes[i]);
-                p.engine.system.graph.Nodes[i].Name = i.ToString();
+            for (int i = 0; i < 20; i++) {
+                p.engine.system.graph.groups.Add(new PersonGroup());
             }
             for (int i = 0; i < 150; i++) {
+                GraphSystem s = p.engine.system;
+                s.Create<Person>(NodeCreationInfo.SystemStart);
+                Node n = p.engine.system.graph.Nodes[i];
+                more.Add((Person)n);
+                n.Name = i.ToString();
+                n.groups.Add(s.graph.groups[i % 20]);
+                n.groups[0].members.Add(n);
             }
 
             Dictionary<Person, int> totalConns = new Dictionary<Person, int>();
@@ -35,22 +40,32 @@ namespace Implementation
             List<Person> remaining = new List<Person>();
             remaining.AddRange(more);
 
-            var rng = new Random();
+            var rng = Node.rng;
             for (int i = 0; i < more.Count; i++) {
                 totalConns[more[i]] = rng.Next(2, 5);
                 curConns[more[i]] = 0;
             }
 
             while (remaining.Count > 1) {
+                bool inter = false;
+                if (rng.NextDouble() <= 0.1) inter = true;
                 var x1 = rng.Next(remaining.Count);
-                var x2 = rng.Next(remaining.Count);
-                if (x1 == x2) {
+                var x2 = rng.Next(remaining[x1].groups[0].members.Count);
+                if (inter) { x2 = rng.Next(remaining.Count); }
+                if (!inter && (x1 == remaining.FindIndex(n => n == remaining[x1].groups[0].members[x2])) 
+                    || (x1 == x2 && inter)){
                     continue;
                 }
                 var node1 = remaining[x1];
-                var node2 = remaining[x2];
-                p.engine.system.graph.AddConnection(node1, node2, new PersonConnection());
-                p.engine.system.graph.AddConnection(node2, node1, new PersonConnection());
+                Person node2;
+                if (inter) {
+                    node2 = remaining[x2];
+                } else {
+                    node2 = (Person)remaining[x1].groups[0].members[x2];
+                }
+                string ctype = inter ? "Interconnection" : node2.groups[0].statuses[0];
+                p.engine.system.graph.AddConnection(node1, node2, new PersonConnection(ctype));
+                p.engine.system.graph.AddConnection(node2, node1, new PersonConnection(ctype));
                 curConns[node1] += 1;
                 curConns[node2] += 1;
                 if (curConns[node1] == totalConns[node1]) {
@@ -60,7 +75,7 @@ namespace Implementation
                     remaining.RemoveAt(x1);
                 }
                 if (curConns[node2] == totalConns[node2]) {
-                    remaining.RemoveAt(x2);
+                    remaining.RemoveAll(n => n == node2);
                 }
             }
             using (Renderer renderer = new Renderer(p.engine.system.graph, p.engine)) {
@@ -126,7 +141,6 @@ namespace Implementation
     class Person : Node
     {
         static int id = 0;
-        static Random rng = new Random();
         public Person() : base() {
             this.Name = id++.ToString();
             return;
@@ -203,12 +217,51 @@ namespace Implementation
 
     class PersonConnection : Connection
     {
-        public PersonConnection() : base() {
-            traits.Add("Proximity", new Random().Next(1, 101));
+        public PersonConnection(string t) : base() {
+            switch (t) {
+                case "Family":
+                    traits.Add("Proximity", Node.rng.Next(75, 101));
+                    break;
+                case "Friends":
+                    traits.Add("Proximity", Node.rng.Next(40, 76));
+                    break;
+                case "Work":
+                    traits.Add("Proximity", Node.rng.Next(25, 61));
+                    break;
+                case "Acquiantances":
+                    traits.Add("Proximity", Node.rng.Next(5, 46));
+                    break;
+                default:
+                    traits.Add("Proximity", Node.rng.Next(1, 101));
+                    break;
+            }
         }
 
         public override float Strength() {
             return (float)Traits["Proximity"] / 5f;
+        }
+    }
+
+    class PersonGroup : Group
+    {
+        static int id = 0;
+        int idx;
+        public PersonGroup() : base() {
+            switch (Node.rng.Next(1, 5)) {
+                case 1:
+                    statuses.Add($"Family");
+                    break;
+                case 2:
+                    statuses.Add($"Work");
+                    break;
+                case 3:
+                    statuses.Add($"Friends");
+                    break;
+                default:
+                    statuses.Add($"Acquiantances");
+                    break;
+            }
+            idx = ++id;
         }
     }
 }

@@ -89,7 +89,6 @@ namespace NodeMonog
             List<DrawNode> remaining = new List<DrawNode>();
             remaining.AddRange(more);
 
-            var rng = new Random();
             for (int i = 0; i < more.Count; i++)
             {
                 totalConns[more[i]] = rng.Next(2, 10);

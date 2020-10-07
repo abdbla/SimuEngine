@@ -14,7 +14,6 @@ namespace Core.Physics {
         public float Mass { get; set; }
         public Point Point;
         public Node Inner { get; private set; }
-        private static Random rng = new Random();
         public bool Pinned;
         public PhysicsNode(Node node) {
             var x = (float)((rng.NextDouble() - .5) * 10.0);

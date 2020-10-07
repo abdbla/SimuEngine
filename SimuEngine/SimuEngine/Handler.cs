@@ -24,17 +24,18 @@ namespace SimuEngine
         {
             graphTree ??= new List<Graph>();
             List<Graph> graphs = new List<Graph>();
+            List<(Node, Action<Node, Graph, Graph>)> stack = new List<(Node, Action<Node, Graph, Graph>)>();
             graphs.AddRange(graphTree);
             graphs.Add(graph);
+            var worldGraph = graphs[0];
+            var localGraph = graphs[graphs.Count - 1];
 
             for (int i = 0; i < graph.Nodes.Count; i++) {
                 List<Event> posEvents = new List<Event>();
-                Random rng = new Random();
+                Random rng = Node.rng;
                 foreach (Event ev in events.GetEventList(graph.Nodes[i].GetType())) {
                     bool req = true;
                     bool pos = true;
-                    var worldGraph = graphs[0];
-                    var localGraph = graphs[graphs.Count - 1];
                     for (int j = 0; j < ev.ReqGuaranteed.Count; j++) { // Check each requirement
                         if (!ev.ReqGuaranteed[j](graph.Nodes[i], localGraph, worldGraph)) {
                             req = false; //if any are false, dont fire the event.
@@ -45,7 +46,7 @@ namespace SimuEngine
                     }
                     if (req) {
                         foreach (var act in ev.Outcome) {
-                            graph.Nodes[i].InvokeAction(act, localGraph, worldGraph); //seperate loop so as to not fire event for each requirement.
+                            stack.Add((graph.Nodes[i], act));
                         }
                     } else {
                         for (int j = 0; j < ev.ReqPossible.Count; j++) {
@@ -59,7 +60,7 @@ namespace SimuEngine
                     }
                     if (pos) {
                         foreach (var act in ev.Outcome) {
-                            graph.Nodes[i].InvokeAction(act, localGraph, worldGraph);
+                            stack.Add((graph.Nodes[i], act));
                         }
                     }
                 }
@@ -67,6 +68,10 @@ namespace SimuEngine
                 if (graph.Nodes[i].SubGraph != null) {
                     Tick(graph.Nodes[i].SubGraph, graphs);
                 }
+            }
+
+            foreach (var item in stack) {
+                item.Item1.InvokeAction(item.Item2, localGraph, worldGraph);
             }
         }
 

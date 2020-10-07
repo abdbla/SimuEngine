@@ -12,11 +12,13 @@ namespace Core {
         public IEnumerable<Connection> Connections { get => adjacencyMatrix.Values; }
         private List<Node> nodes;
         public ReadOnlyCollection<Node> Nodes => nodes.AsReadOnly();
+        public List<Group> groups;
         Dictionary<(int, int), Connection> adjacencyMatrix;
         Dictionary<Node, int> indexLookup;
 
         public Graph() {
             nodes = new List<Node>();
+            groups = new List<Group>();
             indexLookup = new Dictionary<Node, int>();
             adjacencyMatrix = new Dictionary<(int, int), Connection>();
             currentIndex = 0;

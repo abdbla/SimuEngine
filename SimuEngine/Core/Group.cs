@@ -6,9 +6,9 @@ namespace Core {
     public abstract class Group
     {
         //Internal fields, see Node.
-        protected List<string> statuses;
-        protected Dictionary<string, int> traits;
-        protected List<Node> members;
+        public List<string> statuses;
+        public Dictionary<string, int> traits;
+        public List<Node> members;
 
         //External properties, see Node.
         public ReadOnlyDictionary<string, int> Traits {
