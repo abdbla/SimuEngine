@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using GeonBit.UI;
 using GeonBit.UI.Entities;
+using System.Collections.ObjectModel;
+using System.Security.Principal;
 
 namespace NodeMonog
 {
@@ -22,10 +24,12 @@ namespace NodeMonog
     }
 
     class StatusWrapper {
-        public Status inner;
+        public Status status;
         public float timestep;
+        public int iterationCount;
         public StatusWrapper(Status init) {
-            inner = init;
+            status = init;
+            iterationCount = 0;
         }
     }
 
@@ -34,12 +38,12 @@ namespace NodeMonog
         public Status Status {
             get {
                 lock (status) {
-                    return status.inner;
+                    return status.status;
                 }
             }
             set {
                 lock (status) {
-                    status.inner = value;
+                    status.status = value;
                 }
             }
         }
@@ -52,12 +56,26 @@ namespace NodeMonog
             set {
                 lock (status) {
                     status.timestep = value;
+                    lock (iterations) {
+                        iterations.Add((status.iterationCount, status.timestep));
+                        status.iterationCount += 1;   
+                    }
+                }
+            }
+        }
+        public List<(int, float)> TimeStepHistory {
+            get {
+                lock (iterations) {
+                    return iterations.ToList();
                 }
             }
         }
 
+        private List<(int, float)> iterations;
+
         public TaskStatus(Status status) {
             this.status = new StatusWrapper(status);
+            iterations = new List<(int, float)>();
         }
     }
 
@@ -120,7 +138,7 @@ namespace NodeMonog
 
         //Options
         bool cameraLock = true;
-
+        bool showGraph = false;
 
         public Renderer(Graph graph, Engine engine)
         {
@@ -312,13 +330,18 @@ namespace NodeMonog
 
             options.panel.ClearChildren();
             //currentPanel.AddChild(new VerticalScrollbar(1,10));
-            CheckBox box = new CheckBox("Camera Lock");
-            box.Checked = cameraLock;
-            box.OnValueChange += delegate (Entity target)
+            CheckBox graphBox = new CheckBox("Show time step graph");
+            graphBox.Checked = showGraph;
+            graphBox.OnValueChange += _ => showGraph = graphBox.Checked;
+
+            CheckBox cameraBox = new CheckBox("Camera Lock");
+            cameraBox.Checked = cameraLock;
+            cameraBox.OnValueChange += delegate (Entity target)
             {
-                cameraLock = box.Checked;
+                cameraLock = cameraBox.Checked;
             };
-            options.panel.AddChild(box);
+            options.panel.AddChild(graphBox);
+            options.panel.AddChild(cameraBox);
             
             stats.panel.ClearChildren();
             stats.panel.AddChild(new Paragraph($"Ticks: {history.Count}"));
@@ -339,6 +362,8 @@ namespace NodeMonog
 
         async Task RunSimulation() {
             await Task.Run(() => {
+                Func<float, float> S = x => (float)(1.0 / (1.0 + Math.Pow(Math.E, -x)));
+
                 float timeStep = 1.5f;
                 for (int i = 0; i < 10000; i++) {
                     DrawNode.simulation.Advance(timeStep);
@@ -348,8 +373,10 @@ namespace NodeMonog
                     }
 
                     var total = DrawNode.simulation.GetTotalEnergy();
-                    timeStep = (float)Math.Pow(total, 0.1);
+                    float negLog = (float)Math.Pow(2, -Math.Log(total, 2));
+                    timeStep = Math.Min(negLog, total / 10);
                     timeStep = Math.Min(timeStep, 1);
+                    //timeStep = S(total - 2);
                     simulationStatus.TimeStep = timeStep;
                 }
                 simulationStatus.Status = Status.IterationCap;
@@ -585,6 +612,22 @@ namespace NodeMonog
             };
 
             spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
+            if (showGraph) {
+                float maxTime = Math.Max(1, simulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
+                float maxIter = 1000; // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
+
+                float graphWidth = Window.ClientBounds.Width / 5f;
+                float graphHeight = Window.ClientBounds.Height / 4f;
+
+                foreach ((int iter, float timeStep) in simulationStatus.TimeStepHistory) {
+                    var y = (Math.Log(timeStep) - Math.Log(0.01)) / (Math.Log(maxTime) - Math.Log(0.01)) * graphHeight;
+                    var x = iter / maxIter * graphWidth;
+                    spriteBatch.Draw(pixel,
+                        new Rectangle(new Point((int)x, (int)(graphHeight - y) + 128),
+                                      new Point(1, 1)),
+                        new Color(timeStep / maxTime, 0, 0));
+                }
+            }
 
 
 
