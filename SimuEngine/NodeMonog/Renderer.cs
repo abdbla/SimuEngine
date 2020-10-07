@@ -122,6 +122,7 @@ namespace NodeMonog
         List<gameState> history = new List<gameState>();
 
         Graph graph;
+        Graph initialGraph;
         Engine engine;
 
 
@@ -145,6 +146,7 @@ namespace NodeMonog
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             this.graph = graph;
+            this.initialGraph = graph;
             this.engine = engine;
         }
 
@@ -287,7 +289,11 @@ namespace NodeMonog
             group.panel.AddChild(new Paragraph("Not implemented yet"));
             stats.panel.ClearChildren();
 
+
+
             person.panel.ClearChildren();
+
+
             person.panel.AddChild(new Header(engine.player.selectedNode.Name));
             SelectList connectionList = new SelectList();
             foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
@@ -305,8 +311,16 @@ namespace NodeMonog
             };
 
             person.panel.AddChild(new HorizontalLine());
+            Paragraph p = new Paragraph("Connections:", scale: 1.20f);
+            p.WrapWords = false;
+            person.panel.AddChild(p);
             person.panel.AddChild(connectionList);
 
+
+
+            Paragraph traitHeader = new Paragraph("Traits:", scale: 1.20f);
+            traitHeader.WrapWords = false;
+            person.panel.AddChild(traitHeader);
             SelectList traitList = new SelectList();
             List<string> traitNames = new List<string>();
             List<string> traitValues = new List<string>();
@@ -327,6 +341,13 @@ namespace NodeMonog
             }
 
             person.panel.AddChild(traitList);
+
+            //SCrolbar, if only
+            //VerticalScrollbar scrollbar = new VerticalScrollbar(0, 10, Anchor.CenterRight);
+            //scrollbar.
+            //person.panel.AddChild(scrollbar);
+
+
 
             options.panel.ClearChildren();
             //currentPanel.AddChild(new VerticalScrollbar(1,10));
@@ -597,6 +618,7 @@ namespace NodeMonog
 
 
             int centerX = r.Width / 3;
+
 
 
             spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
