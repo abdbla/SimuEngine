@@ -92,7 +92,6 @@ namespace NodeMonog
         // hud elements:
         Texture2D circle, pixel, tickButton, square, arrow;
         SpriteFont arial;
-        int selectedTab = 0;
 
         int dragtimer = 0;
         Point cameraPosition = Point.Zero, cameraGoal = Point.Zero;
@@ -114,42 +113,42 @@ namespace NodeMonog
         List<DrawNode> drawNodes = new List<DrawNode>();
 
 
-        DrawNode hoverNode;
-        int hoverTime = 0;
-
         const int hoverLimit = 1000;
 
         TaskStatus simulationStatus;
         List<gameState> history = new List<gameState>();
 
         Graph graph;
-        Graph initialGraph;
         Engine engine;
+
+        List<Graph> graphistory = new List<Graph>();
+        int historyIndex = 0;
 
 
         PanelTabs tabs;
         Panel outsidePanel;
 
         List<TabData> allTabs;
+        Dictionary<Simulation, string> simulations;
 
-        TabData global;
+        TabData actions;
         TabData group;
         TabData person;
         TabData stats;
         TabData options;
         Simulation simulation;
+        Simulation subSimulatio;
 
         //Options
         bool cameraLock = true;
         bool showGraph = false;
 
-        public Renderer(Graph graph, Engine engine)
+        public Renderer(Engine engine)
         {
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
-            this.graph = graph;
-            this.initialGraph = graph;
             this.engine = engine;
+            graph = engine.system.graph;
 
             simulation = new Simulation(graph, 0.8f, 0.5f, 0.3f, 0.4f);
         }
@@ -175,8 +174,13 @@ namespace NodeMonog
 
             graphics.ApplyChanges();
 
-            UserInterface.Initialize(Content, theme: "editorSourceCodePro");
 
+
+            graphistory.Add(graph);
+            selectedNode = new DrawNode(Vector2.Zero, graph.Nodes[0],simulation);
+
+            //Gui initial Initialisation
+            UserInterface.Initialize(Content, theme: "editorSourceCodePro");
 
 
             outsidePanel = new Panel(new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height));
@@ -190,13 +194,12 @@ namespace NodeMonog
             tabs = new PanelTabs();
 
 
-            global = tabs.AddTab("Global");
-            Vector2 offset = new Vector2(0, -global.button.CalcDestRect().Height / 3);
-            Vector2 size =   new Vector2(global.button.CalcDestRect().Height / 3, global.button.CalcDestRect().Height / 3);
+            actions = tabs.AddTab("Global");
+            Vector2 offset = new Vector2(0, -actions.button.CalcDestRect().Height / 3);
+            Vector2 size =   new Vector2(actions.button.CalcDestRect().Height / 3, actions.button.CalcDestRect().Height / 3);
             Image globalI = new Image(Content.Load<Texture2D>(@"GlobeIcon"), size: size * 2.25f, offset: offset, anchor: Anchor.TopCenter);
             globalI.ClickThrough = true;
-            global.button.AddChild(globalI);
-
+            actions.button.AddChild(globalI);
 
             group = tabs.AddTab("Group");
             Image groupI = new Image(Content.Load<Texture2D>(@"GroupIcon"), size: size * 2.25f, offset: offset, anchor: Anchor.TopCenter);
@@ -213,17 +216,12 @@ namespace NodeMonog
             optI.ClickThrough = true;
             options.button.AddChild(optI);
 
-
             stats = tabs.AddTab("Stats");
             Image satsI = new Image(Content.Load<Texture2D>(@"StatsIcon"), size: size * 2.25f, anchor: Anchor.TopCenter, offset: offset);
             satsI.ClickThrough = true;
             stats.button.AddChild(satsI);
 
-
-
-
-            allTabs = new List<TabData>() { global, group, person, options, stats };
-
+            allTabs = new List<TabData>() { actions, group, person, options, stats };
             foreach (var tab in allTabs)
             {
                 tab.button.ButtonParagraph.Visible = false;
@@ -244,9 +242,7 @@ namespace NodeMonog
             resizeMenu(new object(), new EventArgs());
 
 
-            InitializeHud();
-
-
+            UpdateHud();
             outsidePanel.AddChild(tabs);
 
             
@@ -259,6 +255,7 @@ namespace NodeMonog
             Window.ClientSizeChanged += resizeMenu;
 
            
+
             
             simulationStatus = new TaskStatus(Status.Running);
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
@@ -267,8 +264,12 @@ namespace NodeMonog
             base.Initialize();
         }
 
-        public void InitializeHud() {
-            global.panel.ClearChildren();
+
+
+        public void UpdateHud() {
+
+
+            actions.panel.ClearChildren();
             SelectList eventList = new SelectList(Anchor.TopCenter);
             foreach ((string, Event) e in engine.player.Actions)
             {
@@ -278,11 +279,44 @@ namespace NodeMonog
             {
                 engine.player.ActivateAction(engine.player.Actions[eventList.SelectedIndex].Item2);
                 Console.WriteLine();
-                InitializeHud();
+                UpdateHud();
                 return;
             };
 
-            global.panel.AddChild(eventList);
+            actions.panel.AddChild(eventList);
+            
+            if (selectedNode.node.SubGraph.Nodes.Count != 0) { 
+            Button subGraphButton = new Button("Enter Subgraph");
+                subGraphButton.OnClick += x =>
+                {
+                    List<Graph> tmpGraphList = new List<Graph>();
+
+                    for (int i = 0; i < historyIndex + 1; i++)
+                    {
+                        tmpGraphList.Add(graphistory[i]);
+                    }
+                    graphistory = tmpGraphList;
+
+                    graph = selectedNode.node.SubGraph;
+                    graphistory.Add(graph);
+
+
+                    subSimulatio = new Simulation(selectedNode.node.SubGraph, 0.8f, 0.5f, 0.3f, 0.4f);
+
+                    drawNodes = new List<DrawNode>();
+                    foreach (Node n in selectedNode.node.SubGraph.Nodes)
+                    {
+                        drawNodes.Add(new DrawNode(Vector2.Zero, n, subSimulatio));
+                    }
+                    selectedNode = drawNodes[0];
+                    engine.player.SelectNode(graph.Nodes[0]);
+
+                    //(Task simtask, var _) = RunSimulation(subSimulatio);
+
+                };
+                actions.panel.AddChild(subGraphButton);
+            }
+
 
             group.panel.ClearChildren();
             group.panel.AddChild(new Paragraph("Not implemented yet"));
@@ -305,7 +339,7 @@ namespace NodeMonog
                 engine.player.SelectNode(clickedNode);
                 selectedNode = drawNodes.Find(x => x.node == clickedNode);
                 Console.WriteLine();
-                InitializeHud();
+                UpdateHud();
                 return;
             };
 
@@ -491,7 +525,7 @@ namespace NodeMonog
                             {
                                 engine.player.SelectNode(currentNode.node);
                                 selectedNode = currentNode;
-                                InitializeHud();
+                                UpdateHud();
                             };
 
                         }
@@ -506,7 +540,7 @@ namespace NodeMonog
                                 dead: graph.FindAllNodes(x => x.statuses.Contains("Dead")).Count,
                                 recovered: graph.FindAllNodes(x => x.statuses.Contains("Recovered")).Count,
                                 infected: graph.FindAllNodes(x => x.statuses.Contains("Infected")).Count));
-                            InitializeHud();
+                            UpdateHud();
                         }
 
 
@@ -536,6 +570,11 @@ namespace NodeMonog
                 selectedNode.Position.X + circleDiameter / 4 * 3,
                 selectedNode.Position.Y + circleDiameter / 4 * 3).ToPoint();
 
+            if (Keyboard.GetState().IsKeyDown(Keys.Z))
+            {
+                
+
+            }
 
             if (dragtimer == 0)
             {
@@ -566,6 +605,13 @@ namespace NodeMonog
 
             base.Update(gameTime);
         }
+
+
+        public void gotoSimulatedGraph(int index)
+        {
+
+        }
+
 
         //Methods to generalise and make more readable, aka make Theo happy
 
@@ -669,7 +715,7 @@ namespace NodeMonog
                     depth = 0.2f;
                 }
                 else selectcolour = new Color(0, 0, 0, 15);
-
+                
                 foreach ((Connection c, Node n) in graph.GetConnections(currentNode))
                 {
                     Vector2 arrowVector = (drawNodes.Find(x => x.node == n).Position - currentNodePoistion);
@@ -752,7 +798,11 @@ namespace NodeMonog
 
             base.Draw(gameTime);
         }
+
+       
     }
+
+    
 
 
     public class gameState
