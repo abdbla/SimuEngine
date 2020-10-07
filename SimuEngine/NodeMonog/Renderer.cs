@@ -168,6 +168,7 @@ namespace NodeMonog
         {
             // TODO: Add your initialization logic here
 
+            
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
 
@@ -178,7 +179,7 @@ namespace NodeMonog
             //RasterizerState = new RasterizerState { MultiSampleAntiAlias = true };
 
             graphics.ApplyChanges();
-
+            
 
 
             graphistory.Add(graph);
@@ -319,7 +320,7 @@ namespace NodeMonog
                     selectedNode = drawNodes[0];
                     engine.player.SelectNode(graph.Nodes[0]);
 
-                    //(Task simtask, var _) = RunSimulation(subSimulatio);
+                    (Task simtask, _) = RunSimulation(subSimulatio);
 
                 };
                 actions.panel.AddChild(subGraphButton);
@@ -574,6 +575,11 @@ namespace NodeMonog
                         dragtimer = 0;
                     }
                 }
+
+                if (!new Rectangle(0, 0, Window.ClientBounds.Width / 3 * 2, Window.ClientBounds.Height).Contains(nms.Position))
+                {
+                    dragtimer = 0;
+                };
             }
 
            
