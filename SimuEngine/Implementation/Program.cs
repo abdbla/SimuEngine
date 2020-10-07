@@ -22,7 +22,7 @@ namespace Implementation
             //TODO: Create implementation running code
             p.InitializeEngine();
             List<Person> more = new List<Person>();
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 30; i++) {
                 p.engine.system.graph.groups.Add(new PersonGroup());
             }
             for (int i = 0; i < 150; i++) {
@@ -31,7 +31,7 @@ namespace Implementation
                 Node n = p.engine.system.graph.Nodes[i];
                 more.Add((Person)n);
                 n.Name = i.ToString();
-                n.groups.Add(s.graph.groups[i % 20]);
+                n.groups.Add(s.graph.groups[i % 30]);
                 n.groups[0].members.Add(n);
             }
 
