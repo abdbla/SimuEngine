@@ -248,15 +248,8 @@ namespace NodeMonog
             base.Initialize();
         }
 
-        public void InitializeHud()
-        {
-            
-
-            Panel currentPanel;
-
-
-            currentPanel = global.panel;
-            currentPanel.ClearChildren();
+        public void InitializeHud() {
+            global.panel.ClearChildren();
             SelectList eventList = new SelectList(Anchor.TopCenter);
             foreach ((string, Event) e in engine.player.Actions)
             {
@@ -270,21 +263,14 @@ namespace NodeMonog
                 return;
             };
 
-            currentPanel.AddChild(eventList);
+            global.panel.AddChild(eventList);
 
-
-
-            currentPanel = group.panel;
-            currentPanel.ClearChildren();
-            currentPanel.AddChild(new Paragraph("Not implemented yet"));
-
-
-            currentPanel = stats.panel;
+            group.panel.ClearChildren();
+            group.panel.AddChild(new Paragraph("Not implemented yet"));
             stats.panel.ClearChildren();
 
-            currentPanel = person.panel;
-            currentPanel.ClearChildren();
-            currentPanel.AddChild(new Header(engine.player.selectedNode.Name));
+            person.panel.ClearChildren();
+            person.panel.AddChild(new Header(engine.player.selectedNode.Name));
             SelectList connectionList = new SelectList();
             foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
             {
@@ -300,24 +286,31 @@ namespace NodeMonog
                 return;
             };
 
-            currentPanel.AddChild(new HorizontalLine());
-            currentPanel.AddChild(connectionList);
+            person.panel.AddChild(new HorizontalLine());
+            person.panel.AddChild(connectionList);
 
             SelectList traitList = new SelectList();
-            foreach (KeyValuePair<string, int> kv in selectedNode.node.Traits)
-            {
-                traitList.AddItem(kv.Key + ":   " + kv.Value);
+            List<string> traitNames = new List<string>();
+            List<string> traitValues = new List<string>();
+            int nameMaxWidth = 0;
+            int valMaxWidth = 0;
+            foreach (var kv in selectedNode.node.Traits) {
+                var traitVal = kv.Value.ToString();
+                traitNames.Add(kv.Key);
+                traitValues.Add(traitVal);
+                nameMaxWidth = Math.Max(nameMaxWidth, kv.Key.Length);
+                valMaxWidth = Math.Max(valMaxWidth, traitVal.Length);
             }
-            foreach (string status in selectedNode.node.Statuses)
-            {
+            foreach ((var name, var val) in traitNames.Zip(traitValues, (x, y) => (x, y))) {
+                traitList.AddItem(name.PadRight(nameMaxWidth + 1) + val.PadLeft(valMaxWidth));
+            }
+            foreach (string status in selectedNode.node.Statuses) {
                 traitList.AddItem(status);
             }
 
-            currentPanel.AddChild(traitList);
+            person.panel.AddChild(traitList);
 
-
-            currentPanel = options.panel;
-            currentPanel.ClearChildren();
+            options.panel.ClearChildren();
             //currentPanel.AddChild(new VerticalScrollbar(1,10));
             CheckBox box = new CheckBox("Camera Lock");
             box.Checked = cameraLock;
@@ -325,17 +318,14 @@ namespace NodeMonog
             {
                 cameraLock = box.Checked;
             };
-            currentPanel.AddChild(box);
+            options.panel.AddChild(box);
             
-
-
-            currentPanel = stats.panel;
-            currentPanel.ClearChildren();
-            currentPanel.AddChild(new Paragraph($"Ticks: {history.Count}"));
-            currentPanel.AddChild(new Paragraph($"Alive people {history.Last().alive}"));
-            currentPanel.AddChild(new Paragraph($"Infected {history.Last().infected}"));
-            currentPanel.AddChild(new Paragraph($"Dead people {history.Last().dead}"));
-            currentPanel.AddChild(new Paragraph($"Recovered people {history.Last().recovered}"));
+            stats.panel.ClearChildren();
+            stats.panel.AddChild(new Paragraph($"Ticks: {history.Count}"));
+            stats.panel.AddChild(new Paragraph($"Alive people {history.Last().alive}"));
+            stats.panel.AddChild(new Paragraph($"Infected {history.Last().infected}"));
+            stats.panel.AddChild(new Paragraph($"Dead people {history.Last().dead}"));
+            stats.panel.AddChild(new Paragraph($"Recovered people {history.Last().recovered}"));
         }
 
 
@@ -349,17 +339,18 @@ namespace NodeMonog
 
         async Task RunSimulation() {
             await Task.Run(() => {
-                float timeStep = -1;
+                float timeStep = 1.5f;
                 for (int i = 0; i < 10000; i++) {
-                    DrawNode.simulation.Advance((float)Math.Pow(10, timeStep));
+                    DrawNode.simulation.Advance(timeStep);
                     if (DrawNode.simulation.WithinThreshold) {
                         simulationStatus.Status = Status.MinimaReached;
                         return;
                     }
 
                     var total = DrawNode.simulation.GetTotalEnergy();
-                    timeStep = -((float)Math.Truncate(Math.Log10(DrawNode.simulation.GetTotalEnergy())) + 1);
-                    simulationStatus.TimeStep = (float)Math.Pow(10, timeStep);
+                    timeStep = (float)Math.Pow(total, 0.1);
+                    timeStep = Math.Min(timeStep, 1);
+                    simulationStatus.TimeStep = timeStep;
                 }
                 simulationStatus.Status = Status.IterationCap;
             });
