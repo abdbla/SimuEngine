@@ -259,11 +259,11 @@ namespace NodeMonog
 
             Window.ClientSizeChanged += resizeMenu;
 
-           
-            
-            simulationStatus = new TaskStatus(Status.Running);
+
+            Task simTask;
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
-            _ = RunSimulation();
+            (simTask, simulationStatus) = RunSimulation(simulation);
+            simTask.Start();
 
             base.Initialize();
         }
