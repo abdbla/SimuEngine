@@ -9,6 +9,9 @@ using Microsoft.Xna.Framework;
 using SharpDX.DirectWrite;
 using SharpDX.DXGI;
 
+using Simulation = Core.Physics.Simulation;
+using PVec2 = Core.Physics.Vector2;
+
 namespace NodeMonog
 {
     class DrawNode
@@ -30,16 +33,17 @@ namespace NodeMonog
                 else
                 {
                     var point = simulation.physicsNodes[node].Point;
-                    point.Position = new Core.Physics.Vector2(value.X, value.Y);
+                    point.Position = new PVec2(value.X, value.Y);
                 }
             }
         }
-        public static Core.Physics.System simulation = null;
+        public Simulation simulation { get; private set; }
 
-        public DrawNode(Vector2 position, Node n)
+        public DrawNode(Vector2 pos, Node n, Simulation sim)
         {
-            this.position = position;
-            this.node = n;
+            position = pos;
+            node = n;
+            simulation = sim;
         }
         //public Dictionary<string, int> TraitsWorkaround {
         //    get => traits;
