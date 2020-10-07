@@ -297,7 +297,7 @@ namespace NodeMonog
             SelectList connectionList = new SelectList();
             foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
             {
-                connectionList.AddItem(n.Name);
+                connectionList.AddItem(n.Name + ": " + c.Traits["Proximity"]);
             }
             connectionList.OnValueChange += delegate (Entity target)
             {
@@ -395,7 +395,9 @@ namespace NodeMonog
                     var total = simulation.GetTotalEnergy();
                     float negLog = (float)Math.Pow(2, -Math.Log(total, 2));
                     timeStep = Math.Min(negLog, total / 10);
+                    timeStep = Math.Max(timeStep, 0.01f);
                     timeStep = Math.Min(timeStep, 1);
+                    //timeStep = 1f - timeStep;
                     //timeStep = S(total - 2);
                     simulationStatus.TimeStep = timeStep;
                 }
@@ -631,8 +633,10 @@ namespace NodeMonog
                 Status.MinimaReached => "Local minima reached",
                 _ => "This should never happen"
             };
-
-            spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
+            try {
+                spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
+            } catch {
+            }
             if (showGraph) {
                 float maxTime = Math.Max(1, simulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
                 float maxIter = 1000; // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();

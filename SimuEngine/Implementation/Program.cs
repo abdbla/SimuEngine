@@ -38,7 +38,9 @@ namespace Implementation
             Dictionary<Person, int> totalConns = new Dictionary<Person, int>();
             Dictionary<Person, int> curConns = new Dictionary<Person, int>();
             List<Person> remaining = new List<Person>();
+            List<bool> inters = new List<bool>();
             remaining.AddRange(more);
+            foreach (Node node in more) { inters.Add(false); }
 
             var rng = Node.rng;
             for (int i = 0; i < more.Count; i++) {
@@ -48,8 +50,9 @@ namespace Implementation
 
             while (remaining.Count > 1) {
                 bool inter = false;
-                if (rng.NextDouble() <= 0.1) inter = true;
+                if (rng.NextDouble() <= 0.15) inter = true;
                 var x1 = rng.Next(remaining.Count);
+                if (inters[x1]) inter = false;
                 var x2 = rng.Next(remaining[x1].groups[0].members.Count);
                 if (inter) { x2 = rng.Next(remaining.Count); }
                 if (!inter && (x1 == remaining.FindIndex(n => n == remaining[x1].groups[0].members[x2])) 
@@ -66,6 +69,7 @@ namespace Implementation
                 string ctype = inter ? "Interconnection" : node2.groups[0].statuses[0];
                 p.engine.system.graph.AddConnection(node1, node2, new PersonConnection(ctype));
                 p.engine.system.graph.AddConnection(node2, node1, new PersonConnection(ctype));
+                if (inter) inters[x1] = true; 
                 curConns[node1] += 1;
                 curConns[node2] += 1;
                 if (curConns[node1] == totalConns[node1]) {
@@ -73,9 +77,12 @@ namespace Implementation
                         x2 -= 1;
                     }
                     remaining.RemoveAt(x1);
+                    inters.RemoveAt(x1);
                 }
                 if (curConns[node2] == totalConns[node2]) {
-                    remaining.RemoveAll(n => n == node2);
+                    int b = remaining.FindIndex(n => n == node2);
+                    remaining.RemoveAt(b);
+                    inters.RemoveAt(b);
                 }
             }
             using (Renderer renderer = new Renderer(p.engine.system.graph, p.engine)) {
@@ -238,7 +245,7 @@ namespace Implementation
         }
 
         public override float Strength() {
-            return (float)Traits["Proximity"] / 5f;
+            return (float)Traits["Proximity"] * 0.1f;
         }
     }
 

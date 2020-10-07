@@ -191,11 +191,11 @@ namespace Core.Physics {
                 var n2 = spring.n2;
                 var d = spring.n1.Point.Position - spring.n2.Point.Position;
                 var dist = d.Magnitude();
-                dist -= spring.Length;
+                //dist -= spring.Length;
                 var displacement = dist * Stiffness;
                 var direction = (d * dist).Normalize();
 
-                var force = direction * spring.K * displacement;
+                var force = direction * spring.K * displacement * (dist - spring.Length);
 
                 if (n1.Pinned && n2.Pinned) {
                     
@@ -237,6 +237,7 @@ namespace Core.Physics {
                 var speed = node.Point.Velocity.Magnitude();
                 total += 0.5f * node.Mass * speed * speed;
             }
+            Math.Max(total, 10f);
             return total;
         }
 
