@@ -254,14 +254,6 @@ namespace Core {
             return ret;
         }
 
-        /// <summary>
-        /// Get the list of all nodes
-        /// </summary>
-        /// <returns>the list of all nodes</returns>
-        public List<Node> GetNodes() {
-            return nodes;
-        }
-
         public List<(Connection, Connection, Node)> GetNeighbors(Node node) {
             var nIdx = FindIndex(node);
             var indices = new HashSet<int>();

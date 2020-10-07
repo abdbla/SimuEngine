@@ -14,6 +14,7 @@ using GeonBit.UI;
 using GeonBit.UI.Entities;
 using System.Collections.ObjectModel;
 using System.Security.Principal;
+using Simulation = Core.Physics.Simulation;
 
 namespace NodeMonog
 {
@@ -136,6 +137,7 @@ namespace NodeMonog
         TabData person;
         TabData stats;
         TabData options;
+        Simulation simulation;
 
         //Options
         bool cameraLock = true;
@@ -148,6 +150,8 @@ namespace NodeMonog
             this.graph = graph;
             this.initialGraph = graph;
             this.engine = engine;
+
+            simulation = new Simulation(graph, 0.8f, 0.5f, 0.3f, 0.4f);
         }
 
         /// <summary>
@@ -178,9 +182,9 @@ namespace NodeMonog
             outsidePanel = new Panel(new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height));
             outsidePanel.Anchor = Anchor.TopRight;
 
-            foreach (Node item in graph.GetNodes())
+            foreach (Node item in graph.Nodes)
             {
-                drawNodes.Add(new DrawNode(new Vector2(), item));
+                drawNodes.Add(new DrawNode(new Vector2(), item, simulation));
             }
 
             tabs = new PanelTabs();
@@ -226,7 +230,7 @@ namespace NodeMonog
                 tab.button.Children.First(x => x.GetType() == typeof(Image) || x.GetType() == typeof(Icon)).Visible = true;
             }
 
-            selectedNode =  new DrawNode(Vector2.Zero,graph.GetNodes()[0]);
+            selectedNode =  new DrawNode(Vector2.Zero,graph.Nodes[0], simulation);
 
 
             engine.player.SelectNode(selectedNode.node);
@@ -256,11 +260,6 @@ namespace NodeMonog
 
            
             
-            
-
-
-
-            DrawNode.simulation = new Core.Physics.System(graph, 0.8f, 0.5f, 0.3f, 0.4f);
             simulationStatus = new TaskStatus(Status.Running);
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
             _ = RunSimulation();
@@ -302,7 +301,7 @@ namespace NodeMonog
             }
             connectionList.OnValueChange += delegate (Entity target)
             {
-                Node clickedNode = graph.GetNodes().Find(x => x.Name == connectionList.SelectedValue);
+                Node clickedNode = graph.FindNode(x => x.Name == connectionList.SelectedValue);
                 engine.player.SelectNode(clickedNode);
                 selectedNode = drawNodes.Find(x => x.node == clickedNode);
                 Console.WriteLine();
@@ -387,13 +386,13 @@ namespace NodeMonog
 
                 float timeStep = 1.5f;
                 for (int i = 0; i < 10000; i++) {
-                    DrawNode.simulation.Advance(timeStep);
-                    if (DrawNode.simulation.WithinThreshold) {
+                    simulation.Advance(timeStep);
+                    if (simulation.WithinThreshold) {
                         simulationStatus.Status = Status.MinimaReached;
                         return;
                     }
 
-                    var total = DrawNode.simulation.GetTotalEnergy();
+                    var total = simulation.GetTotalEnergy();
                     float negLog = (float)Math.Pow(2, -Math.Log(total, 2));
                     timeStep = Math.Min(negLog, total / 10);
                     timeStep = Math.Min(timeStep, 1);
@@ -479,9 +478,9 @@ namespace NodeMonog
                     if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released)
                     {
 
-                        for (int i = 0; i < graph.GetNodes().Count; i++)
+                        for (int i = 0; i < graph.Nodes.Count; i++)
                         {
-                            DrawNode currentNode = new DrawNode(drawNodes.Find(x => x.node == graph.GetNodes()[i]).Position, graph.GetNodes()[i]);
+                            DrawNode currentNode = drawNodes.Find(x => x.node == graph.Nodes[i]);
 
 
                             if (new Rectangle(CameraTransform(currentNode.Position).ToPoint(), new Point(
@@ -626,7 +625,7 @@ namespace NodeMonog
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
             string simStatusString = simulationStatus.Status switch
             {
-                Status.Running => $"Running\ntotal energy: {DrawNode.simulation.GetTotalEnergy()}" +
+                Status.Running => $"Running\ntotal energy: {simulation.GetTotalEnergy()}" +
                 $"\ntimestep: {simulationStatus.TimeStep}",
                 Status.IterationCap => "Iteration cap reached",
                 Status.MinimaReached => "Local minima reached",
@@ -653,9 +652,9 @@ namespace NodeMonog
 
 
 
-            for (int i = 0; i < graph.GetNodes().Count; i++)
+            for (int i = 0; i < graph.Nodes.Count; i++)
             {
-                Node currentNode = graph.GetNodes()[i];
+                Node currentNode = graph.Nodes[i];
                 Vector2 currentNodePoistion = drawNodes.Find(x => x.node == currentNode).Position;
 
                 Color selectcolour;

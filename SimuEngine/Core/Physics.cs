@@ -107,7 +107,7 @@ namespace Core.Physics {
         public override float Strength() => 0.0f;
     }
 
-    public class System {
+    public class Simulation {
         public float Stiffness;
         public float Repulsion;
         public float Damping;
@@ -118,7 +118,7 @@ namespace Core.Physics {
         public Graph Graph { get; private set; }
         public Dictionary<Node, PhysicsNode> physicsNodes;
 
-        public System(Graph graph, float stiffness, float repulsion, float damping, float gravity) {
+        public Simulation(Graph graph, float stiffness, float repulsion, float damping, float gravity) {
             Stiffness = stiffness;
             Repulsion = repulsion;
             Damping = damping;
