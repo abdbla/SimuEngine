@@ -19,6 +19,7 @@ using Simulation = Core.Physics.Simulation;
 namespace NodeMonog
 {
     enum Status {
+        Idle,
         Running,
         IterationCap,
         MinimaReached
@@ -151,7 +152,7 @@ namespace NodeMonog
             this.initialGraph = graph;
             this.engine = engine;
 
-            simulation = new Simulation(graph, 0.8f, 0.5f, 0.3f, 0.4f);
+            simulation = new Simulation(graph, 0.8f, 0.5f, 0.3f, 0.1f);
         }
 
         /// <summary>
@@ -380,29 +381,32 @@ namespace NodeMonog
             
         }
 
-        async Task RunSimulation() {
-            await Task.Run(() => {
+        static (Task, TaskStatus) RunSimulation(Simulation sim) {
+            var status = new TaskStatus(Status.Idle);
+            var task = new Task(() => {
                 Func<float, float> S = x => (float)(1.0 / (1.0 + Math.Pow(Math.E, -x)));
-
                 float timeStep = 1.5f;
+                status.Status = Status.Running;
                 for (int i = 0; i < 10000; i++) {
-                    simulation.Advance(timeStep);
-                    if (simulation.WithinThreshold) {
-                        simulationStatus.Status = Status.MinimaReached;
+                    sim.Advance(timeStep);
+                    if (sim.WithinThreshold) {
+                        status.Status = Status.MinimaReached;
                         return;
                     }
 
-                    var total = simulation.GetTotalEnergy();
+                    var total = sim.GetTotalEnergy();
                     float negLog = (float)Math.Pow(2, -Math.Log(total, 2));
                     timeStep = Math.Min(negLog, total / 10);
                     timeStep = Math.Max(timeStep, 0.01f);
                     timeStep = Math.Min(timeStep, 1);
                     //timeStep = 1f - timeStep;
                     //timeStep = S(total - 2);
-                    simulationStatus.TimeStep = timeStep;
+                    status.TimeStep = timeStep;
                 }
-                simulationStatus.Status = Status.IterationCap;
+                status.Status = Status.IterationCap;
             });
+
+            return (task, status);
         }
 
         public void testDelegate(object sender, EventArgs e)
@@ -639,7 +643,7 @@ namespace NodeMonog
             }
             if (showGraph) {
                 float maxTime = Math.Max(1, simulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
-                float maxIter = 1000; // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
+                float maxIter = 10000; // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
 
                 float graphWidth = Window.ClientBounds.Width / 5f;
                 float graphHeight = Window.ClientBounds.Height / 4f;
