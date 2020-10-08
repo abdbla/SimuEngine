@@ -145,7 +145,7 @@ namespace Core.Physics {
             Repulsion = @params.repulsion;
             Damping = @params.damping;
             Gravity = @params.gravity;
-            Threshold = 0.0001f;
+            Threshold = 0f;
             var physicsGraph = new Graph();
 
             var nodeMap = new Dictionary<Node, PhysicsNode>();
@@ -355,7 +355,7 @@ namespace Core.Physics {
             AttractToCenter();
             UpdateVelocity(timeStep);
 
-            WithinThreshold = GetTotalEnergy() < Threshold;
+            WithinThreshold = GetTotalEnergy() <= Threshold;
         }
     }
 }

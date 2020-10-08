@@ -22,7 +22,7 @@ namespace Implementation
             //TODO: Create implementation running code
             p.InitializeEngine();
             List<Person> more = new List<Person>();
-            for (int i = 0; i < 20; i++) {
+            for (int i = 0; i < 30; i++) {
                 p.engine.system.graph.groups.Add(new PersonGroup());
             }
             for (int i = 0; i < 150; i++) {
@@ -31,7 +31,7 @@ namespace Implementation
                 Node n = p.engine.system.graph.Nodes[i];
                 more.Add((Person)n);
                 n.Name = i.ToString();
-                n.groups.Add(s.graph.groups[i % 20]);
+                n.groups.Add(s.graph.groups[i % 30]);
                 n.groups[0].members.Add(n);
             }
 
@@ -85,7 +85,22 @@ namespace Implementation
                     inters.RemoveAt(b);
                 }
             }
-            using (Renderer renderer = new Renderer(p.engine.system.graph, p.engine)) {
+
+
+            Graph tmpsubgraph = new Graph();
+            Person p1 = new Person();
+            p1.Name = "Billy";
+            tmpsubgraph.Add(p1);
+            Person p2 = new Person();
+            p2.Name = "Charlie";
+            tmpsubgraph.Add(p2);
+            tmpsubgraph.AddConnection(p1, p2, new PersonConnection("Family"));
+            tmpsubgraph.AddConnection(p2, p1, new PersonConnection("Family"));
+
+            p.engine.system.graph.FindNode(x => x.Name == "0").SubGraph = tmpsubgraph;
+
+
+            using (Renderer renderer = new Renderer(p.engine)) {
                 renderer.Run();
             }
         }
