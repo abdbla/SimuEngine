@@ -89,6 +89,7 @@ namespace NodeMonog
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         MouseState oms = Mouse.GetState();
+        KeyboardState okbs = Keyboard.GetState();
 
         // hud elements:
         Texture2D circle, pixel, tickButton, square, arrow;
@@ -317,6 +318,7 @@ namespace NodeMonog
                     engine.player.SelectNode(graph.Nodes[0]);
 
                     (Task simtask, _) = RunSimulation(subSimulatio);
+                    UpdateHud();
 
                 };
                 actions.panel.AddChild(subGraphButton);
@@ -340,7 +342,7 @@ namespace NodeMonog
             }
             connectionList.OnValueChange += delegate (Entity target)
             {
-                Node clickedNode = graph.FindNode(x => x.Name == connectionList.SelectedValue);
+                Node clickedNode = graph.GetConnections(selectedNode.node)[connectionList.SelectedIndex].Item2;
                 engine.player.SelectNode(clickedNode);
                 selectedNode = drawNodes.Find(x => x.node == clickedNode);
                 Console.WriteLine();
@@ -501,9 +503,8 @@ namespace NodeMonog
             Rectangle r = Window.ClientBounds;
             int x = r.Width / 3;
 
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
             MouseState nms = Mouse.GetState();
+            KeyboardState nkbs = Keyboard.GetState();
 
             //Mouse is moved/pressed/Scrolled
             if (nms != oms)
@@ -582,12 +583,9 @@ namespace NodeMonog
             cameraGoal = new Vector2(
                 selectedNode.Position.X + circleDiameter / 4 * 3,
                 selectedNode.Position.Y + circleDiameter / 4 * 3).ToPoint();
-
-            if (Keyboard.GetState().IsKeyDown(Keys.Z))
-            {
-                
-
-            }
+            
+            if (nkbs.IsKeyDown(Keys.Z) && !okbs.IsKeyDown(Keys.Z)) gotoSimulatedGraph();
+            
 
             if (dragtimer == 0)
             {
@@ -612,6 +610,7 @@ namespace NodeMonog
             UserInterface.Active.Update(gameTime);
 
             oms = nms;
+            okbs = nkbs;
 
             // TODO: Add your update logic here
 
@@ -620,9 +619,49 @@ namespace NodeMonog
         }
 
 
-        public void gotoSimulatedGraph(int index)
-        {
+        public void gotoSimulatedGraph(string nameOfNodeOwner)
+        {/*
+            List<Graph> tmpGraphList = new List<Graph>();
 
+            for (int i = 0; i < historyIndex + 1; i++)
+            {
+                tmpGraphList.Add(graphistory[i]);
+            }
+            graphistory = tmpGraphList;
+
+            graph = selectedNode.node.SubGraph;
+            graphistory.Add(graph);
+
+
+            subSimulatio = new Simulation(selectedNode.node.SubGraph, 0.8f, 0.5f, 0.3f, 0.4f);
+
+            drawNodes = new List<DrawNode>();
+            foreach (Node n in selectedNode.node.SubGraph.Nodes)
+            {
+                drawNodes.Add(new DrawNode(Vector2.Zero, n, subSimulatio));
+            }
+            selectedNode = drawNodes[0];
+            engine.player.SelectNode(graph.Nodes[0]);
+
+            (Task simtask, _) = RunSimulation(subSimulatio);*/
+        }
+
+        public void gotoSimulatedGraph()
+        {
+            Node tmpNode = graphistory[0].Nodes.First(x => x.SubGraph == graph);
+
+            graph = graphistory[0];
+
+            drawNodes = new List<DrawNode>();
+            for (int i = 0; i <graph.Nodes.Count; i++)
+            {
+                drawNodes.Add(new DrawNode(Vector2.Zero, graph.Nodes[i], simulation));
+            }
+            engine.player.SelectNode(tmpNode);
+            selectedNode = drawNodes.Find(x => x.node == tmpNode);
+            cameraPosition = selectedNode.Position.ToPoint();
+
+            UpdateHud();
         }
 
 
