@@ -106,6 +106,20 @@ namespace Core.Physics {
         public override float Strength() => 0.0f;
     }
 
+    public readonly struct SimulationParams {
+        public readonly float stiffness;
+        public readonly float repulsion;
+        public readonly float damping;
+        public readonly float gravity;
+
+        public SimulationParams(float stiffness, float repulsion, float damping, float gravity) {
+            this.stiffness = stiffness;
+            this.repulsion = repulsion;
+            this.damping = damping;
+            this.gravity = gravity;
+        }
+    }
+
     public class Simulation {
         public float Stiffness;
         public float Repulsion;
@@ -113,15 +127,25 @@ namespace Core.Physics {
         public float Threshold;
         public float Gravity;
         public bool WithinThreshold;
+        private Random rng;
 
         public Graph Graph { get; private set; }
+        public Graph InnerGraph { get; private set; }
         public Dictionary<Node, PhysicsNode> physicsNodes;
+        private List<Spring> springs;
 
-        public Simulation(Graph graph, float stiffness, float repulsion, float damping, float gravity) {
-            Stiffness = stiffness;
-            Repulsion = repulsion;
-            Damping = damping;
-            Threshold = 0.01f;
+        [Obsolete]
+        public Simulation(Graph graph, float stiffness, float repulsion, float damping, float gravity)
+            : this(graph, new SimulationParams(stiffness, repulsion, damping, gravity)) { }
+
+        public Simulation(Graph graph, SimulationParams @params) {
+            InnerGraph = graph;
+            springs = new List<Spring>();
+            Stiffness = @params.stiffness;
+            Repulsion = @params.repulsion;
+            Damping = @params.damping;
+            Gravity = @params.gravity;
+            Threshold = 0.0001f;
             var physicsGraph = new Graph();
 
             var nodeMap = new Dictionary<Node, PhysicsNode>();
@@ -132,7 +156,7 @@ namespace Core.Physics {
             }
 
             physicsNodes = nodeMap;
-            var rng = new Random();
+            rng = new Random();
 
             foreach (PhysicsNode node in nodeMap.Values) {
                 foreach ((var conn1, var conn2, Node other) in graph.GetNeighbors(node.Inner)) {
@@ -146,18 +170,102 @@ namespace Core.Physics {
                         var s2 = conn2?.Strength();
                         s1 ??= s2;
                         s2 ??= s1;
+                        var spring = new Spring(node,
+                                       nodeMap[other],
+                                       (float)(s1 + s2) / 2f,
+                                       Stiffness);
                         physicsGraph.AddConnection(
                             node,
                             nodeMap[other],
-                            new Spring(node,
-                                       nodeMap[other],
-                                       (float)(s1 + s2) / 2f,
-                                       Stiffness));
+                            spring
+                            );
+                        springs.Add(spring);
                     }
                 }
             }
-            Gravity = gravity;
+
             Graph = physicsGraph;
+        }
+
+        public Simulation(Graph graph, SimulationParams @params, List<Node> includedNodes) {
+            InnerGraph = graph;
+            Stiffness = @params.stiffness;
+            Repulsion = @params.repulsion;
+            Damping = @params.damping;
+            Gravity = @params.gravity;
+            springs = new List<Spring>();
+
+            var physicsGraph = new Graph();
+
+            var nodeMap = new Dictionary<Node, PhysicsNode>();
+            foreach (var node in includedNodes) {
+                var physicsNode = new PhysicsNode(node);
+                physicsGraph.Add(physicsNode);
+                nodeMap.Add(node, physicsNode);
+            }
+
+            physicsNodes = nodeMap;
+            rng = new Random();
+
+            foreach (PhysicsNode node in nodeMap.Values) {
+                foreach ((var conn1, var conn2, Node other) in graph.GetNeighbors(node.Inner)) {
+                    if (!nodeMap.ContainsKey(other)) {
+                        continue;
+                    }
+
+                    PhysicsNode node2 = nodeMap[other];
+                    if (physicsGraph.TryGetDirectedConnection(node2, node, out Connection conn)) {
+                        var spring = (Spring)conn;
+                        physicsGraph.AddConnection(node, node2, new Spring(spring.n2, spring.n1, spring.Length, spring.K));
+                    } else {
+                        // one of these must be non-null, since we're iterating over all existing connections
+                        var s1 = conn1?.Strength();
+                        var s2 = conn2?.Strength();
+                        s1 ??= s2;
+                        s2 ??= s1;
+                        var spring = new Spring(node,
+                                                nodeMap[other],
+                                                (float)(s1 + s2) / 2f,
+                                                Stiffness);
+                        physicsGraph.AddConnection(
+                            node,
+                            nodeMap[other],
+                            spring);
+                        springs.Add(spring);
+                    }
+                }
+            }
+
+            Graph = physicsGraph;
+
+        }
+
+        public void Reset() {
+            foreach (PhysicsNode pn in Graph.Nodes.Cast<PhysicsNode>()) {
+                pn.Point.Position.X = (float)((rng.NextDouble() - .5) * 10.0);
+                pn.Point.Position.Y = (float)((rng.NextDouble() - .5) * 10.0);
+            }
+        }
+
+        public void Add(Node n) {
+            if (physicsNodes.ContainsKey(n)) {
+                throw new Exception("This simulation already contains the node");
+            }
+            var conns = InnerGraph.GetConnections(n);
+            var pNode = new PhysicsNode(n);
+            foreach ((var outgoing, var other) in conns) {
+                if (!physicsNodes.ContainsKey(other))
+                    continue;
+
+                InnerGraph.TryGetDirectedConnection(other, n, out var incoming);
+                var s1 = incoming?.Strength();
+                var s2 = outgoing?.Strength();
+                s1 ??= s2;
+                s2 ??= s1;
+                var spring = new Spring(pNode, physicsNodes[other], (float)(s1 + s2) / 2f, Stiffness);
+                springs.Add(spring);
+            }
+            physicsNodes.Add(n, pNode);
         }
 
         void ApplyCoulombsLaw() {
@@ -186,7 +294,7 @@ namespace Core.Physics {
         }
 
         void ApplyHookesLaw() {
-            foreach (var spring in Graph.Connections.Cast<Spring>()) {
+            foreach (var spring in springs) {
                 var n1 = spring.n1;
                 var n2 = spring.n2;
                 var d = spring.n1.Point.Position - spring.n2.Point.Position;
@@ -237,7 +345,6 @@ namespace Core.Physics {
                 var speed = node.Point.Velocity.Magnitude();
                 total += 0.5f * node.Mass * speed * speed;
             }
-            Math.Max(total, 10f);
             return total;
         }
 
