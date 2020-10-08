@@ -152,7 +152,11 @@ namespace NodeMonog
             this.engine = engine;
             graph = engine.system.graph;
 
+<<<<<<< HEAD
+            simulation = new Simulation(graph, 0.8f, 1f, 0.3f, 0.1f);
+=======
             simulation = new Simulation(graph, 0.8f, 0.5f, 0.3f, 0.1f);
+>>>>>>> 0329e9dadf92b3296d43fd2fb78f1830b5ae9a99
         }
 
         /// <summary>
@@ -437,7 +441,7 @@ namespace NodeMonog
                     var total = sim.GetTotalEnergy();
                     float negLog = (float)Math.Pow(2, -Math.Log(total, 2));
                     timeStep = Math.Min(negLog, total / 10);
-                    timeStep = Math.Max(timeStep, 0.01f);
+                    //timeStep = Math.Max(timeStep, 0.01f);
                     timeStep = Math.Min(timeStep, 1);
                     //timeStep = 1f - timeStep;
                     //timeStep = S(total - 2);

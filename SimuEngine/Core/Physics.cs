@@ -121,7 +121,7 @@ namespace Core.Physics {
             Stiffness = stiffness;
             Repulsion = repulsion;
             Damping = damping;
-            Threshold = 0.01f;
+            Threshold = 0f;// .0000000001f;
             var physicsGraph = new Graph();
 
             var nodeMap = new Dictionary<Node, PhysicsNode>();
@@ -237,7 +237,7 @@ namespace Core.Physics {
                 var speed = node.Point.Velocity.Magnitude();
                 total += 0.5f * node.Mass * speed * speed;
             }
-            Math.Max(total, 10f);
+            //total = Math.Max(total, 10f);
             return total;
         }
 
@@ -248,7 +248,7 @@ namespace Core.Physics {
             AttractToCenter();
             UpdateVelocity(timeStep);
 
-            WithinThreshold = GetTotalEnergy() < Threshold;
+            WithinThreshold = GetTotalEnergy() <= Threshold;
         }
     }
 }
