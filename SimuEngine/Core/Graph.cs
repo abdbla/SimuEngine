@@ -281,6 +281,10 @@ namespace Core {
             return ret;
         }
 
+        public bool Contains(Node node) {
+            return indexLookup.TryGetValue(node, out _);
+        }
+
         public GraphCount Count {
             get {
                 return new GraphCount (nodes.Count, adjacencyMatrix.Count);
