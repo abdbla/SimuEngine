@@ -15,6 +15,8 @@ using GeonBit.UI.Entities;
 using System.Collections.ObjectModel;
 using System.Security.Principal;
 using Simulation = Core.Physics.Simulation;
+using SimulationParams = Core.Physics.SimulationParams;
+using System.Xml.Schema;
 
 namespace NodeMonog
 {
@@ -95,6 +97,8 @@ namespace NodeMonog
         Texture2D circle, pixel, tickButton, square, arrow;
         SpriteFont arial;
 
+        bool ctrlr = false;
+
         int dragtimer = 0;
         Point cameraPosition = Point.Zero, cameraGoal = Point.Zero;
         Vector2 cameraVelocity = Vector2.Zero;
@@ -118,6 +122,7 @@ namespace NodeMonog
         const int hoverLimit = 1000;
 
         TaskStatus simulationStatus;
+        Task simTask;
         List<gameState> history = new List<gameState>();
 
         Graph graph;
@@ -152,8 +157,12 @@ namespace NodeMonog
             this.engine = engine;
             graph = engine.system.graph;
 
-            simulation = new Simulation(graph, 0.8f, 1f, 0.3f, 0.1f);
-            // alt: simulation = new Simulation(graph, 0.8f, 0.5f, 0.3f, 0.1f);
+            var includedNodes = (from node in graph.Nodes
+                                 where int.Parse(node.Name) < 100
+                                 select node).ToList();
+
+            simulation = new Simulation(graph, new SimulationParams(0.8f, 1f, 0.3f, 0.1f), includedNodes);
+            // alt: 0.8f, 0.5f, 0.3f, 0.1f
         }
 
         /// <summary>
@@ -192,7 +201,10 @@ namespace NodeMonog
 
             foreach (Node item in graph.Nodes)
             {
-                drawNodes.Add(new DrawNode(new Vector2(), item, simulation));
+                bool success = int.TryParse(item.Name, out int n);
+                if (success && n < 100) {
+                    drawNodes.Add(new DrawNode(new Vector2(), item, simulation));
+                }
             }
 
             tabs = new PanelTabs();
@@ -263,7 +275,6 @@ namespace NodeMonog
             
             simulationStatus = new TaskStatus(Status.Running);
 
-            Task simTask;
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
             (simTask, simulationStatus) = RunSimulation(simulation);
             simTask.Start();
@@ -429,13 +440,16 @@ namespace NodeMonog
                 float timeStep = 1.5f;
                 status.Status = Status.Running;
                 for (int i = 0; i < 10000; i++) {
-                    sim.Advance(timeStep);
-                    if (sim.WithinThreshold) {
-                        status.Status = Status.MinimaReached;
-                        return;
-                    }
+                    float total;
+                    lock (sim) {
+                        sim.Advance(timeStep);
+                        if (sim.WithinThreshold) {
+                            status.Status = Status.MinimaReached;
+                            return;
+                        }
 
-                    var total = sim.GetTotalEnergy();
+                        total = sim.GetTotalEnergy();
+                    }
                     float negLog = (float)Math.Pow(2, -Math.Log(total, 2));
                     timeStep = Math.Min(negLog, total / 10);
                     //timeStep = Math.Max(timeStep, 0.01f);
@@ -497,9 +511,21 @@ namespace NodeMonog
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            var timeFactor = 100f;
-            if (Keyboard.GetState().IsKeyDown(Keys.Space)) timeFactor = 25f;
-            //ShittyAssNode.simulation.Advance(gameTime.ElapsedGameTime.Milliseconds / timeFactor);
+            if (Keyboard.GetState().IsKeyDown(Keys.LeftControl) && Keyboard.GetState().IsKeyDown(Keys.R) && !ctrlr) {
+                ctrlr = true;
+                lock (simulation) {
+                    simulation.Reset();
+                    var oldTask = simTask;
+                    (var newSimTask, var newStatus) = RunSimulation(simulation);
+                    simTask = oldTask.ContinueWith(_ => {
+                        simulationStatus = newStatus;
+                        newSimTask.Start();
+                    });
+                }
+            } else if (Keyboard.GetState().IsKeyDown(Keys.LeftControl) && Keyboard.GetState().IsKeyDown(Keys.R) && ctrlr) {
+            } else {
+                ctrlr = false;
+            }
 
             Rectangle r = Window.ClientBounds;
             int x = r.Width / 3;
@@ -524,16 +550,24 @@ namespace NodeMonog
                     if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released)
                     {
 
-                        for (int i = 0; i < graph.Nodes.Count; i++)
+                        foreach (var n in graph.Nodes)
                         {
-                            DrawNode currentNode = drawNodes.Find(x => x.node == graph.Nodes[i]);
-
+                            DrawNode currentNode = drawNodes.Find(x => x.node == n);
+                            if (currentNode == null) continue;
 
                             if (new Rectangle(CameraTransform(currentNode.Position).ToPoint(), new Point(
                                 (int)(64 * zoomlevel),
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
                             {
                                 engine.player.SelectNode(currentNode.node);
+                                foreach ((var conn, var other) in graph.GetConnections(n)) {
+                                    if (!simulation.physicsNodes.ContainsKey(other)) {
+                                        lock (simulation) {
+                                            simulation.Add(other);
+                                        }
+                                        drawNodes.Add(new DrawNode(Vector2.Zero, other, simulation));
+                                    }
+                                }
                                 selectedNode = currentNode;
                                 UpdateHud();
                             };
@@ -729,6 +763,7 @@ namespace NodeMonog
                 $"\ntimestep: {simulationStatus.TimeStep}",
                 Status.IterationCap => "Iteration cap reached",
                 Status.MinimaReached => "Local minima reached",
+                Status.Idle => "idle",
                 _ => "This should never happen"
             };
             try {
@@ -737,12 +772,14 @@ namespace NodeMonog
             }
             if (showGraph) {
                 float maxTime = Math.Max(1, simulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
-                float maxIter = 10000; // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
+                float maxIter = Math.Min(1000, simulationStatus.TimeStepHistory.Last().Item1); // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
 
                 float graphWidth = Window.ClientBounds.Width / 5f;
                 float graphHeight = Window.ClientBounds.Height / 4f;
 
-                foreach ((int iter, float timeStep) in simulationStatus.TimeStepHistory) {
+                foreach ((int iter, float timeStep) in simulationStatus.TimeStepHistory.Skip(
+                    Math.Min(0, simulationStatus.TimeStepHistory.Last().Item1 - 1000)))
+                {
                     var y = (Math.Log(timeStep) - Math.Log(0.01)) / (Math.Log(maxTime) - Math.Log(0.01)) * graphHeight;
                     var x = iter / maxIter * graphWidth;
                     spriteBatch.Draw(pixel,
@@ -757,6 +794,7 @@ namespace NodeMonog
             for (int i = 0; i < graph.Nodes.Count; i++)
             {
                 Node currentNode = graph.Nodes[i];
+                if (drawNodes.Find(x => x.node == currentNode) == null) continue;
                 Vector2 currentNodePoistion = drawNodes.Find(x => x.node == currentNode).Position;
 
                 Color selectcolour;
@@ -770,6 +808,9 @@ namespace NodeMonog
                 
                 foreach ((Connection c, Node n) in graph.GetConnections(currentNode))
                 {
+                    var drawNode = drawNodes.Find(x => x.node == n);
+                    if (drawNode == null)
+                        continue;
                     Vector2 arrowVector = (drawNodes.Find(x => x.node == n).Position - currentNodePoistion);
                     double rotation = Math.Atan(arrowVector.Y / arrowVector.X);
                     if (arrowVector.X < 0) rotation += Math.PI;
@@ -803,9 +844,9 @@ namespace NodeMonog
                 if (currentNode.Statuses.Contains("Recovered")) _color = new Color(81, 182, 74);
                 spriteBatch.Draw(circle,
                     destinationRectangle: new Rectangle(CameraTransform(currentNodePoistion).ToPoint(),
-                    new Point(
-                    (int)(circleDiameter * zoomlevel),
-                    (int)(circleDiameter * zoomlevel))),
+                                                        new Point(
+                                                            (int)(circleDiameter * zoomlevel),
+                                                            (int)(circleDiameter * zoomlevel))),
                     sourceRectangle: null,
                     color: _color,
                     0,
