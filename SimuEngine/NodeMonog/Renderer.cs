@@ -692,10 +692,9 @@ namespace NodeMonog
             return new Rectangle(newLocation.ToPoint(), newSize.ToPoint());
         }
 
-        public int CameraTransform(int i, bool xAxis)
+        public int CameraTransform(int i)
         {
-            if (xAxis) return (int)((i + cameraPosition.X) * zoomlevel);
-            else return (int)((i + cameraPosition.Y) * zoomlevel);
+            return (int)(i * zoomlevel);
         }
 
 
@@ -784,7 +783,7 @@ namespace NodeMonog
                         destinationRectangle: new Rectangle(CameraTransform((currentNodePoistion + offsetPoint).ToPoint()),
                         new Point(
                         (int)((arrowVector.Length()) * zoomlevel),
-                         (int)(8 * zoomlevel))),
+                         CameraTransform(6) + 2)),
                         sourceRectangle: null,
                         color: selectcolour,
                         rotation: (float)rotation,
