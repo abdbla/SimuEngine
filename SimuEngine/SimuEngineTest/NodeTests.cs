@@ -87,7 +87,7 @@ namespace SimuEngineTest
             connectionList.Add((connection, node4));
             connectionList.Add((connection, node5));
 
-            List<(Connection, Node)> getConnectionsList = graphSystem.graph.GetConnections(node1);
+            List<(Connection, Node)> getConnectionsList = graphSystem.graph.GetOutgoingConnections(node1);
 
             //assert
             CollectionAssert.AreEquivalent(connectionList, getConnectionsList);

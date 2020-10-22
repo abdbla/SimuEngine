@@ -20,69 +20,6 @@ using System.Xml.Schema;
 
 namespace NodeMonog
 {
-    enum Status {
-        Idle,
-        Running,
-        IterationCap,
-        MinimaReached
-    }
-
-    class StatusWrapper {
-        public Status status;
-        public float timestep;
-        public int iterationCount;
-        public StatusWrapper(Status init) {
-            status = init;
-            iterationCount = 0;
-        }
-    }
-
-    class TaskStatus {
-        private StatusWrapper status;
-        public Status Status {
-            get {
-                lock (status) {
-                    return status.status;
-                }
-            }
-            set {
-                lock (status) {
-                    status.status = value;
-                }
-            }
-        }
-        public float TimeStep {
-            get {
-                lock (status) {
-                    return status.timestep;
-                }
-            }
-            set {
-                lock (status) {
-                    status.timestep = value;
-                    lock (iterations) {
-                        iterations.Add((status.iterationCount, status.timestep));
-                        status.iterationCount += 1;   
-                    }
-                }
-            }
-        }
-        public List<(int, float)> TimeStepHistory {
-            get {
-                lock (iterations) {
-                    return iterations.ToList();
-                }
-            }
-        }
-
-        private List<(int, float)> iterations;
-
-        public TaskStatus(Status status) {
-            this.status = new StatusWrapper(status);
-            iterations = new List<(int, float)>();
-        }
-    }
-
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
@@ -115,8 +52,8 @@ namespace NodeMonog
         const int circleDiameter = 64;
 
 
-        DrawNode selectedNode;
-        List<DrawNode> drawNodes = new List<DrawNode>();
+        DrawNode selectedNode { get => simulation.SelectedDrawNode; set { } }
+        List<DrawNode> drawNodes { get => simulation.DrawNodes; set { } }
 
 
         const int hoverLimit = 1000;
@@ -143,8 +80,8 @@ namespace NodeMonog
         TabData person;
         TabData stats;
         TabData options;
-        Simulation simulation;
-        Simulation subSimulatio;
+        PhysicsWrapper simulation;
+        PhysicsWrapper subSimulatio;
 
         //Options
         bool cameraLock = true;
@@ -157,11 +94,7 @@ namespace NodeMonog
             this.engine = engine;
             graph = engine.system.graph;
 
-            var includedNodes = (from node in graph.Nodes
-                                 where int.Parse(node.Name) < 100
-                                 select node).ToList();
-
-            simulation = new Simulation(graph, new SimulationParams(0.8f, 1f, 0.3f, 0.1f), includedNodes);
+            simulation = new PhysicsWrapper(graph, graph.Nodes[0], 4, new SimulationParams(0.8f, 1f, 0.3f, 0.1f));
             // alt: 0.8f, 0.5f, 0.3f, 0.1f
         }
 
@@ -190,7 +123,7 @@ namespace NodeMonog
 
 
             graphistory.Add(graph);
-            selectedNode = new DrawNode(Vector2.Zero, graph.Nodes[0],simulation);
+            selectedNode = simulation.SelectedDrawNode;
 
             //Gui initial Initialisation
             UserInterface.Initialize(Content, theme: "editorSourceCodePro");
@@ -198,14 +131,6 @@ namespace NodeMonog
 
             outsidePanel = new Panel(new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height));
             outsidePanel.Anchor = Anchor.TopRight;
-
-            foreach (Node item in graph.Nodes)
-            {
-                bool success = int.TryParse(item.Name, out int n);
-                if (success && n < 100) {
-                    drawNodes.Add(new DrawNode(new Vector2(), item, simulation));
-                }
-            }
 
             tabs = new PanelTabs();
 
@@ -244,7 +169,7 @@ namespace NodeMonog
                 tab.button.Children.First(x => x.GetType() == typeof(Image) || x.GetType() == typeof(Icon)).Visible = true;
             }
 
-            selectedNode =  new DrawNode(Vector2.Zero,graph.Nodes[0], simulation);
+            selectedNode = simulation.SelectedDrawNode;
 
 
             engine.player.SelectNode(selectedNode.node);
@@ -276,8 +201,7 @@ namespace NodeMonog
             simulationStatus = new TaskStatus(Status.Running);
 
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
-            (simTask, simulationStatus) = RunSimulation(simulation);
-            simTask.Start();
+            simulation.StartSimulation();
 
             base.Initialize();
         }
@@ -319,17 +243,14 @@ namespace NodeMonog
                     graphistory.Add(graph);
 
 
-                    subSimulatio = new Simulation(selectedNode.node.SubGraph, 0.8f, 0.5f, 0.3f, 0.4f);
+                    subSimulatio = new PhysicsWrapper(selectedNode.node.SubGraph,
+                        selectedNode.node.SubGraph.Nodes[0], 4, new SimulationParams(0.8f, 0.5f, 0.3f, 0.4f));
 
-                    drawNodes = new List<DrawNode>();
-                    foreach (Node n in selectedNode.node.SubGraph.Nodes)
-                    {
-                        drawNodes.Add(new DrawNode(Vector2.Zero, n, subSimulatio));
-                    }
+                    drawNodes = subSimulatio.DrawNodes;
                     selectedNode = drawNodes[0];
                     engine.player.SelectNode(graph.Nodes[0]);
 
-                    (Task simtask, _) = RunSimulation(subSimulatio);
+                    subSimulatio.StartSimulation();
                     UpdateHud();
 
                 };
@@ -348,13 +269,13 @@ namespace NodeMonog
 
             person.panel.AddChild(new Header(engine.player.selectedNode.Name));
             SelectList connectionList = new SelectList();
-            foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
+            foreach ((Connection c, Node n) in graph.GetOutgoingConnections(engine.player.selectedNode))
             {
                 connectionList.AddItem(n.Name + ": " + c.Traits["Proximity"]);
             }
             connectionList.OnValueChange += delegate (Entity target)
             {
-                Node clickedNode = graph.GetConnections(selectedNode.node)[connectionList.SelectedIndex].Item2;
+                Node clickedNode = graph.GetOutgoingConnections(selectedNode.node)[connectionList.SelectedIndex].Item2;
                 engine.player.SelectNode(clickedNode);
                 selectedNode = drawNodes.Find(x => x.node == clickedNode);
                 Console.WriteLine();
@@ -433,37 +354,6 @@ namespace NodeMonog
             
         }
 
-        static (Task, TaskStatus) RunSimulation(Simulation sim) {
-            var status = new TaskStatus(Status.Idle);
-            var task = new Task(() => {
-                Func<float, float> S = x => (float)(1.0 / (1.0 + Math.Pow(Math.E, -x)));
-                float timeStep = 1.5f;
-                status.Status = Status.Running;
-                for (int i = 0; i < 10000; i++) {
-                    float total;
-                    lock (sim) {
-                        sim.Advance(timeStep);
-                        if (sim.WithinThreshold) {
-                            status.Status = Status.MinimaReached;
-                            return;
-                        }
-
-                        total = sim.GetTotalEnergy();
-                    }
-                    float negLog = (float)Math.Pow(2, -Math.Log(total, 2));
-                    timeStep = Math.Min(negLog, total / 10);
-                    //timeStep = Math.Max(timeStep, 0.01f);
-                    timeStep = Math.Min(timeStep, 1);
-                    //timeStep = 1f - timeStep;
-                    //timeStep = S(total - 2);
-                    status.TimeStep = timeStep;
-                }
-                status.Status = Status.IterationCap;
-            });
-
-            return (task, status);
-        }
-
         public void testDelegate(object sender, EventArgs e)
         {
             Console.WriteLine("called");
@@ -514,13 +404,7 @@ namespace NodeMonog
             if (Keyboard.GetState().IsKeyDown(Keys.LeftControl) && Keyboard.GetState().IsKeyDown(Keys.R) && !ctrlr) {
                 ctrlr = true;
                 lock (simulation) {
-                    simulation.Reset();
-                    var oldTask = simTask;
-                    (var newSimTask, var newStatus) = RunSimulation(simulation);
-                    simTask = oldTask.ContinueWith(_ => {
-                        simulationStatus = newStatus;
-                        newSimTask.Start();
-                    });
+                    simulation.ResetAndRestart();
                 }
             } else if (Keyboard.GetState().IsKeyDown(Keys.LeftControl) && Keyboard.GetState().IsKeyDown(Keys.R) && ctrlr) {
             } else {
@@ -560,14 +444,7 @@ namespace NodeMonog
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
                             {
                                 engine.player.SelectNode(currentNode.node);
-                                foreach ((var conn, var other) in graph.GetConnections(n)) {
-                                    if (!simulation.physicsNodes.ContainsKey(other)) {
-                                        lock (simulation) {
-                                            simulation.Add(other);
-                                        }
-                                        drawNodes.Add(new DrawNode(Vector2.Zero, other, simulation));
-                                    }
-                                }
+                                simulation.SelectedNode = currentNode.node;
                                 selectedNode = currentNode;
                                 UpdateHud();
                             };
@@ -687,11 +564,7 @@ namespace NodeMonog
 
             graph = graphistory[0];
 
-            drawNodes = new List<DrawNode>();
-            for (int i = 0; i <graph.Nodes.Count; i++)
-            {
-                drawNodes.Add(new DrawNode(Vector2.Zero, graph.Nodes[i], simulation));
-            }
+            drawNodes = simulation.DrawNodes;
             engine.player.SelectNode(tmpNode);
             selectedNode = drawNodes.Find(x => x.node == tmpNode);
             cameraPosition = selectedNode.Position.ToPoint();
@@ -806,7 +679,7 @@ namespace NodeMonog
                 }
                 else selectcolour = new Color(0, 0, 0, 15);
                 
-                foreach ((Connection c, Node n) in graph.GetConnections(currentNode))
+                foreach ((Connection c, Node n) in graph.GetOutgoingConnections(currentNode))
                 {
                     var drawNode = drawNodes.Find(x => x.node == n);
                     if (drawNode == null)
@@ -836,7 +709,7 @@ namespace NodeMonog
                 }
 
 
-                if (graph.GetConnections(selectedNode.node).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
+                if (graph.GetOutgoingConnections(selectedNode.node).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
                 //Draws circles
                 var _color = Color.White;
                 if (currentNode.Statuses.Contains("Infected")) _color = Color.Red;
@@ -867,7 +740,7 @@ namespace NodeMonog
                         Vector2.Zero,
                         (float)(1 / zoomlevel / 32 + 1.2f),
                         SpriteEffects.None,
-                        0.1f);
+                        0.1f) ;
                 }
             }
 

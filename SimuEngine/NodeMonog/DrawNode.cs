@@ -19,6 +19,7 @@ namespace NodeMonog
         Vector2? position;
 
         public Node node;
+        public int separation;
 
         public Vector2 Position
         {
@@ -49,9 +50,16 @@ namespace NodeMonog
         //    get => traits;
         //    set => traits = value;
         //}
-        public DrawNode()
+        public DrawNode(Node n, Simulation sim)
         {
+            node = n;
+            simulation = sim;
+        }
 
+        public DrawNode(Node n, Simulation sim, int sep) {
+            node = n;
+            simulation = sim;
+            separation = sep;
         }
     }
 
