@@ -385,6 +385,12 @@ namespace NodeMonog
             {
                 stats.panel.AddChild(new Paragraph(entry.Key + ": " + entry.Value));
             }
+            stats.panel.AddChild(new Paragraph());
+            foreach (KeyValuePair<string, List<int>> entry in new GameState(masterGraph).allStatuses)
+            {
+                stats.panel.AddChild(new Paragraph(entry.Key + " average: " + entry.Value.Average()));
+            }
+
         }
 
 
@@ -590,7 +596,6 @@ namespace NodeMonog
 
             base.Update(gameTime);
         }
-
 
         public void GoIntoAGraph(Node enteredNode)
         {
@@ -841,43 +846,48 @@ namespace NodeMonog
 
        
     }
-
-    
-
-
     public class GameState
     {
 
         public Dictionary<string, int> allTraits;
-        public Dictionary<string, (int, int)> allStatuses;
+        public Dictionary<string, List<int>> allStatuses;
 
         public GameState(Graph master)
         {
             List<Node> allNodes = new List<Node>();
             allNodes.AddRange(master.Nodes);
 
-            foreach (Node n in allNodes)
+            for (int i = 0; i < allNodes.Count; i++)
             {
-                if (n.SubGraph != null) allNodes.AddRange(n.SubGraph.Nodes);
+
+                if (allNodes[i].SubGraph != null) allNodes.AddRange(allNodes[i].SubGraph.Nodes);
             }
+            
 
             Dictionary<string, int> allTraits = new Dictionary<string, int>();
-            Dictionary<string, (int, int)> allStatuses = new Dictionary<string, (int, int)>();
+            Dictionary<string, List<int>> allStatuses = new Dictionary<string, List<int>>();
 
 
-            //oreach (Node n in allNodes)
-            //   {
-            //       foreach (string s in n.Statuses)
-            //       {
-            //           if (gamestate.Keys.Contains(s)) gamestate[s]++;
-            //           else gamestate.Add(s, 1);
-            //       }
-            //   }
+            foreach (Node n in allNodes)
+               {
+                   foreach (string s in n.Statuses)
+                   {
+                       if (allTraits.Keys.Contains(s)) allTraits[s]++;
+                       else allTraits.Add(s, 1);
+                   }
+                   foreach(KeyValuePair<string,int> kvp in n.Traits)
+                {
+                    if (allStatuses.Keys.Contains(kvp.Key)) allStatuses[kvp.Key].Add(kvp.Value);
+                    else {
+                        List<int> x = new List<int>  { kvp.Value };
+                        allStatuses.Add(kvp.Key, x);
+                    }
+                }
+               }
             
             this.allTraits = allTraits;
             this.allStatuses = allStatuses;
         }
     }
     
-
 }
