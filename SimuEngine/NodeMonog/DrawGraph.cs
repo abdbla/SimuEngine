@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using SimuEngine;
 using Core;
 using Microsoft.Xna.Framework;
-using SharpDX.DirectWrite;
-using SharpDX.DXGI;
 
 using Simulation = Core.Physics.Simulation;
 using PVec2 = Core.Physics.Vector2;
 
 namespace NodeMonog
 {
+    class DrawGraph : Graph
+    {
+    }
+
     class DrawNode
     {
         Vector2? position;
@@ -72,5 +73,5 @@ namespace NodeMonog
         }
 
     }
+
 }
-                                                            

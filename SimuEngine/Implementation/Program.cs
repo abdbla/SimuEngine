@@ -44,7 +44,7 @@ namespace Implementation
 
             var rng = Node.rng;
             for (int i = 0; i < more.Count; i++) {
-                totalConns[more[i]] = rng.Next(2, 5);
+                totalConns[more[i]] = rng.Next(2, 7);
                 curConns[more[i]] = 0;
             }
 
@@ -86,8 +86,8 @@ namespace Implementation
                 }
             }
 
-
             Graph tmpsubgraph = new Graph();
+            { 
             Person p1 = new Person();
             p1.Name = "Billy";
             tmpsubgraph.Add(p1);
@@ -98,6 +98,23 @@ namespace Implementation
             tmpsubgraph.AddConnection(p2, p1, new PersonConnection("Family"));
 
             p.engine.system.graph.FindNode(x => x.Name == "0").SubGraph = tmpsubgraph;
+
+            }
+
+            {
+                Graph tmptmpsubgraph = new Graph();
+                Person p1 = new Person();
+                p1.Name = "Charlie deep";
+                tmptmpsubgraph.Add(p1);
+                Person p2 = new Person();
+                p2.Name = "ALGNAIUSHDU";
+                tmptmpsubgraph.Add(p2);
+                tmptmpsubgraph.AddConnection(p1, p2, new PersonConnection("Family"));
+                tmptmpsubgraph.AddConnection(p2, p1, new PersonConnection("Family"));
+
+                tmpsubgraph.Nodes[0].SubGraph = tmptmpsubgraph;
+
+            }
 
 
             using (Renderer renderer = new Renderer(p.engine)) {

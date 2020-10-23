@@ -6,14 +6,9 @@ using Core;
 using System.Linq;
 using System.Collections.Generic;
 using System;
-using SharpDX.MediaFoundation;
-using SharpDX.Direct2D1.Effects;
 using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 using GeonBit.UI;
 using GeonBit.UI.Entities;
-using System.Collections.ObjectModel;
-using System.Security.Principal;
 using Simulation = Core.Physics.Simulation;
 
 namespace NodeMonog
@@ -115,31 +110,31 @@ namespace NodeMonog
         List<DrawNode> drawNodes = new List<DrawNode>();
 
 
-        const int hoverLimit = 1000;
-
         TaskStatus simulationStatus;
-        List<gameState> history = new List<gameState>();
+        List<GameState> history = new List<GameState>();
 
-        Graph graph;
+
         Engine engine;
 
-        List<Graph> graphistory = new List<Graph>();
+        Graph masterGraph;
+        List<(Graph, Simulation, string)> visitedGraphs = new List<(Graph, Simulation, string)>();
+        List<string> allActiveStatuses = new List<string>();
+
         int historyIndex = 0;
+        List<Simulation> ranSimulations = new List<Simulation>();
+        Simulation currentSimulation;
 
 
         PanelTabs tabs;
         Panel outsidePanel;
 
         List<TabData> allTabs;
-        Dictionary<Simulation, string> simulations;
 
         TabData actions;
         TabData group;
         TabData person;
         TabData stats;
         TabData options;
-        Simulation simulation;
-        Simulation subSimulatio;
 
         //Options
         bool cameraLock = true;
@@ -150,10 +145,17 @@ namespace NodeMonog
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             this.engine = engine;
-            graph = engine.system.graph;
+            masterGraph = engine.system.graph;
 
-            simulation = new Simulation(graph, 0.8f, 1f, 0.3f, 0.1f);
+            
+#pragma warning disable CS0612 // 'Simulation.Simulation(Graph, float, float, float, float)' is obsolete
+            currentSimulation = new Simulation(masterGraph, 0.8f, 1f, 0.3f, 0.1f);
+#pragma warning restore CS0612 // 'Simulation.Simulation(Graph, float, float, float, float)' is obsolete
+            ranSimulations.Add(currentSimulation);
             // alt: simulation = new Simulation(graph, 0.8f, 0.5f, 0.3f, 0.1f);
+
+
+            visitedGraphs.Add((masterGraph, currentSimulation, "Master"));
         }
 
         /// <summary>
@@ -180,9 +182,6 @@ namespace NodeMonog
             
 
 
-            graphistory.Add(graph);
-            selectedNode = new DrawNode(Vector2.Zero, graph.Nodes[0],simulation);
-
             //Gui initial Initialisation
             UserInterface.Initialize(Content, theme: "editorSourceCodePro");
 
@@ -190,10 +189,11 @@ namespace NodeMonog
             outsidePanel = new Panel(new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height));
             outsidePanel.Anchor = Anchor.TopRight;
 
-            foreach (Node item in graph.Nodes)
+            foreach (Node item in masterGraph.Nodes)
             {
-                drawNodes.Add(new DrawNode(new Vector2(), item, simulation));
+                drawNodes.Add(new DrawNode(new Vector2(), item, visitedGraphs[0].Item2));
             }
+            selectedNode = drawNodes[0];
 
             tabs = new PanelTabs();
 
@@ -232,16 +232,13 @@ namespace NodeMonog
                 tab.button.Children.First(x => x.GetType() == typeof(Image) || x.GetType() == typeof(Icon)).Visible = true;
             }
 
-            selectedNode =  new DrawNode(Vector2.Zero,graph.Nodes[0], simulation);
+            //selectedNode =  new DrawNode(Vector2.Zero,graphs[0].Nodes[0], simulation);
 
 
             engine.player.SelectNode(selectedNode.node);
 
-            history.Add(new gameState(
-                                alive: graph.FindAllNodes(x => x.statuses.Contains("Healthy")).Count,
-                                dead: graph.FindAllNodes(x => x.statuses.Contains("Dead")).Count,
-                                recovered: graph.FindAllNodes(x => x.statuses.Contains("Recovered")).Count,
-                                infected: graph.FindAllNodes(x => x.statuses.Contains("Infected")).Count));
+
+            history.Add(new GameState(masterGraph));
 
             resizeMenu(new object(), new EventArgs());
 
@@ -265,12 +262,11 @@ namespace NodeMonog
 
             Task simTask;
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
-            (simTask, simulationStatus) = RunSimulation(simulation);
+            (simTask, simulationStatus) = RunSimulation(currentSimulation);
             simTask.Start();
 
             base.Initialize();
         }
-
 
 
         public void UpdateHud() {
@@ -296,30 +292,7 @@ namespace NodeMonog
             Button subGraphButton = new Button("Enter Subgraph");
                 subGraphButton.OnClick += x =>
                 {
-                    List<Graph> tmpGraphList = new List<Graph>();
-
-                    for (int i = 0; i < historyIndex + 1; i++)
-                    {
-                        tmpGraphList.Add(graphistory[i]);
-                    }
-                    graphistory = tmpGraphList;
-
-                    graph = selectedNode.node.SubGraph;
-                    graphistory.Add(graph);
-
-
-                    subSimulatio = new Simulation(selectedNode.node.SubGraph, 0.8f, 0.5f, 0.3f, 0.4f);
-
-                    drawNodes = new List<DrawNode>();
-                    foreach (Node n in selectedNode.node.SubGraph.Nodes)
-                    {
-                        drawNodes.Add(new DrawNode(Vector2.Zero, n, subSimulatio));
-                    }
-                    selectedNode = drawNodes[0];
-                    engine.player.SelectNode(graph.Nodes[0]);
-
-                    (Task simtask, _) = RunSimulation(subSimulatio);
-                    UpdateHud();
+                    GoIntoAGraph(selectedNode.node);
 
                 };
                 actions.panel.AddChild(subGraphButton);
@@ -337,13 +310,13 @@ namespace NodeMonog
 
             person.panel.AddChild(new Header(engine.player.selectedNode.Name));
             SelectList connectionList = new SelectList();
-            foreach ((Connection c, Node n) in graph.GetConnections(engine.player.selectedNode))
+            foreach ((Connection c, Node n) in visitedGraphs[historyIndex].Item1.GetConnections(engine.player.selectedNode))
             {
                 connectionList.AddItem(n.Name + ": " + c.Traits["Proximity"]);
             }
             connectionList.OnValueChange += delegate (Entity target)
             {
-                Node clickedNode = graph.GetConnections(selectedNode.node)[connectionList.SelectedIndex].Item2;
+                Node clickedNode = visitedGraphs[historyIndex].Item1.GetConnections(selectedNode.node)[connectionList.SelectedIndex].Item2;
                 engine.player.SelectNode(clickedNode);
                 selectedNode = drawNodes.Find(x => x.node == clickedNode);
                 Console.WriteLine();
@@ -404,13 +377,14 @@ namespace NodeMonog
             };
             options.panel.AddChild(graphBox);
             options.panel.AddChild(cameraBox);
-            
+
+
             stats.panel.ClearChildren();
             stats.panel.AddChild(new Paragraph($"Ticks: {history.Count}"));
-            stats.panel.AddChild(new Paragraph($"Alive people {history.Last().alive}"));
-            stats.panel.AddChild(new Paragraph($"Infected {history.Last().infected}"));
-            stats.panel.AddChild(new Paragraph($"Dead people {history.Last().dead}"));
-            stats.panel.AddChild(new Paragraph($"Recovered people {history.Last().recovered}"));
+            foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
+            {
+                stats.panel.AddChild(new Paragraph(entry.Key + ": " + entry.Value));
+            }
         }
 
 
@@ -497,7 +471,9 @@ namespace NodeMonog
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+#pragma warning disable CS0219 // The variable 'timeFactor' is assigned but its value is never used
             var timeFactor = 100f;
+#pragma warning restore CS0219 // The variable 'timeFactor' is assigned but its value is never used
             if (Keyboard.GetState().IsKeyDown(Keys.Space)) timeFactor = 25f;
             //ShittyAssNode.simulation.Advance(gameTime.ElapsedGameTime.Milliseconds / timeFactor);
 
@@ -524,9 +500,9 @@ namespace NodeMonog
                     if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released)
                     {
 
-                        for (int i = 0; i < graph.Nodes.Count; i++)
+                        for (int i = 0; i < visitedGraphs[historyIndex].Item1.Nodes.Count; i++)
                         {
-                            DrawNode currentNode = drawNodes.Find(x => x.node == graph.Nodes[i]);
+                            DrawNode currentNode = drawNodes.Find(x => x.node == visitedGraphs[historyIndex].Item1.Nodes[i]);
 
 
                             if (new Rectangle(CameraTransform(currentNode.Position).ToPoint(), new Point(
@@ -544,12 +520,8 @@ namespace NodeMonog
                         if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position))
                         {
                             //The tickbutton is pressed
-                            engine.handler.Tick(graph);
-                            history.Add(new gameState(
-                                alive: graph.FindAllNodes(x => x.statuses.Contains("Healthy")).Count,
-                                dead: graph.FindAllNodes(x => x.statuses.Contains("Dead")).Count,
-                                recovered: graph.FindAllNodes(x => x.statuses.Contains("Recovered")).Count,
-                                infected: graph.FindAllNodes(x => x.statuses.Contains("Infected")).Count));
+                            engine.handler.Tick(visitedGraphs[historyIndex].Item1);
+                            history.Add(new GameState(masterGraph));
                             UpdateHud();
                         }
 
@@ -585,7 +557,7 @@ namespace NodeMonog
                 selectedNode.Position.X + circleDiameter / 4 * 3,
                 selectedNode.Position.Y + circleDiameter / 4 * 3).ToPoint();
             
-            if (nkbs.IsKeyDown(Keys.Z) && !okbs.IsKeyDown(Keys.Z)) gotoSimulatedGraph();
+            if (nkbs.IsKeyDown(Keys.Z) && !okbs.IsKeyDown(Keys.Z)) GoOutAGraph();
             
 
             if (dragtimer == 0)
@@ -620,49 +592,60 @@ namespace NodeMonog
         }
 
 
-        public void gotoSimulatedGraph(string nameOfNodeOwner)
-        {/*
-            List<Graph> tmpGraphList = new List<Graph>();
-
-            for (int i = 0; i < historyIndex + 1; i++)
+        public void GoIntoAGraph(Node enteredNode)
+        {
+            Graph g = enteredNode.SubGraph;
+            //visitedGraphs[historyIndex].Add((selectedNode.node.SubGraph, currentSimulation));
+            Simulation s = ranSimulations.Find(x => x.Graph == g);
+            if (s == null)
             {
-                tmpGraphList.Add(graphistory[i]);
+#pragma warning disable CS0612 // 'Simulation.Simulation(Graph, float, float, float, float)' is obsolete
+                currentSimulation = new Simulation(selectedNode.node.SubGraph, 0.8f, 0.5f, 0.3f, 0.4f);
+                s = currentSimulation;
+#pragma warning restore CS0612 // 'Simulation.Simulation(Graph, float, float, float, float)' is obsolete
+                ranSimulations.Add(currentSimulation);
+                (Task simtask, _) = RunSimulation(currentSimulation);
             }
-            graphistory = tmpGraphList;
-
-            graph = selectedNode.node.SubGraph;
-            graphistory.Add(graph);
-
-
-            subSimulatio = new Simulation(selectedNode.node.SubGraph, 0.8f, 0.5f, 0.3f, 0.4f);
+            else currentSimulation = s;
 
             drawNodes = new List<DrawNode>();
-            foreach (Node n in selectedNode.node.SubGraph.Nodes)
+            foreach (Node n in g.Nodes)
             {
-                drawNodes.Add(new DrawNode(Vector2.Zero, n, subSimulatio));
+                drawNodes.Add(new DrawNode(Vector2.Zero, n, currentSimulation));
             }
             selectedNode = drawNodes[0];
-            engine.player.SelectNode(graph.Nodes[0]);
+            engine.player.SelectNode(g.Nodes[0]);
 
-            (Task simtask, _) = RunSimulation(subSimulatio);*/
-        }
+            historyIndex++;
+            visitedGraphs.Add((g, s, enteredNode.Name));
 
-        public void gotoSimulatedGraph()
-        {
-            Node tmpNode = graphistory[0].Nodes.First(x => x.SubGraph == graph);
-
-            graph = graphistory[0];
-
-            drawNodes = new List<DrawNode>();
-            for (int i = 0; i <graph.Nodes.Count; i++)
-            {
-                drawNodes.Add(new DrawNode(Vector2.Zero, graph.Nodes[i], simulation));
-            }
-            engine.player.SelectNode(tmpNode);
-            selectedNode = drawNodes.Find(x => x.node == tmpNode);
-            cameraPosition = selectedNode.Position.ToPoint();
+            cameraPosition = cameraGoal;
 
             UpdateHud();
+        }
+
+       public void GoOutAGraph()
+        {
+            if (historyIndex > 0) {
+                historyIndex--;
+                Node newSelectedNode = visitedGraphs[historyIndex].Item1.Nodes.First(x => x.SubGraph == visitedGraphs[historyIndex + 1].Item1);
+
+                visitedGraphs.RemoveAt(historyIndex + 1);
+
+                currentSimulation = visitedGraphs[historyIndex].Item2;
+
+                drawNodes = new List<DrawNode>();
+                for (int i = 0; i < visitedGraphs[historyIndex].Item1.Nodes.Count; i++)
+                {
+                    drawNodes.Add(new DrawNode(Vector2.Zero, visitedGraphs[historyIndex].Item1.Nodes[i], currentSimulation));
+                }
+                engine.player.SelectNode(newSelectedNode);
+                selectedNode = drawNodes.Find(x => x.node == newSelectedNode);
+                cameraPosition = selectedNode.Position.ToPoint();
+
+                UpdateHud();
+
+            }
         }
 
 
@@ -718,14 +701,19 @@ namespace NodeMonog
 
             int centerX = r.Width / 3;
 
-
+            int k = 0;
+            foreach((Graph  g, Simulation s, string name) in visitedGraphs)
+            {
+                spriteBatch.DrawString(arial, name, new Vector2(centerX, k * 32), Color.Black);
+                k++;
+            }
 
             spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
             string simStatusString = simulationStatus.Status switch
             {
-                Status.Running => $"Running\ntotal energy: {simulation.GetTotalEnergy()}" +
+                Status.Running => $"Running\ntotal energy: {currentSimulation.GetTotalEnergy()}" +
                 $"\ntimestep: {simulationStatus.TimeStep}",
                 Status.IterationCap => "Iteration cap reached",
                 Status.MinimaReached => "Local minima reached",
@@ -754,9 +742,9 @@ namespace NodeMonog
 
 
 
-            for (int i = 0; i < graph.Nodes.Count; i++)
+            for (int i = 0; i < visitedGraphs[historyIndex].Item1.Nodes.Count; i++)
             {
-                Node currentNode = graph.Nodes[i];
+                Node currentNode = visitedGraphs[historyIndex].Item1.Nodes[i];
                 Vector2 currentNodePoistion = drawNodes.Find(x => x.node == currentNode).Position;
 
                 Color selectcolour;
@@ -768,7 +756,7 @@ namespace NodeMonog
                 }
                 else selectcolour = new Color(0, 0, 0, 15);
                 
-                foreach ((Connection c, Node n) in graph.GetConnections(currentNode))
+                foreach ((Connection c, Node n) in visitedGraphs[historyIndex].Item1.GetConnections(currentNode))
                 {
                     Vector2 arrowVector = (drawNodes.Find(x => x.node == n).Position - currentNodePoistion);
                     double rotation = Math.Atan(arrowVector.Y / arrowVector.X);
@@ -795,7 +783,7 @@ namespace NodeMonog
                 }
 
 
-                if (graph.GetConnections(selectedNode.node).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
+                if (visitedGraphs[historyIndex].Item1.GetConnections(selectedNode.node).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
                 //Draws circles
                 var _color = Color.White;
                 if (currentNode.Statuses.Contains("Infected")) _color = Color.Red;
@@ -857,21 +845,39 @@ namespace NodeMonog
     
 
 
-    public class gameState
+    public class GameState
     {
-        public int alive;
-        public int dead;
-        public int recovered;
-        public int infected;
 
-        public gameState(int alive, int dead, int recovered, int infected)
+        public Dictionary<string, int> allTraits;
+        public Dictionary<string, (int, int)> allStatuses;
+
+        public GameState(Graph master)
         {
-            this.alive = alive;
-            this.dead = dead;
-            this.recovered = recovered;
-            this.infected = infected;
+            List<Node> allNodes = new List<Node>();
+            allNodes.AddRange(master.Nodes);
+
+            foreach (Node n in allNodes)
+            {
+                if (n.SubGraph != null) allNodes.AddRange(n.SubGraph.Nodes);
+            }
+
+            Dictionary<string, int> allTraits = new Dictionary<string, int>();
+            Dictionary<string, (int, int)> allStatuses = new Dictionary<string, (int, int)>();
+
+
+            //oreach (Node n in allNodes)
+            //   {
+            //       foreach (string s in n.Statuses)
+            //       {
+            //           if (gamestate.Keys.Contains(s)) gamestate[s]++;
+            //           else gamestate.Add(s, 1);
+            //       }
+            //   }
+            
+            this.allTraits = allTraits;
+            this.allStatuses = allStatuses;
         }
     }
-
+    
 
 }
