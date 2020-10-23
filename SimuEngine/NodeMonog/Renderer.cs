@@ -99,9 +99,6 @@ namespace NodeMonog
         int frameRate = 0;
 
         int animation = 0;
-        const int animThreshold = short.MaxValue;
-        const int animationRepeat = short.MaxValue;
-        int transitionAnimation = animThreshold;
 
         const int circleDiameter = 64;
 
@@ -139,6 +136,7 @@ namespace NodeMonog
         //Options
         bool cameraLock = true;
         bool showGraph = false;
+        bool animations = false;
 
         public Renderer(Engine engine)
         {
@@ -369,13 +367,17 @@ namespace NodeMonog
             graphBox.Checked = showGraph;
             graphBox.OnValueChange += _ => showGraph = graphBox.Checked;
 
+            CheckBox animationBox = new CheckBox("Arrow Animations");
+            animationBox.Checked = animations;
+            animationBox.OnValueChange += _ => animations = animationBox.Checked;
+
             CheckBox cameraBox = new CheckBox("Camera Lock");
             cameraBox.Checked = cameraLock;
-            cameraBox.OnValueChange += delegate (Entity target)
-            {
-                cameraLock = cameraBox.Checked;
-            };
+            cameraBox.OnValueChange += _ => cameraLock = cameraBox.Checked;
+
+            
             options.panel.AddChild(graphBox);
+            options.panel.AddChild(animationBox);
             options.panel.AddChild(cameraBox);
 
 
@@ -577,14 +579,7 @@ namespace NodeMonog
 
             if (gameTime.ElapsedGameTime.Milliseconds != 0) frameRate = 1000 / gameTime.ElapsedGameTime.Milliseconds;
 
-            if (transitionAnimation < animThreshold)
-            {
-                transitionAnimation += gameTime.ElapsedGameTime.Milliseconds * 25;
-            }
-            if (transitionAnimation > animThreshold) transitionAnimation = animThreshold;
-
             animation += gameTime.ElapsedGameTime.Milliseconds;
-            if (animation > animationRepeat) animation = 0;
 
             UserInterface.Active.Update(gameTime);
 
@@ -715,7 +710,7 @@ namespace NodeMonog
 
             spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
 
-            spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
+            spriteBatch.DrawString(arial, (animation).ToString(), new Vector2(0, 32), Color.Black);
             string simStatusString = simulationStatus.Status switch
             {
                 Status.Running => $"Running\ntotal energy: {currentSimulation.GetTotalEnergy()}" +
@@ -771,7 +766,6 @@ namespace NodeMonog
                         (float)(circleDiameter / 2 ),
                         (float)(circleDiameter / 2 ));
 
-
                     spriteBatch.Draw(pixel,
                         destinationRectangle: new Rectangle(CameraTransform((currentNodePoistion + offsetPoint).ToPoint()),
                         new Point(
@@ -784,6 +778,22 @@ namespace NodeMonog
                         effects: SpriteEffects.None,
                         layerDepth: depth
                         );
+
+                    if (animations)
+                    {
+
+                        Vector2 relativeMovement = ((arrowVector + offsetPoint)* (((animation) % (c.Strength() * 1000)) / (c.Strength() * 1000) ));
+                        spriteBatch.Draw(arrow,
+                        destinationRectangle: CameraTransform(new Rectangle(
+                            (currentNodePoistion + relativeMovement + offsetPoint).ToPoint(),
+                        new Point(32,16))),
+                        sourceRectangle: null,
+                        color: selectcolour,
+                        rotation: (float)rotation,
+                        origin: new Vector2(0.5f, 0.5f),
+                        effects: SpriteEffects.None,
+                        layerDepth: depth);
+                    }
 
                 }
 
@@ -824,12 +834,12 @@ namespace NodeMonog
             }
 
             //Theos lab colours
-            var startColor = LabColor.RgbToLab(new Color(0xA5, 0xD7, 0xC8));
+            //var startColor = LabColor.RgbToLab(new Color(0xA5, 0xD7, 0xC8));
             //Console.WriteLine(startColor);
-            var endColor = LabColor.RgbToLab(new Color(0x48, 0x73, 0x66));
-            float time = transitionAnimation / (float)animThreshold;
-            time = 1 - (float)Math.Pow(1 - time, 3);
-            var color = LabColor.LabToRgb(LabColor.LinearGradient(startColor, endColor, time));
+            //var endColor = LabColor.RgbToLab(new Color(0x48, 0x73, 0x66));
+            //float time = transitionAnimation / (float)animThreshold;
+            //time = 1 - (float)Math.Pow(1 - time, 3);
+            //var color = LabColor.LabToRgb(LabColor.LinearGradient(startColor, endColor, time));
 
 
 
