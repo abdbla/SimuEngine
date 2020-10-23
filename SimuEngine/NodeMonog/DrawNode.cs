@@ -16,8 +16,6 @@ namespace NodeMonog
 {
     class DrawNode
     {
-        Vector2? position;
-
         public Node node;
         public int separation;
 
@@ -30,19 +28,14 @@ namespace NodeMonog
             }
             set
             {
-                if (simulation == null) position = value;
-                else
-                {
-                    var point = simulation.physicsNodes[node].Point;
-                    point.Position = new PVec2(value.X, value.Y);
-                }
+                
             }
         }
         public Simulation simulation { get; private set; }
 
         public DrawNode(Vector2 pos, Node n, Simulation sim)
         {
-            position = pos;
+            Position = pos;
             node = n;
             simulation = sim;
         }

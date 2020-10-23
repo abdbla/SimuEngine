@@ -34,6 +34,8 @@ namespace NodeMonog
         Texture2D circle, pixel, tickButton, square, arrow;
         SpriteFont arial;
 
+        const int SEPARATION = 4;
+
         bool ctrlr = false;
 
         int dragtimer = 0;
@@ -52,14 +54,12 @@ namespace NodeMonog
         const int circleDiameter = 64;
 
 
-        DrawNode selectedNode { get => simulation.SelectedDrawNode; set { } }
+        DrawNode selectedNode { get => simulation.SelectedDrawNode; set => simulation.SelectedDrawNode = value; }
         List<DrawNode> drawNodes { get => simulation.DrawNodes; set { } }
 
 
         const int hoverLimit = 1000;
 
-        TaskStatus simulationStatus;
-        Task simTask;
         List<gameState> history = new List<gameState>();
 
         Graph graph;
@@ -94,7 +94,10 @@ namespace NodeMonog
             this.engine = engine;
             graph = engine.system.graph;
 
-            simulation = new PhysicsWrapper(graph, graph.Nodes[0], 4, new SimulationParams(0.8f, 1f, 0.3f, 0.1f));
+            simulation = new PhysicsWrapper(graph,
+                                            graph.Nodes[0],
+                                            SEPARATION,
+                                            new SimulationParams(0.8f, 1f, 0.1f, 0.1f));
             // alt: 0.8f, 0.5f, 0.3f, 0.1f
         }
 
@@ -195,11 +198,6 @@ namespace NodeMonog
 
             Window.ClientSizeChanged += resizeMenu;
 
-           
-
-            
-            simulationStatus = new TaskStatus(Status.Running);
-
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
             simulation.StartSimulation();
 
@@ -244,7 +242,7 @@ namespace NodeMonog
 
 
                     subSimulatio = new PhysicsWrapper(selectedNode.node.SubGraph,
-                        selectedNode.node.SubGraph.Nodes[0], 4, new SimulationParams(0.8f, 0.5f, 0.3f, 0.4f));
+                        selectedNode.node.SubGraph.Nodes[0], SEPARATION, new SimulationParams(0.8f, 0.5f, 0.3f, 0.4f));
 
                     drawNodes = subSimulatio.DrawNodes;
                     selectedNode = drawNodes[0];
@@ -401,21 +399,25 @@ namespace NodeMonog
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            if (Keyboard.GetState().IsKeyDown(Keys.LeftControl) && Keyboard.GetState().IsKeyDown(Keys.R) && !ctrlr) {
-                ctrlr = true;
-                lock (simulation) {
-                    simulation.ResetAndRestart();
-                }
-            } else if (Keyboard.GetState().IsKeyDown(Keys.LeftControl) && Keyboard.GetState().IsKeyDown(Keys.R) && ctrlr) {
-            } else {
-                ctrlr = false;
-            }
+
 
             Rectangle r = Window.ClientBounds;
             int x = r.Width / 3;
 
             MouseState nms = Mouse.GetState();
             KeyboardState nkbs = Keyboard.GetState();
+
+            if (nkbs.IsKeyDown(Keys.Space)) {
+                simulation.AdvanceOnce();
+            }
+
+
+            if (nkbs.IsKeyDown(Keys.LeftControl) && nkbs.IsKeyDown(Keys.R)
+                && !(okbs.IsKeyDown(Keys.LeftControl) || okbs.IsKeyDown(Keys.R))) {
+                simulation.FullReset();
+            } else if (nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R)) {
+                simulation.Restart();
+            }
 
             //Mouse is moved/pressed/Scrolled
             if (nms != oms)
@@ -618,6 +620,18 @@ namespace NodeMonog
 
             spriteBatch.Begin(SpriteSortMode.BackToFront);
 
+            (var bl_1, var bl_2) = simulation.sim.GetBoundingBox();
+            var bottomleft = new Vector2(bl_1.X, bl_1.Y);
+            var topright = new Vector2(bl_2.X, bl_2.Y);
+
+            bottomleft = bottomleft * 50 + new Vector2(300, 300);
+            topright = topright * 50 + new Vector2(300, 300);
+
+            bottomleft = CameraTransform(bottomleft);
+            topright = CameraTransform(topright);
+
+            spriteBatch.Draw(square, new Rectangle(bottomleft.ToPoint(), (topright - bottomleft).ToPoint()), Color.Red);
+
 
             spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
             spriteBatch.DrawString(arial, "Tick", new Vector2(16, r.Height - 48), Color.Black);
@@ -630,28 +644,29 @@ namespace NodeMonog
             spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, frameRate.ToString() + "fps", new Vector2(0, 32), Color.Black);
-            string simStatusString = simulationStatus.Status switch
+            string simStatusString = simulation.SimulationStatus.Status switch
             {
                 Status.Running => $"Running\ntotal energy: {simulation.GetTotalEnergy()}" +
-                $"\ntimestep: {simulationStatus.TimeStep}",
+                $"\ntimestep: {simulation.SimulationStatus.TimeStep}",
                 Status.IterationCap => "Iteration cap reached",
                 Status.MinimaReached => "Local minima reached",
                 Status.Idle => "idle",
-                _ => "This should never happen"
+                Status.Cancelled => "Cancelled",
+                // _ => "This should never happen"
             };
             try {
                 spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
             } catch {
             }
             if (showGraph) {
-                float maxTime = Math.Max(1, simulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
-                float maxIter = Math.Min(1000, simulationStatus.TimeStepHistory.Last().Item1); // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
+                float maxTime = Math.Max(1, simulation.SimulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
+                float maxIter = Math.Min(1000, simulation.SimulationStatus.TimeStepHistory.Last().Item1); // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
 
                 float graphWidth = Window.ClientBounds.Width / 5f;
                 float graphHeight = Window.ClientBounds.Height / 4f;
 
-                foreach ((int iter, float timeStep) in simulationStatus.TimeStepHistory.Skip(
-                    Math.Min(0, simulationStatus.TimeStepHistory.Last().Item1 - 1000)))
+                foreach ((int iter, float timeStep) in simulation.SimulationStatus.TimeStepHistory.Skip(
+                    Math.Min(0, simulation.SimulationStatus.TimeStepHistory.Last().Item1 - 1000)))
                 {
                     var y = (Math.Log(timeStep) - Math.Log(0.01)) / (Math.Log(maxTime) - Math.Log(0.01)) * graphHeight;
                     var x = iter / maxIter * graphWidth;
@@ -664,11 +679,11 @@ namespace NodeMonog
 
 
 
-            for (int i = 0; i < graph.Nodes.Count; i++)
+            for (int i = 0; i < drawNodes.Count; i++)
             {
-                Node currentNode = graph.Nodes[i];
-                if (drawNodes.Find(x => x.node == currentNode) == null) continue;
-                Vector2 currentNodePoistion = drawNodes.Find(x => x.node == currentNode).Position;
+                DrawNode currentDrawNode = drawNodes[i];
+                Node currentNode = currentDrawNode.node;
+                Vector2 currentNodePoistion = currentDrawNode.Position;
 
                 Color selectcolour;
                 float depth = 0.5f;
@@ -679,7 +694,7 @@ namespace NodeMonog
                 }
                 else selectcolour = new Color(0, 0, 0, 15);
                 
-                foreach ((Connection c, Node n) in graph.GetOutgoingConnections(currentNode))
+                foreach ((Connection c, Node n) in simulation.graph.GetOutgoingConnections(currentNode))
                 {
                     var drawNode = drawNodes.Find(x => x.node == n);
                     if (drawNode == null)
@@ -733,7 +748,7 @@ namespace NodeMonog
                     Color fadeColour = Color.Black;
                     if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
                     spriteBatch.DrawString(arial,
-                        currentNode.Name,
+                        drawNodes.Find(n => n.node == currentNode).separation.ToString(),
                         CameraTransform(currentNodePoistion),
                         fadeColour,
                         0,

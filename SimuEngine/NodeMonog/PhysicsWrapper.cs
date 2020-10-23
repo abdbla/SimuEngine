@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Core;
 using Core.Physics;
+
+using SharpDX.Direct2D1;
 
 namespace NodeMonog {
 
@@ -22,8 +26,10 @@ namespace NodeMonog {
     }
 
     class PhysicsWrapper {
-        Simulation sim;
-        Graph graph;
+        const int MAXNODES = 100;
+
+        public Simulation sim;
+        public Graph graph;
         Node selectedNode;
 
         /// <summary>
@@ -56,27 +62,27 @@ namespace NodeMonog {
             List<DrawNode> drawNodes = new List<DrawNode>() { new DrawNode(selectedNode, sim) };
 
             drawNodes.AddRange(neighbors.Select(x => new DrawNode(x.Item1, sim, sep: (int)x.Item2)));
+            drawNodes.AddRange(sim.physicsNodes.Keys.Where(x => !neighbors.Select(x => x.Item1).Prepend(selectedNode).Contains(x)).Select(x => new DrawNode(x, sim, sep: 100)));
 
             return drawNodes;
         }
 
-        public double initialStep = 1.5;
-        public Func<int, double, double> timeStepFunction = (iterCount, energy) => {
-            double negLog = Math.Pow(2, -Math.Log(energy, 2));
-            double timeStep = Math.Min(negLog, energy / 10);
-            //timeStep = Math.Max(timeStep, 0.01f);
-            timeStep = Math.Min(timeStep, 1);
+        public double initialStep = 1.0;
+        public Func<int, double, double, double> timeStepFunction = (iterations, oldTimeStep, energy) => {
 
-            return timeStep;
+            //double negLog = Math.Pow(2, -Math.Log(energy, 2));
+            //double timeStep = Math.Min(negLog, energy / 10);
+            ////timeStep = Math.Max(timeStep, 0.01f);
+            //timeStep = Math.Min(timeStep, 1);
+
+            return 0.6 * Math.Exp(-Math.Pow(((double)iterations - 4000) / 2000, 2) / 2);
         };
-
-        TaskStatus status;
         Task simulationTask;
         CancellationTokenSource tokenSource;
 
         public uint Degrees { get; private set; }
 
-        public Status Status { get => status.Status; }
+        public TaskStatus SimulationStatus { get; private set; }
 
         public PhysicsWrapper(Graph graph, Node selectedNode, uint degrees, SimulationParams @params) {
             this.selectedNode = selectedNode;
@@ -92,10 +98,10 @@ namespace NodeMonog {
                         if (graph.TryGetDirectedConnection(n1, n2, out var n1_n2)) {
                             if (graph.TryGetDirectedConnection(n2, n1, out var n2_n1)) {
                                 biGraph.AddConnection(n1, n2, n1_n2);
-                                biGraph.AddConnection(n1, n2, n2_n1);
+                                biGraph.AddConnection(n2, n1, n2_n1);
                             } else {
                                 biGraph.AddConnection(n1, n2, n1_n2);
-                                biGraph.AddConnection(n1, n2, new DuplicatedConnection(n1_n2));
+                                biGraph.AddConnection(n2, n1, new DuplicatedConnection(n1_n2));
                             }
                         }
                     }
@@ -104,43 +110,56 @@ namespace NodeMonog {
 
             this.graph = biGraph;
 
-            neighbors = graph.GetNeighborsDegrees(selectedNode, degrees).ToList();
-            sim = new Simulation(graph, @params, neighbors
+            neighbors = this.graph.GetNeighborsDegrees(selectedNode, degrees - 1).Take(MAXNODES).ToList();
+            sim = new Simulation(this.graph, @params, neighbors
                 .Select(x => x.Item1)
                 .Except(new[] { selectedNode })
                 .Prepend(selectedNode)
                 .ToList());
+
+            sim.physicsNodes[selectedNode].Pinned = false;
+
             Degrees = degrees;
             
-            (simulationTask, status) = CreateSimulationTask();
+            (simulationTask, SimulationStatus) = CreateSimulationTask();
+
+            singleTimeStep = (float)initialStep;
         }
 
         public void Update(Node newSelected) {
-            var newNeighbors = graph.GetNeighborsDegrees(newSelected, Degrees);
-            var newSet = new HashSet<Node>(newNeighbors.Select(x => x.Item1));
-            var oldSet = new HashSet<Node>(neighbors.Select(x => x.Item1));
+            var newNeighbors = graph.GetNeighborsDegrees(newSelected, Degrees - 1).Take(MAXNODES).ToList();
+            var newSet = new HashSet<Node>(newNeighbors.Select(x => x.Item1).Prepend(newSelected));
+            var oldSet = new HashSet<Node>(neighbors.Select(x => x.Item1).Prepend(selectedNode));
 
-            if (newSet.Contains(selectedNode)) {
-            }
-
-            // oldSet.ExceptWith(newSet);
-            // newSet.ExceptWith(oldSet);
+            oldSet.ExceptWith(newSet);
 
             lock (sim) {
+                // sim.physicsNodes[selectedNode].Pinned = false;
+
                 sim.RemoveRange(oldSet);
                 sim.AddRange(newSet);
+
+                neighbors = newNeighbors;
+                selectedNode = newSelected;
+                // sim.physicsNodes[selectedNode].Pinned = !true;
+                // sim.Origin = sim.physicsNodes[selectedNode].Point.Position;
             }
 
-            neighbors = newNeighbors;
-            selectedNode = newSelected;
+            //ResetAndRestart();
 
-            ResetAndRestart();
+            Restart();
+
+            singleTimeStep = (float)initialStep;
 
             drawNodes = null;
         }
 
         public void StartSimulation() {
-            simulationTask.Start();
+            try {
+                simulationTask.Start();
+            } catch (InvalidOperationException) {
+                ResetAndRestart();
+            }
         }
 
         public float GetTotalEnergy() {
@@ -150,18 +169,72 @@ namespace NodeMonog {
         }
 
         public void ResetSimulation() {
-            tokenSource.Cancel();
-            simulationTask.Wait();
-            simulationTask.Dispose();
-
+            
             lock (sim) { sim.Reset(); }
+        }
 
-            (simulationTask, status) = CreateSimulationTask();
+        public void Restart() {
+            tokenSource.Cancel();
+            try {
+                simulationTask.Wait();
+            } catch (AggregateException e) {
+                Console.WriteLine("cancelled I think, ", e.ToString());
+            } finally {
+                simulationTask.Dispose();
+                tokenSource.Dispose();
+            }
+            (simulationTask, SimulationStatus) = CreateSimulationTask();
+            StartSimulation();
         }
 
         public void ResetAndRestart() {
+            tokenSource.Cancel();
+            try {
+                simulationTask.Wait();
+            } catch (AggregateException e) {
+                Console.WriteLine("cancelled I think, ", e.ToString());
+            } finally {
+                simulationTask.Dispose();
+                tokenSource.Dispose();
+            }
+            simulationTask.Dispose();
+
+            (simulationTask, SimulationStatus) = CreateSimulationTask();
+
             ResetSimulation();
             StartSimulation();
+        }
+
+        public void FullReset() {
+            tokenSource.Cancel();
+            try {
+                simulationTask.Wait();
+            } catch (AggregateException e) {
+                Console.WriteLine("cancelled I think, ", e.ToString());
+            } finally {
+                simulationTask.Dispose();
+                tokenSource.Dispose();
+            }
+            simulationTask.Dispose();
+
+            (simulationTask, SimulationStatus) = CreateSimulationTask();
+
+            sim.ResetFull();
+
+            StartSimulation();
+        }
+
+        float singleTimeStep;
+        int singleIter;
+
+        public void AdvanceOnce() {
+            if (SimulationStatus.Status == Status.Running) return;
+            
+            lock (sim) {
+                sim.Advance(singleTimeStep);
+            }
+
+            singleTimeStep = (float)timeStepFunction(singleIter++, singleTimeStep, sim.GetTotalEnergy());
         }
 
         (Task, TaskStatus) CreateSimulationTask() {
@@ -170,15 +243,15 @@ namespace NodeMonog {
             var ct = tokenSource.Token;
 
             var task = new Task(() => {
-                float timeStep = (float)initialStep;
+                float timeStep = SimulationStatus == null ? (float)initialStep : 0.0001f;
                 status.Status = Status.Running;
-                for (int i = 0; i < 10000; i++) {
+                for (int i = 0; i < 1000000; i++) {
                     if (ct.IsCancellationRequested) {
                         status.Status = Status.Cancelled;
                         return;
                     }
 
-                    float total;
+                    float total = sim.GetTotalEnergy();
                     lock (sim) {
                         sim.Advance(timeStep);
                         if (sim.WithinThreshold) {
@@ -186,9 +259,18 @@ namespace NodeMonog {
                             return;
                         }
 
-                        total = sim.GetTotalEnergy();
+                        var newTotal = sim.GetTotalEnergy();
+                        if (newTotal / total > 1.0 && total != 0) {
+                            Console.WriteLine($"Warning: newTotal / total = {newTotal / total}");
+                            if (newTotal / total > 100.0) {
+                                Console.WriteLine($"Severe warning: newTotal / total = {newTotal / total}, stopping.");
+                                status.Status = Status.Cancelled;
+                                return;
+                            }
+                        }
+                        total = newTotal;
                     }
-                    timeStep = (float)timeStepFunction(i, total);
+                    timeStep = (float)timeStepFunction(i, timeStep, total);
                     status.TimeStep = timeStep;
                 }
                 status.Status = Status.IterationCap;

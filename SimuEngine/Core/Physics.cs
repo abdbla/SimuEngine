@@ -9,6 +9,7 @@ using System.Text;
 using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 using System.Runtime.InteropServices.ComTypes;
+using System.Security;
 
 namespace Core.Physics {
     [DebuggerDisplay("Position: {Point.Position.X} {Point.Position.Y}")]
@@ -72,6 +73,10 @@ namespace Core.Physics {
             float m = Magnitude();
             return this * (1 / m);
         }
+
+        public override string ToString() {
+            return $"({X}, {Y})";
+        }
     }
 
     public class Point {
@@ -130,6 +135,8 @@ namespace Core.Physics {
         public float Gravity;
         public bool WithinThreshold;
         private Random rng;
+
+        public Vector2 Origin { get; set; } = Vector2.Zero;
 
         public Graph Graph { get; private set; }
         public Graph InnerGraph { get; private set; }
@@ -244,13 +251,25 @@ namespace Core.Physics {
 
         public void Reset() {
             foreach (PhysicsNode pn in Graph.Nodes.Cast<PhysicsNode>()) {
-                pn.Point.Position.X = (float)((rng.NextDouble() - .5) * 10.0);
-                pn.Point.Position.Y = (float)((rng.NextDouble() - .5) * 10.0);
+                pn.Point.Position.X = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.X - 5, Origin.X + 5);
+                pn.Point.Position.Y = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.Y - 5, Origin.Y + 5);
+            }
+        }
+
+        public void ResetFull() {
+            Origin = Vector2.Zero;
+
+            foreach (PhysicsNode pn in Graph.Nodes.Cast<PhysicsNode>()) {
+                pn.Point.Position.X = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.X - 5, Origin.X + 5);
+                pn.Point.Position.Y = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.Y - 5, Origin.Y + 5);
             }
         }
 
         public void AddRange(IEnumerable<Node> nodes) {
             (var bottomleft, var topright) = GetBoundingBox();
+
+            Console.WriteLine($"bottomleft: {bottomleft}\ntopright: {topright}");
+            Console.WriteLine($"nodes: {nodes}");
 
             var conns = new List<(PhysicsNode, List<(Connection, Node)>)>();
 
@@ -264,6 +283,9 @@ namespace Core.Physics {
 
                 var x = MapInterval(rng.NextDouble(), 0, 1, bottomleft.X, topright.X);
                 var y = MapInterval(rng.NextDouble(), 0, 1, bottomleft.Y, topright.Y);
+
+                Console.WriteLine($"x: {x}, y: {y}");
+
                 var pNode = new PhysicsNode(n, new Vector2((float)x, (float)y));
 
                 conns.Add((pNode, InnerGraph.GetOutgoingConnections(n)));
@@ -297,17 +319,20 @@ namespace Core.Physics {
 
         public void RemoveRange(IEnumerable<Node> nodes) {
             var removeSet = new HashSet<Spring>();
-            var removeNodes = new HashSet<Node>();
-            var removePhysicsNodes = new HashSet<PhysicsNode>();
-            foreach (Node node in nodes) {
-                removeNodes.Add(node);
-                removePhysicsNodes.Add(physicsNodes[node]);
-            }
+            var removeNodes = new HashSet<Node>(nodes);
+
+            if (removeNodes.Count == 0) return;
 
             foreach (var spring in springs) {
                 if (removeNodes.Contains(spring.n1.Inner) || removeNodes.Contains(spring.n2.Inner)) {
                     removeSet.Add(spring);
                 }
+            }
+
+            springs.RemoveAll(s => removeSet.Contains(s));
+            Graph.RemoveNodes(removeNodes.Select(n => physicsNodes[n]));
+            foreach (var n in removeNodes) {
+                physicsNodes.Remove(n);
             }
         }
 
@@ -354,16 +379,29 @@ namespace Core.Physics {
             Graph.Add(pNode);
         }
 
-        private (Vector2, Vector2) GetBoundingBox() {
+        public (Vector2, Vector2) GetBoundingBox() {
             if (Graph.Nodes.Count == 0) {
                 return (Vector2.Zero, Vector2.Zero);
             }
 
             Vector2 bottomLeft = ((PhysicsNode)Graph.Nodes[0]).Point.Position;
-            Vector2 topRight = ((PhysicsNode) Graph.Nodes[0]).Point.Position;
+            Vector2 topRight = ((PhysicsNode)Graph.Nodes[0]).Point.Position;
+
+            var smallestX = bottomLeft;
+            var smallestY = bottomLeft;
+
+            var biggestX = topRight;
+            var biggestY = topRight;
 
             foreach (var n in Graph.Nodes.Cast<PhysicsNode>()) {
                 var p = n.Point.Position;
+
+                if (bottomLeft.X > p.X) {
+                    smallestX = p;
+                }
+                if (bottomLeft.Y > p.Y) {
+                    smallestY = p;
+                }
 
                 bottomLeft.X = Math.Min(p.X, bottomLeft.X);
                 bottomLeft.Y = Math.Min(p.Y, bottomLeft.Y);
@@ -430,7 +468,7 @@ namespace Core.Physics {
                 if (!node.Pinned) {
                     var d = node.Point.Position;
                     var displacement = d.Magnitude();
-                    var direction = -d.Normalize();
+                    var direction = (Origin - d).Normalize();
                     node.ApplyForce(direction * (Stiffness * displacement * Gravity));
                 }
             }
@@ -455,8 +493,25 @@ namespace Core.Physics {
             return total;
         }
 
+        public void SanityCheck() {
+            var seen = new HashSet<Vector2>();
+
+            foreach (PhysicsNode n in physicsNodes.Values) {
+                while (seen.Contains(n.Point.Position)
+#pragma warning disable CS1718 // Comparison made to same variable
+                    || n.Point.Position.X != n.Point.Position.X
+                    || n.Point.Position.Y != n.Point.Position.Y) {
+#pragma warning restore CS1718 // Comparison made to same variable
+                    n.Point.Position.X = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.X - 10.0, Origin.X + 10.0);
+                    n.Point.Position.Y = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.Y - 10.0, Origin.Y + 10.0);
+                }
+            }
+        }
+
         // Advance the simulation
         public void Advance(float timeStep) {
+            Console.WriteLine($"advanced time by {timeStep}");
+
             ApplyCoulombsLaw();
             ApplyHookesLaw();
             AttractToCenter();

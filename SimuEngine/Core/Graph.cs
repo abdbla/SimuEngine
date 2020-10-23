@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Core {
@@ -9,18 +10,22 @@ namespace Core {
     /// A Graph class implemented using a list of Nodes and an adjacency matrix
     /// </summary>
     public class Graph {
-        private int currentIndex;
+        int connId = 0;
+
         public IEnumerable<Connection> Connections { get => adjacencyMatrix.Values; }
         private List<Node> nodes;
         public ReadOnlyCollection<Node> Nodes => nodes.AsReadOnly();
         public List<Group> groups;
         Dictionary<(Node, Node), Connection> adjacencyMatrix;
+        Dictionary<Connection, (Node, Node)> reverseLookup;
+        Dictionary<Node, List<Connection>> connectionLists;
 
         public Graph() {
             nodes = new List<Node>();
             groups = new List<Group>();
             adjacencyMatrix = new Dictionary<(Node, Node), Connection>();
-            currentIndex = 0;
+            reverseLookup = new Dictionary<Connection, (Node, Node)>();
+            connectionLists = new Dictionary<Node, List<Connection>>();
         }
 
         /// <summary>
@@ -154,7 +159,15 @@ namespace Core {
         /// <param name="target">the target node</param>
         /// <param name="conn">the type of connection to add</param>
         public void AddConnection(Node src, Node target, Connection conn) {
+            if (!connectionLists.ContainsKey(src)) {
+                connectionLists.Add(src, new List<Connection>());
+            }
+
+            conn.SetName(connId++.ToString());
+            src.connections.Add(conn);
+            connectionLists[src].Add(conn);
             adjacencyMatrix[(src, target)] = conn;
+            reverseLookup[conn] = (src, target);
         }
 
         /// <summary>
@@ -253,12 +266,9 @@ namespace Core {
         /// <param name="node">the node to get connections from</param>
         /// <returns>a list of all the outwards connections plus the nodes they go to</returns>
         public List<(Connection, Node)> GetOutgoingConnections(Node node) {
-            var ret = new List<(Connection, Node)>();
-            foreach (var item in adjacencyMatrix) {
-                if (item.Key.Item1 == node) {
-                    ret.Add((item.Value, item.Key.Item2));
-                }
-            }
+            connectionLists.TryGetValue(node, out List<Connection> conns);
+            var ret = (from conn in conns
+                       select (conn, reverseLookup[conn].Item2)).ToList();
 
             return ret;
         }
@@ -296,13 +306,13 @@ namespace Core {
             var subNeighbors = new List<List<(Node, uint)>>();
 
             if (separation == 0) {
-                return GetNeighbors(node).Select(x => x.Item3)
+                return GetOutgoingConnections(node).Select(x => x.Item2)
                     .Where(x => !seen.Contains(x))
                     .Select(x => (x, level))
                     .ToList();
             }
 
-            foreach ((_, _, Node neighbor) in GetNeighbors(node)) {
+            foreach ((_, Node neighbor) in GetOutgoingConnections(node)) {
                 if (!seen.Contains(neighbor)) {
                     seen.Add(neighbor);
                     neighbors.Add((neighbor, level));

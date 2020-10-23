@@ -6,12 +6,13 @@ using Microsoft.Xna.Framework;
 
 namespace NodeMonog
 {
-#if WINDOWS || LINUX
+#if true || WINDOWS || LINUX
     /// <summary>
     /// The main class.
     /// </summary>
-    public static class Program
+    public class Program
     {
+#if false
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -25,108 +26,283 @@ namespace NodeMonog
 
             Random r = new Random();
 
+            using (var game = new Renderer(g,e))
+                game.Run();
+        }
+    }
+#endif
 
-           /* DrawNode testNode =  new DrawNode(new Vector2(r.Next(0, 64)));
-            DrawNode testNode2 = new DrawNode(new Vector2(72 + r.Next(0, 64), r.Next(0, 128)));
-            DrawNode testNode3 = new DrawNode(new Vector2(156 + r.Next(0, 64), r.Next(0, 128)));
-            DrawNode testNode4 = new DrawNode(new Vector2(256 + r.Next(0, 64), r.Next(0, 128)));
-            DrawNode testNode5 = new DrawNode(new Vector2(326 + r.Next(0, 64), r.Next(0, 128)));
+        List<(string, Event)> actions = new List<(string, Event)>();
+        EventListContainer eventList = new EventListContainer();
+        Engine engine;
 
-
-            testNode.TraitsWorkaround.Add("Age", 500);
-            testNode.TraitsWorkaround.Add("Corona", 200);
-
-            testNode2.TraitsWorkaround.Add("Age", 100);
-            testNode2.TraitsWorkaround.Add("Corona", 300);
-
-
-            testNode3.TraitsWorkaround.Add("Age", 10);
-            testNode3.TraitsWorkaround.Add("Corona", 200);
-
-
-            testNode4.TraitsWorkaround.Add("Age", 10);
-            testNode4.TraitsWorkaround.Add("Corona", 200);
-
-
-            testNode5.TraitsWorkaround.Add("Age", 10);
-            testNode5.TraitsWorkaround.Add("Corona", 200);
-
-
-            g.Add(testNode);
-            g.Add(testNode2);
-            g.Add(testNode3);
-            g.Add(testNode4);
-            g.Add(testNode5);
-
-            testNode.NName = "billy";
-            testNode2.NName = "Steve";
-            testNode3.NName = "Felix";
-            testNode4.NName = "Felix But good";
-            testNode5.NName = "Felix 2";
-
-            //Doesn't work btw                                          
-            g.AddConnection(testNode, testNode2, new ShittyAssKnect(2000, 1000));
-            g.AddConnection(testNode, testNode3, new ShittyAssKnect(2000, 1000));
-            g.AddConnection(testNode, testNode5, new ShittyAssKnect(2000, 1000));
-            g.AddConnection(testNode, testNode4, new ShittyAssKnect(1000, 500));
-            g.AddConnection(testNode2, testNode3, new ShittyAssKnect(2000, 1000));
-            g.AddConnection(testNode2, testNode, new ShittyAssKnect(2000, 1000));
-            g.AddConnection(testNode4, testNode3, new ShittyAssKnect(2000, 1000));
-            g.AddConnection(testNode4, testNode2, new ShittyAssKnect(2000, 1000));
-            g.AddConnection(testNode4, testNode, new ShittyAssKnect(2000, 1000));
-
-            List<Node> more = new List<Node>();
-            for (int i = 0; i < 150; i++)
-            {
-                var n = new DrawNode(NodeCreationInfo.Empty);
+        static void Main() {
+            Program p = new Program();
+            //TODO: Create implementation running code
+            p.InitializeEngine();
+            List<Person> more = new List<Person>();
+            for (int i = 0; i < 30; i++) {
+                p.engine.system.graph.groups.Add(new PersonGroup());
+            }
+            for (int i = 0; i < 5000; i++) {
+                GraphSystem s = p.engine.system;
+                s.Create<Person>(NodeCreationInfo.SystemStart);
+                Node n = p.engine.system.graph.Nodes[i];
+                more.Add((Person)n);
                 n.Name = i.ToString();
-                more.Add(n);
-                g.Add(n);
+                n.groups.Add(s.graph.groups[i % 30]);
+                n.groups[0].members.Add(n);
             }
 
-            Dictionary<DrawNode, int> totalConns = new Dictionary<DrawNode, int>();
-            Dictionary<DrawNode, int> curConns = new Dictionary<DrawNode, int>();
-            List<DrawNode> remaining = new List<DrawNode>();
+            Dictionary<Person, int> totalConns = new Dictionary<Person, int>();
+            Dictionary<Person, int> curConns = new Dictionary<Person, int>();
+            List<Person> remaining = new List<Person>();
+            List<bool> inters = new List<bool>();
             remaining.AddRange(more);
+            foreach (Node node in more) { inters.Add(false); }
 
-            for (int i = 0; i < more.Count; i++)
-            {
-                totalConns[more[i]] = rng.Next(2, 10);
+            var rng = Node.rng;
+            for (int i = 0; i < more.Count; i++) {
+                totalConns[more[i]] = rng.Next(2, 5);
                 curConns[more[i]] = 0;
             }
 
-            while (remaining.Count > 1)
-            {
+            while (remaining.Count > 1) {
+                bool inter = false;
+                if (rng.NextDouble() <= 0.15) inter = true;
                 var x1 = rng.Next(remaining.Count);
+                if (inters[x1]) inter = false;
                 var x2 = rng.Next(remaining.Count);
-                if (x1 == x2)
-                {
+                var x2_g = x2 % remaining[x1].groups[0].members.Count;
+                if (inter) { x2 = rng.Next(remaining.Count); }
+                if (!inter && (remaining[x1] == remaining[x1].groups[0].members[x2_g])
+                    || (x1 == x2 && inter)) {
                     continue;
                 }
                 var node1 = remaining[x1];
-                var node2 = remaining[x2];
-                var strength = rng.Next(100, 400);
-                g.AddConnection(node1, node2, new ShittyAssKnect(strength, 500));
-                g.AddConnection(node2, node1, new ShittyAssKnect(strength, 500));
+                Person node2;
+                if (inter) {
+                    node2 = remaining[x2];
+                } else {
+                    node2 = (Person)remaining[x1].groups[0].members[x2_g];
+                }
+                string ctype = inter ? "Interconnection" : node2.groups[0].statuses[0];
+                p.engine.system.graph.AddConnection(node1, node2, new PersonConnection(ctype));
+                p.engine.system.graph.AddConnection(node2, node1, new PersonConnection(ctype));
+                if (inter) inters[x1] = true;
                 curConns[node1] += 1;
                 curConns[node2] += 1;
-                if (curConns[node1] == totalConns[node1])
-                {
-                    if (x1 < x2)
-                    {
+                if (curConns[node1] == totalConns[node1]) {
+                    if (x1 < x2) {
                         x2 -= 1;
                     }
                     remaining.RemoveAt(x1);
+                    inters.RemoveAt(x1);
                 }
-                if (curConns[node2] == totalConns[node2])
-                {
-                    remaining.RemoveAt(x2);
+                if (curConns[node2] == totalConns[node2]) {
+                    int b = x2;
+                    remaining.RemoveAt(b);
+                    inters.RemoveAt(b);
                 }
             }
 
+            Console.WriteLine("finished init");
 
-            using (var game = new Renderer(g,e))
-                game.Run();*/
+            Graph tmpsubgraph = new Graph();
+            Person p1 = new Person();
+            p1.Name = "Billy";
+            tmpsubgraph.Add(p1);
+            Person p2 = new Person();
+            p2.Name = "Charlie";
+            tmpsubgraph.Add(p2);
+            tmpsubgraph.AddConnection(p1, p2, new PersonConnection("Family"));
+            tmpsubgraph.AddConnection(p2, p1, new PersonConnection("Family"));
+
+            p.engine.system.graph.FindNode(x => x.Name == "0").SubGraph = tmpsubgraph;
+
+
+            using (Renderer renderer = new Renderer(p.engine)) {
+                renderer.Run();
+            }
+        }
+
+        private void InitializeEngine() {
+            actions.Add(("Make healthy", new Event()));
+            actions[0].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
+                return 1;
+            });
+            actions[0].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
+                List<string> tStatus = engine.player.selectedNode.statuses;
+                tStatus.Add("Healthy");
+                tStatus.Remove("Infected");
+                tStatus.Remove("Dead");
+                tStatus.Remove("Recovered");
+            });
+
+            actions.Add(("Make infected", new Event()));
+            actions[1].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
+                return 1;
+            });
+            actions[1].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
+                List<string> tStatus = engine.player.selectedNode.statuses;
+                tStatus.Remove("Healthy");
+                tStatus.Add("Infected");
+                tStatus.Remove("Dead");
+                tStatus.Remove("Recovered");
+            });
+            actions.Add(("Make dead", new Event()));
+            actions[2].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
+                return 1;
+            });
+
+            actions[2].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
+                List<string> tStatus = engine.player.selectedNode.statuses;
+                tStatus.Remove("Healthy");
+                tStatus.Remove("Infected");
+                tStatus.Add("Dead");
+                tStatus.Remove("Recovered");
+            });
+
+            actions.Add(("Make recovered", new Event()));
+            actions[3].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
+                return 1;
+            });
+            actions[3].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
+                List<string> tStatus = engine.player.selectedNode.statuses;
+                tStatus.Remove("Healthy");
+                tStatus.Remove("Infected");
+                tStatus.Remove("Dead");
+                tStatus.Add("Recovered");
+            });
+
+            List<Event> personEvents = Person.InitializeEvents();
+            eventList.AddEventList(typeof(Person), personEvents);
+            engine = new Engine(actions, eventList);
+        }
+    }
+
+    class Person : Node {
+        static int id = 0;
+        public Person() : base() {
+            this.Name = id++.ToString();
+            this.SubGraph = null;
+            return;
+        }
+
+        public override void NodeCreation(Graph g, NodeCreationInfo info) {
+            if (info == NodeCreationInfo.SystemStart) {
+                statuses.Add("Healthy");
+                traits.Add("Hygiene", rng.Next(1, 101));
+                traits.Add("Age", rng.Next(1, 101));
+                traits.Add("Infected Time", 0);
+                if (rng.NextDouble() <= 0.3) {
+                    statuses.Add("Asthmatic");
+                }
+            }
+            return;
+        }
+
+        public static List<Event> InitializeEvents() {
+            List<Event> personEvents = new List<Event>();
+
+            personEvents.Add(new Event());
+            personEvents[0].AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                double chance = 0;
+                if (!n.Statuses.Contains("Healthy")) return 0;
+                foreach ((Connection, Node) m in l.GetOutgoingConnections(n)) {
+                    if (m.Item2.Statuses.Contains("Infected")) {
+                        chance += (double)((m.Item1.Traits["Proximity"]) + (double)((100 - m.Item2.Traits["Hygiene"])) + (double)((100 - n.Traits["Hygiene"])) / 300);
+                    }
+                }
+                return chance;
+            });
+            personEvents[0].AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Remove("Healthy");
+                n.statuses.Add("Infected");
+            });
+
+            personEvents.Add(new Event());
+            personEvents[1].AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                double chance = 0;
+                if (!n.Statuses.Contains("Infected")) return 0;
+                if (n.Statuses.Contains("Asthmatic")) chance += 0.1;
+                chance += ((double)n.Traits["Age"] / 150d);
+                return chance;
+            });
+            personEvents[1].AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Remove("Infected");
+                n.statuses.Add("Dead");
+            });
+
+            personEvents.Add(new Event());
+            personEvents[2].AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                double chance = 0;
+                if (!n.Statuses.Contains("Infected")) return 0;
+                chance = Math.Pow((101 - n.Traits["Age"]) / 100, 14 - n.Traits["Infected Time"]);
+                return chance;
+            });
+            personEvents[2].AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Remove("Infected");
+                n.statuses.Add("Recovered");
+            });
+
+            personEvents.Add(new Event());
+            personEvents[3].AddReqGuaranteed(delegate (Node n, Graph l, Graph w) {
+                return n.Statuses.Contains("Infected") ? true : false;
+            });
+            personEvents[3].AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.traits["Infected Time"]++;
+            });
+
+            return personEvents;
+        }
+    }
+
+    class PersonConnection : Connection {
+        public PersonConnection(string t) : base() {
+            switch (t) {
+                case "Family":
+                    traits.Add("Proximity", Node.rng.Next(75, 101));
+                    break;
+                case "Friends":
+                    traits.Add("Proximity", Node.rng.Next(40, 76));
+                    break;
+                case "Work":
+                    traits.Add("Proximity", Node.rng.Next(25, 61));
+                    break;
+                case "Acquiantances":
+                    traits.Add("Proximity", Node.rng.Next(5, 46));
+                    break;
+                default:
+                    traits.Add("Proximity", Node.rng.Next(1, 101));
+                    break;
+            }
+        }
+
+        public override float Strength() {
+            return (float)Traits["Proximity"] * 0.1f;
+        }
+    }
+
+    class PersonGroup : Group {
+        static int id = 0;
+        int idx;
+        public PersonGroup() : base() {
+            switch (Node.rng.Next(1, 5)) {
+                case 1:
+                    statuses.Add($"Family");
+                    break;
+                case 2:
+                    statuses.Add($"Work");
+                    break;
+                case 3:
+                    statuses.Add($"Friends");
+                    break;
+                default:
+                    statuses.Add($"Acquiantances");
+                    break;
+            }
+            idx = ++id;
         }
     }
 #endif
