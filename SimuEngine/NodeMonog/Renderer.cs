@@ -381,6 +381,28 @@ namespace NodeMonog
             options.panel.AddChild(cameraBox);
 
 
+            options.panel.AddChild(new Paragraph("Physics damp:"));
+            Slider sDamp = new Slider(0, 100);
+            sDamp.OnValueChange += _ => currentSimulation.Damping = sDamp.Value / 100;
+            options.panel.AddChild(sDamp);
+
+            options.panel.AddChild(new Paragraph("Physics Gravity:"));
+            Slider sGravity = new Slider(0, 100);
+            sGravity.OnValueChange += _ => currentSimulation.Gravity = sGravity.Value / 100;
+            options.panel.AddChild(sGravity);
+
+            options.panel.AddChild(new Paragraph("Physics Repulstion:"));
+            Slider sRepulsion = new Slider(0, 100);
+            sRepulsion.OnValueChange += _ => currentSimulation.Repulsion = sRepulsion.Value / 100;
+            options.panel.AddChild(sRepulsion);
+
+            options.panel.AddChild(new Paragraph("Physics Stiffnes:"));
+            Slider sStiffnes = new Slider(0, 100);
+            sStiffnes.OnValueChange += _ => currentSimulation.Stiffness = sStiffnes.Value / 100;
+            options.panel.AddChild(sStiffnes);
+
+
+
             stats.panel.ClearChildren();
             stats.panel.AddChild(new Paragraph($"Ticks: {history.Count}"));
             foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
