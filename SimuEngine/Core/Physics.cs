@@ -253,6 +253,7 @@ namespace Core.Physics {
             }
             var conns = InnerGraph.GetConnections(n);
             var pNode = new PhysicsNode(n);
+            pNode.Point.Position *= 100;
             foreach ((var outgoing, var other) in conns) {
                 if (!physicsNodes.ContainsKey(other))
                     continue;
@@ -266,6 +267,7 @@ namespace Core.Physics {
                 springs.Add(spring);
             }
             physicsNodes.Add(n, pNode);
+            Graph.Add(pNode);
         }
 
         void ApplyCoulombsLaw() {

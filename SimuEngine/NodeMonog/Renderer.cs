@@ -788,7 +788,7 @@ namespace NodeMonog
                 var _color = Color.White;
                 if (currentNode.Statuses.Contains("Infected")) _color = Color.Red;
                 if (currentNode.Statuses.Contains("Dead")) _color = Color.Black;
-                if (currentNode.Statuses.Contains("Recovered")) _color = Color.Green;
+                if (currentNode.Statuses.Contains("Recovered")) _color = new Color(81, 182, 74);
                 spriteBatch.Draw(circle,
                     destinationRectangle: new Rectangle(CameraTransform(currentNodePoistion).ToPoint(),
                     new Point(
