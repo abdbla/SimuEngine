@@ -426,10 +426,7 @@ namespace NodeMonog
         /// checking for collisions, gathering input, and playing audio.
         /// </summary>
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
-        protected override void Update(GameTime gameTime)
-        {
-
-
+        protected override void Update(GameTime gameTime) {
             Rectangle r = Window.ClientBounds;
             int x = r.Width / 3;
 
@@ -449,25 +446,15 @@ namespace NodeMonog
             }
 
             //Mouse is moved/pressed/Scrolled
-            if (nms != oms)
-            {
-
-
+            if (nms != oms) {
                 //Vänsta hud
-                if (new Rectangle(0, 0, x * 2, r.Height).Contains(nms.Position))
-                {
-                    
-                    if (nms.ScrollWheelValue != oms.ScrollWheelValue)
-                    {
+                if (new Rectangle(0, 0, x * 2, r.Height).Contains(nms.Position)) {
+                    if (nms.ScrollWheelValue != oms.ScrollWheelValue) {
                         zoomlevel *= ((nms.ScrollWheelValue - oms.ScrollWheelValue) / 2000f) + 1f;
                     }
 
-                    if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released)
-                    {
-
-                        foreach (var n in currentSimulation.DrawNodes)
-                        {
-                            DrawNode currentNode = currentSimulation.SelectedDrawNode;
+                    if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released) {
+                        foreach (var currentNode in currentSimulation.DrawNodes) {
                             if (currentNode == null) continue;
 
                             if (new Rectangle(CameraTransform(currentNode.Position).ToPoint(), new Point(
@@ -475,44 +462,36 @@ namespace NodeMonog
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
                             {
                                 engine.player.SelectNode(currentNode.node);
-                                currentSimulation.SelectedNode = currentNode.node;
+                                selectedNode = currentNode;
                                 UpdateHud();
                             };
 
                         }
 
                         
-                        if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position))
-                        {
+                        if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position)) {
                             //The tickbutton is pressed
                             engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
                             history.Add(new GameState(masterGraph));
                             UpdateHud();
                         }
-
-
                     }
 
-                    if (nms.LeftButton == ButtonState.Pressed)
-                    {
-                        if (!new Rectangle(x * 2, 0, x, r.Height).Contains(nms.Position))
-                        {
-                            if (dragtimer > 50)
-                            {
+                    if (nms.LeftButton == ButtonState.Pressed) {
+                        if (!new Rectangle(x * 2, 0, x, r.Height).Contains(nms.Position)) {
+                            if (dragtimer > 50) {
                                 cameraPosition -= ((nms.Position - oms.Position).ToVector2() / (float)zoomlevel).ToPoint();
                                 cameraVelocity = Vector2.Zero;
                             }
                             else dragtimer += gameTime.ElapsedGameTime.Milliseconds;
                         }
                     }
-                    else if (oms.LeftButton == ButtonState.Pressed && nms.LeftButton == ButtonState.Released)
-                    {
+                    else if (oms.LeftButton == ButtonState.Pressed && nms.LeftButton == ButtonState.Released) {
                         dragtimer = 0;
                     }
                 }
 
-                if (!new Rectangle(0, 0, Window.ClientBounds.Width / 3 * 2, Window.ClientBounds.Height).Contains(nms.Position))
-                {
+                if (!new Rectangle(0, 0, Window.ClientBounds.Width / 3 * 2, Window.ClientBounds.Height).Contains(nms.Position)) {
                     dragtimer = 0;
                 };
             }
@@ -525,12 +504,10 @@ namespace NodeMonog
             if (nkbs.IsKeyDown(Keys.Z) && !okbs.IsKeyDown(Keys.Z)) GoOutAGraph();
             
 
-            if (dragtimer == 0)
-            {
+            if (dragtimer == 0) {
                 cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             }
-            if (cameraLock)
-            {
+            if (cameraLock) {
                 cameraPosition += (cameraVelocity * gameTime.ElapsedGameTime.Milliseconds).ToPoint();
             }
 
@@ -549,8 +526,7 @@ namespace NodeMonog
             base.Update(gameTime);
         }
 
-        public void GoIntoAGraph(Node enteredNode)
-        {
+        public void GoIntoAGraph(Node enteredNode) {
             Graph g = enteredNode.SubGraph;
 
             PhysicsWrapper s = ranSimulations.Find(x => x.Graph == g) ?? new PhysicsWrapper(g, g.Nodes[0], degrees: SEPARATION, SIMULATION_PARAMS);
