@@ -2,26 +2,30 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Core {
     /// <summary>
     /// A Graph class implemented using a list of Nodes and an adjacency matrix
     /// </summary>
     public class Graph {
-        private int currentIndex;
+        int connId = 0;
+
         public IEnumerable<Connection> Connections { get => adjacencyMatrix.Values; }
         private List<Node> nodes;
         public ReadOnlyCollection<Node> Nodes => nodes.AsReadOnly();
         public List<Group> groups;
-        Dictionary<(int, int), Connection> adjacencyMatrix;
-        Dictionary<Node, int> indexLookup;
+        Dictionary<(Node, Node), Connection> adjacencyMatrix;
+        Dictionary<Connection, (Node, Node)> reverseLookup;
+        Dictionary<Node, List<Connection>> connectionLists;
 
         public Graph() {
             nodes = new List<Node>();
             groups = new List<Group>();
-            indexLookup = new Dictionary<Node, int>();
-            adjacencyMatrix = new Dictionary<(int, int), Connection>();
-            currentIndex = 0;
+            adjacencyMatrix = new Dictionary<(Node, Node), Connection>();
+            reverseLookup = new Dictionary<Connection, (Node, Node)>();
+            connectionLists = new Dictionary<Node, List<Connection>>();
         }
 
         /// <summary>
@@ -30,7 +34,6 @@ namespace Core {
         /// <param name="node">the node to be added</param>
         public void Add(Node node) {
             nodes.Add(node);
-            indexLookup.Add(node, currentIndex++);
         }
 
         /// <summary>
@@ -43,19 +46,57 @@ namespace Core {
         /// true if the node was found and removed, false if it doesn't exist.
         /// </returns>
         public bool RemoveNode(Node node) {
-            try {
-                int index = FindIndex(node);
-                foreach (var key in adjacencyMatrix.Keys) {
-                    if (key.Item1 == index || key.Item2 == index) {
-                        adjacencyMatrix.Remove(key);
-                    }
+
+            if (!nodes.Remove(node)) return false;
+
+            foreach (var key in adjacencyMatrix.Keys) {
+                if (key.Item1 == node || key.Item2 == node) {
+                    adjacencyMatrix.Remove(key);
                 }
-                nodes.RemoveAt(index);
-                indexLookup.Remove(node);
-                return true;
-            } catch (NodeNotFoundException) {
-                return false;
             }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Removes multiple nodes from the graph, together with the connections
+        /// </summary>
+        /// <param name="nodes">the nodes to remove</param>
+        /// <returns>the number of nodes and connections that were removed</returns>
+        public GraphCount RemoveNodes(IEnumerable<Node> nodes) {
+            var set = new Dictionary<Node, bool>();
+            foreach (var node in nodes) set.Add(node, false);
+
+            var toRemove = new List<(Node, Node)>();
+
+            var connectionCount = 0;
+
+            foreach (var kv in adjacencyMatrix) {
+                bool rConn = false;
+
+                if (set.ContainsKey(kv.Key.Item1)) {
+                    rConn = true;
+                    set[kv.Key.Item1] = true;
+                }
+
+                if (set.ContainsKey(kv.Key.Item2)) {
+                    rConn = true;
+                    set[kv.Key.Item2] = true;
+                }
+
+                if (rConn) {
+                    connectionCount++;
+                    toRemove.Add(kv.Key);
+                }
+            }
+
+            var nodeCount = set.Select(kv => kv.Value ? 1 : 0).Sum();
+
+            foreach (var key in toRemove) {
+                adjacencyMatrix.Remove(key);
+            }
+
+            return new GraphCount(nodeCount, connectionCount);
         }
 
         /// <summary>
@@ -68,9 +109,7 @@ namespace Core {
         /// connection didn't exist to begin with
         /// </returns>
         public bool RemoveConnection(Node src, Node dst) {
-            var index = FindSrcDstIndex(src, dst);
-
-            return adjacencyMatrix.Remove(index);
+            return adjacencyMatrix.Remove((src, dst));
         }
 
         /// <summary>
@@ -113,28 +152,6 @@ namespace Core {
             return nodes.FindAll(node => node is T && predicate(node as T)).Cast<T>().ToList();
         }
 
-        // find the index of a certain node
-        private int FindIndex(Node node) {
-            int index; 
-            bool success = indexLookup.TryGetValue(node, out index);
-            if (!success) {
-                throw new NodeNotFoundException($"Couldn't find node `{node}` in the graph");
-            }
-            return index;
-        }
-
-        private Node FindNodeIndex(int idx) {
-            foreach (var item in indexLookup) {
-                if (item.Value == idx) return item.Key;
-            }
-            return null;
-        }
-
-        // shorthand to find the indices of two nodes
-        private (int, int) FindSrcDstIndex(Node src, Node dst) {
-            return (FindIndex(src), FindIndex(dst));
-        }
-
         /// <summary>
         /// Add a directed connection between two nodes
         /// </summary>
@@ -142,9 +159,15 @@ namespace Core {
         /// <param name="target">the target node</param>
         /// <param name="conn">the type of connection to add</param>
         public void AddConnection(Node src, Node target, Connection conn) {
-            var srcIndex = FindIndex(src);
-            var targetIndex = FindIndex(target);
-            adjacencyMatrix[(srcIndex, targetIndex)] = conn;
+            if (!connectionLists.ContainsKey(src)) {
+                connectionLists.Add(src, new List<Connection>());
+            }
+
+            conn.SetName(connId++.ToString());
+            src.connections.Add(conn);
+            connectionLists[src].Add(conn);
+            adjacencyMatrix[(src, target)] = conn;
+            reverseLookup[conn] = (src, target);
         }
 
         /// <summary>
@@ -173,8 +196,8 @@ namespace Core {
         /// <returns>(connection, List<(source, target)>)</returns>
         public List<(Connection, List<(Node, Node)>)> FindDuplicateConnections() {
             var connections = (from kv in adjacencyMatrix
-                               let src = nodes[kv.Key.Item1]
-                               let dst = nodes[kv.Key.Item2]
+                               let src = kv.Key.Item1
+                               let dst = kv.Key.Item2
                                let conn = kv.Value
                                select new {
                                    src,
@@ -223,16 +246,14 @@ namespace Core {
         /// <param name="target">the target node</param>
         /// <returns>the connection src->target</returns>
         public Connection GetDirectedConnection(Node src, Node target) {
-            var index = FindSrcDstIndex(src, target);
             Connection ret;
-            bool res = adjacencyMatrix.TryGetValue(index, out ret);
+            bool res = adjacencyMatrix.TryGetValue((src, target), out ret);
             return res ? ret : null;
         }
 
         public bool TryGetDirectedConnection(Node src, Node target, out Connection connection) {
             try {
-                var index = FindSrcDstIndex(src, target);
-                return adjacencyMatrix.TryGetValue(index, out connection);
+                return adjacencyMatrix.TryGetValue((src, target), out connection);
             } catch (NodeNotFoundException) {
                 connection = null;
                 return false;
@@ -244,45 +265,73 @@ namespace Core {
         /// </summary>
         /// <param name="node">the node to get connections from</param>
         /// <returns>a list of all the outwards connections plus the nodes they go to</returns>
-        public List<(Connection, Node)> GetConnections(Node node) {
-            var idx = FindIndex(node);
-            var ret = new List<(Connection, Node)>();
-            foreach (var item in adjacencyMatrix) {
-                if (item.Key.Item1 == idx) {
-                    ret.Add((item.Value, nodes[item.Key.Item2]));
-                }
+        public List<(Connection, Node)> GetOutgoingConnections(Node node) {
+            if (!connectionLists.TryGetValue(node, out List<Connection> conns)) {
+                throw new NodeNotFoundException("Tried to get outgoing connections for non-existent node");
             }
+            var ret = (from conn in conns
+                       select (conn, reverseLookup[conn].Item2)).ToList();
 
             return ret;
         }
 
         public List<(Connection, Connection, Node)> GetNeighbors(Node node) {
-            var nIdx = FindIndex(node);
-            var indices = new HashSet<int>();
+            var connectedNodes = new HashSet<Node>();
             
             foreach (var item in adjacencyMatrix) {
-                if (item.Key.Item1 == nIdx) {
-                    indices.Add(item.Key.Item2);
-                } else if (item.Key.Item2 == nIdx) {
-                    indices.Add(item.Key.Item1);
+                if (item.Key.Item1 == node) {
+                    connectedNodes.Add(item.Key.Item2);
+                } else if (item.Key.Item2 == node) {
+                    connectedNodes.Add(item.Key.Item1);
                 }
             }
 
             var ret = new List<(Connection, Connection, Node)>();
 
-            foreach (var idx in indices) {
-                Connection conn1 = null;
-                Connection conn2 = null;
-                adjacencyMatrix.TryGetValue((nIdx, idx), out conn1);
-                adjacencyMatrix.TryGetValue((idx, nIdx), out conn2);
-                ret.Add((conn1, conn2, FindNodeIndex(idx)));
+            foreach (var otherNode in connectedNodes) {
+                adjacencyMatrix.TryGetValue((node, otherNode), out Connection conn1);
+                adjacencyMatrix.TryGetValue((otherNode, node), out Connection conn2);
+                ret.Add((conn1, conn2, otherNode));
             }
 
             return ret;
         }
 
+        public List<(Node, uint)> GetNeighborsDegrees(Node node, uint separation) {
+            return GetNeighborsHelper(new HashSet<Node>(), node, separation, 1).ToList();
+        }
+        
+        private List<(Node, uint)> GetNeighborsHelper(HashSet<Node> seen, Node node, uint separation, uint level) {
+            seen.Add(node);
+
+            var neighbors = new List<(Node, uint)>();
+            var subNeighbors = new List<List<(Node, uint)>>();
+
+            if (separation == 0) {
+                return GetOutgoingConnections(node).Select(x => x.Item2)
+                    .Where(x => !seen.Contains(x))
+                    .Select(x => (x, level))
+                    .ToList();
+            }
+
+            foreach ((_, Node neighbor) in GetOutgoingConnections(node)) {
+                if (!seen.Contains(neighbor)) {
+                    seen.Add(neighbor);
+                    neighbors.Add((neighbor, level));
+                }
+            }
+
+            foreach (var neighbor in neighbors.Select(x => x.Item1)) {
+                subNeighbors.Add(GetNeighborsHelper(seen, neighbor, separation - 1, level + 1));
+            }
+
+            neighbors.AddRange(subNeighbors.SelectMany(x => x));
+
+            return neighbors.ToList();
+        }
+
         public bool Contains(Node node) {
-            return indexLookup.TryGetValue(node, out _);
+            return nodes.Contains(node);
         }
 
         public GraphCount Count {

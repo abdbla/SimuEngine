@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Core;
 using SimuEngine;
 using NodeMonog;
+using System.Diagnostics;
 
 namespace Implementation
 {
@@ -25,7 +26,7 @@ namespace Implementation
             for (int i = 0; i < 30; i++) {
                 p.engine.system.graph.groups.Add(new PersonGroup());
             }
-            for (int i = 0; i < 150; i++) {
+            for (int i = 0; i < 1000; i++) {
                 GraphSystem s = p.engine.system;
                 s.Create<Person>(NodeCreationInfo.SystemStart);
                 Node n = p.engine.system.graph.Nodes[i];
@@ -55,8 +56,8 @@ namespace Implementation
                 if (inters[x1]) inter = false;
                 var x2 = rng.Next(remaining[x1].groups[0].members.Count);
                 if (inter) { x2 = rng.Next(remaining.Count); }
-                if (!inter && (x1 == remaining.FindIndex(n => n == remaining[x1].groups[0].members[x2])) 
-                    || (x1 == x2 && inter)){
+                if (!inter && (remaining[x1] == remaining[x1].groups[0].members[x2])
+                    || (x1 == x2 && inter)) {
                     continue;
                 }
                 var node1 = remaining[x1];
@@ -69,7 +70,7 @@ namespace Implementation
                 string ctype = inter ? "Interconnection" : node2.groups[0].statuses[0];
                 p.engine.system.graph.AddConnection(node1, node2, new PersonConnection(ctype));
                 p.engine.system.graph.AddConnection(node2, node1, new PersonConnection(ctype));
-                if (inter) inters[x1] = true; 
+                if (inter) inters[x1] = true;
                 curConns[node1] += 1;
                 curConns[node2] += 1;
                 if (curConns[node1] == totalConns[node1]) {
@@ -116,6 +117,39 @@ namespace Implementation
 
             }
 
+            // p.engine.system.graph = new Graph();
+            var graph = new Graph();
+
+            var a = new Person();
+            var b2 = new Person();
+            var c = new Person();
+            var d = new Person();
+            var e = new Person();
+            var f = new Person();
+            var g = new Person();
+            var h = new Person();
+            var i2 = new Person();
+
+            graph.Add(a);
+            graph.Add(b2);
+            graph.Add(c);
+            graph.Add(d);
+            graph.Add(e);
+            graph.Add(f);
+            graph.Add(g);
+            graph.Add(h);
+            graph.Add(i2);
+
+
+            graph.AddConnection(a, b2, new PersonConnection("Healthy"));
+            graph.AddConnection(b2, c, new PersonConnection("Healthy"));
+            graph.AddConnection(c, d, new PersonConnection("Healthy"));
+            graph.AddConnection(d, e, new PersonConnection("Healthy"));
+            graph.AddConnection(e, f, new PersonConnection("Healthy"));
+            graph.AddConnection(f, g, new PersonConnection("Healthy"));
+            graph.AddConnection(g, h, new PersonConnection("Healthy"));
+            graph.AddConnection(h, i2, new PersonConnection("Healthy"));
+            graph.AddConnection(i2, a, new PersonConnection("Healthy"));
 
             using (Renderer renderer = new Renderer(p.engine)) {
                 renderer.Run();
@@ -177,6 +211,7 @@ namespace Implementation
         }
     }
 
+    [DebuggerDisplay("name: {this.Name}")]
     class Person : Node
     {
         static int id = 0;
@@ -205,7 +240,7 @@ namespace Implementation
             personEvents[0].AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
                 if (!n.Statuses.Contains("Healthy")) return 0;
-                foreach ((Connection, Node) m in l.GetConnections(n)) {
+                foreach ((Connection, Node) m in l.GetOutgoingConnections(n)) {
                     if (m.Item2.Statuses.Contains("Infected")) {
                         chance += (double)((m.Item1.Traits["Proximity"]) + (double)((100 - m.Item2.Traits["Hygiene"])) + (double)((100 - n.Traits["Hygiene"])) / 300);
                     }
@@ -254,9 +289,20 @@ namespace Implementation
         }
     }
 
+    [DebuggerDisplay("Creation ID: {creationID}, Graph name: {graphName}")]
     class PersonConnection : Connection
     {
+        static int id = 0;
+        string creationID;
+        string graphName;
+
+        public override void SetName(string name) {
+            graphName = name;
+        }
+
         public PersonConnection(string t) : base() {
+            creationID = id++.ToString();
+
             switch (t) {
                 case "Family":
                     traits.Add("Proximity", Node.rng.Next(75, 101));

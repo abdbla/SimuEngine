@@ -22,5 +22,7 @@ namespace Core {
         }
 
         public virtual float Strength() => 0.0f;
+
+        public virtual void SetName(string name) { }
     }
 }

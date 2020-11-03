@@ -10,72 +10,11 @@ using System.Threading.Tasks;
 using GeonBit.UI;
 using GeonBit.UI.Entities;
 using Simulation = Core.Physics.Simulation;
+using SimulationParams = Core.Physics.SimulationParams;
+using System.Xml.Schema;
 
 namespace NodeMonog
 {
-    enum Status {
-        Idle,
-        Running,
-        IterationCap,
-        MinimaReached
-    }
-
-    class StatusWrapper {
-        public Status status;
-        public float timestep;
-        public int iterationCount;
-        public StatusWrapper(Status init) {
-            status = init;
-            iterationCount = 0;
-        }
-    }
-
-    class TaskStatus {
-        private StatusWrapper status;
-        public Status Status {
-            get {
-                lock (status) {
-                    return status.status;
-                }
-            }
-            set {
-                lock (status) {
-                    status.status = value;
-                }
-            }
-        }
-        public float TimeStep {
-            get {
-                lock (status) {
-                    return status.timestep;
-                }
-            }
-            set {
-                lock (status) {
-                    status.timestep = value;
-                    lock (iterations) {
-                        iterations.Add((status.iterationCount, status.timestep));
-                        status.iterationCount += 1;   
-                    }
-                }
-            }
-        }
-        public List<(int, float)> TimeStepHistory {
-            get {
-                lock (iterations) {
-                    return iterations.ToList();
-                }
-            }
-        }
-
-        private List<(int, float)> iterations;
-
-        public TaskStatus(Status status) {
-            this.status = new StatusWrapper(status);
-            iterations = new List<(int, float)>();
-        }
-    }
-
     /// <summary>
     /// This is the main type for your game.
     /// </summary>
@@ -90,6 +29,11 @@ namespace NodeMonog
         Texture2D circle, pixel, tickButton, square, arrow;
         SpriteFont arial;
 
+        const int SEPARATION = 4;
+        readonly static SimulationParams SIMULATION_PARAMS = new SimulationParams(0.8f, 0.5f, 0.3f, 0.4f);
+
+        bool ctrlr = false;
+
         int dragtimer = 0;
         Point cameraPosition = Point.Zero, cameraGoal = Point.Zero;
         Vector2 cameraVelocity = Vector2.Zero;
@@ -103,23 +47,21 @@ namespace NodeMonog
         const int circleDiameter = 64;
 
 
-        DrawNode selectedNode;
-        List<DrawNode> drawNodes = new List<DrawNode>();
+        DrawNode selectedNode { get => currentSimulation.SelectedDrawNode; set => currentSimulation.SelectedDrawNode = value; }
+        List<DrawNode> drawNodes { get => currentSimulation.DrawNodes.ToList(); set { } }
 
-
-        TaskStatus simulationStatus;
         List<GameState> history = new List<GameState>();
-
 
         Engine engine;
 
         Graph masterGraph;
-        List<(Graph, Simulation, string)> visitedGraphs = new List<(Graph, Simulation, string)>();
+        List<(PhysicsWrapper, string)> visitedGraphs = new List<(PhysicsWrapper, string)>();
         List<string> allActiveStatuses = new List<string>();
 
         int historyIndex = 0;
-        List<Simulation> ranSimulations = new List<Simulation>();
-        Simulation currentSimulation;
+        List<PhysicsWrapper> ranSimulations = new List<PhysicsWrapper>();
+        PhysicsWrapper currentSimulation { get => visitedGraphs[historyIndex].Item1; }
+        Graph currentGraph { get => visitedGraphs[historyIndex].Item1.Graph; }
 
 
         PanelTabs tabs;
@@ -145,15 +87,12 @@ namespace NodeMonog
             this.engine = engine;
             masterGraph = engine.system.graph;
 
-            
-#pragma warning disable CS0612 // 'Simulation.Simulation(Graph, float, float, float, float)' is obsolete
-            currentSimulation = new Simulation(masterGraph, 0.8f, 1f, 0.3f, 0.1f);
-#pragma warning restore CS0612 // 'Simulation.Simulation(Graph, float, float, float, float)' is obsolete
-            ranSimulations.Add(currentSimulation);
-            // alt: simulation = new Simulation(graph, 0.8f, 0.5f, 0.3f, 0.1f);
-
-
-            visitedGraphs.Add((masterGraph, currentSimulation, "Master"));
+            visitedGraphs.Add((new PhysicsWrapper(masterGraph,
+                                                  masterGraph.Nodes[0],
+                                                  SEPARATION,
+                                                  SIMULATION_PARAMS),
+                               "master"));
+            // alt: 0.8f, 0.5f, 0.3f, 0.1f
         }
 
         /// <summary>
@@ -177,8 +116,6 @@ namespace NodeMonog
             //RasterizerState = new RasterizerState { MultiSampleAntiAlias = true };
 
             graphics.ApplyChanges();
-            
-
 
             //Gui initial Initialisation
             UserInterface.Initialize(Content, theme: "editorSourceCodePro");
@@ -186,12 +123,6 @@ namespace NodeMonog
 
             outsidePanel = new Panel(new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height));
             outsidePanel.Anchor = Anchor.TopRight;
-
-            foreach (Node item in masterGraph.Nodes)
-            {
-                drawNodes.Add(new DrawNode(new Vector2(), item, visitedGraphs[0].Item2));
-            }
-            selectedNode = drawNodes[0];
 
             tabs = new PanelTabs();
 
@@ -230,9 +161,6 @@ namespace NodeMonog
                 tab.button.Children.First(x => x.GetType() == typeof(Image) || x.GetType() == typeof(Icon)).Visible = true;
             }
 
-            //selectedNode =  new DrawNode(Vector2.Zero,graphs[0].Nodes[0], simulation);
-
-
             engine.player.SelectNode(selectedNode.node);
 
 
@@ -253,15 +181,8 @@ namespace NodeMonog
 
             Window.ClientSizeChanged += resizeMenu;
 
-           
-
-            
-            simulationStatus = new TaskStatus(Status.Running);
-
-            Task simTask;
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
-            (simTask, simulationStatus) = RunSimulation(currentSimulation);
-            simTask.Start();
+            currentSimulation.StartSimulation();
 
             base.Initialize();
         }
@@ -308,15 +229,15 @@ namespace NodeMonog
 
             person.panel.AddChild(new Header(engine.player.selectedNode.Name));
             SelectList connectionList = new SelectList();
-            foreach ((Connection c, Node n) in visitedGraphs[historyIndex].Item1.GetConnections(engine.player.selectedNode))
+            foreach ((Connection c, Node n) in currentGraph.GetOutgoingConnections(engine.player.selectedNode))
             {
                 connectionList.AddItem(n.Name + ": " + c.Traits["Proximity"]);
             }
             connectionList.OnValueChange += delegate (Entity target)
             {
-                Node clickedNode = visitedGraphs[historyIndex].Item1.GetConnections(selectedNode.node)[connectionList.SelectedIndex].Item2;
+                Node clickedNode = currentGraph.GetOutgoingConnections(selectedNode.node)[connectionList.SelectedIndex].Item2;
                 engine.player.SelectNode(clickedNode);
-                selectedNode = drawNodes.Find(x => x.node == clickedNode);
+                currentSimulation.SelectedNode = clickedNode;
                 Console.WriteLine();
                 UpdateHud();
                 return;
@@ -383,22 +304,22 @@ namespace NodeMonog
 
             options.panel.AddChild(new Paragraph("Physics damp:"));
             Slider sDamp = new Slider(0, 100);
-            sDamp.OnValueChange += _ => currentSimulation.Damping = sDamp.Value / 100;
+            sDamp.OnValueChange += _ => currentSimulation.Simulation.Damping = sDamp.Value / 100;
             options.panel.AddChild(sDamp);
 
             options.panel.AddChild(new Paragraph("Physics Gravity:"));
             Slider sGravity = new Slider(0, 100);
-            sGravity.OnValueChange += _ => currentSimulation.Gravity = sGravity.Value / 100;
+            sGravity.OnValueChange += _ => currentSimulation.Simulation.Gravity = sGravity.Value / 100;
             options.panel.AddChild(sGravity);
 
             options.panel.AddChild(new Paragraph("Physics Repulstion:"));
             Slider sRepulsion = new Slider(0, 100);
-            sRepulsion.OnValueChange += _ => currentSimulation.Repulsion = sRepulsion.Value / 100;
+            sRepulsion.OnValueChange += _ => currentSimulation.Simulation.Repulsion = sRepulsion.Value / 100;
             options.panel.AddChild(sRepulsion);
 
             options.panel.AddChild(new Paragraph("Physics Stiffnes:"));
             Slider sStiffnes = new Slider(0, 100);
-            sStiffnes.OnValueChange += _ => currentSimulation.Stiffness = sStiffnes.Value / 100;
+            sStiffnes.OnValueChange += _ => currentSimulation.Simulation.Stiffness = sStiffnes.Value / 100;
             options.panel.AddChild(sStiffnes);
 
 
@@ -424,34 +345,6 @@ namespace NodeMonog
             outsidePanel.Size = new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height);
             outsidePanel.Anchor = Anchor.TopRight;
             
-        }
-
-        static (Task, TaskStatus) RunSimulation(Simulation sim) {
-            var status = new TaskStatus(Status.Idle);
-            var task = new Task(() => {
-                Func<float, float> S = x => (float)(1.0 / (1.0 + Math.Pow(Math.E, -x)));
-                float timeStep = 1.5f;
-                status.Status = Status.Running;
-                for (int i = 0; i < 10000; i++) {
-                    sim.Advance(timeStep);
-                    if (sim.WithinThreshold) {
-                        status.Status = Status.MinimaReached;
-                        return;
-                    }
-
-                    var total = sim.GetTotalEnergy();
-                    float negLog = (float)Math.Pow(2, -Math.Log(total, 2));
-                    timeStep = Math.Min(negLog, total / 10);
-                    //timeStep = Math.Max(timeStep, 0.01f);
-                    timeStep = Math.Min(timeStep, 1);
-                    //timeStep = 1f - timeStep;
-                    //timeStep = S(total - 2);
-                    status.TimeStep = timeStep;
-                }
-                status.Status = Status.IterationCap;
-            });
-
-            return (task, status);
         }
 
         public void testDelegate(object sender, EventArgs e)
@@ -501,17 +394,25 @@ namespace NodeMonog
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-#pragma warning disable CS0219 // The variable 'timeFactor' is assigned but its value is never used
-            var timeFactor = 100f;
-#pragma warning restore CS0219 // The variable 'timeFactor' is assigned but its value is never used
-            if (Keyboard.GetState().IsKeyDown(Keys.Space)) timeFactor = 25f;
-            //ShittyAssNode.simulation.Advance(gameTime.ElapsedGameTime.Milliseconds / timeFactor);
+
 
             Rectangle r = Window.ClientBounds;
             int x = r.Width / 3;
 
             MouseState nms = Mouse.GetState();
             KeyboardState nkbs = Keyboard.GetState();
+
+            if (nkbs.IsKeyDown(Keys.Space)) {
+                currentSimulation.AdvanceOnce();
+            }
+
+
+            if (nkbs.IsKeyDown(Keys.LeftControl) && nkbs.IsKeyDown(Keys.R)
+                && !(okbs.IsKeyDown(Keys.LeftControl) || okbs.IsKeyDown(Keys.R))) {
+                currentSimulation.FullReset();
+            } else if (nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R)) {
+                currentSimulation.Restart();
+            }
 
             //Mouse is moved/pressed/Scrolled
             if (nms != oms)
@@ -530,17 +431,17 @@ namespace NodeMonog
                     if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released)
                     {
 
-                        for (int i = 0; i < visitedGraphs[historyIndex].Item1.Nodes.Count; i++)
+                        foreach (var n in currentSimulation.DrawNodes)
                         {
-                            DrawNode currentNode = drawNodes.Find(x => x.node == visitedGraphs[historyIndex].Item1.Nodes[i]);
-
+                            DrawNode currentNode = currentSimulation.SelectedDrawNode;
+                            if (currentNode == null) continue;
 
                             if (new Rectangle(CameraTransform(currentNode.Position).ToPoint(), new Point(
                                 (int)(64 * zoomlevel),
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
                             {
                                 engine.player.SelectNode(currentNode.node);
-                                selectedNode = currentNode;
+                                currentSimulation.SelectedNode = currentNode.node;
                                 UpdateHud();
                             };
 
@@ -550,7 +451,7 @@ namespace NodeMonog
                         if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position))
                         {
                             //The tickbutton is pressed
-                            engine.handler.Tick(visitedGraphs[historyIndex].Item1);
+                            engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
                             history.Add(new GameState(masterGraph));
                             UpdateHud();
                         }
@@ -617,29 +518,14 @@ namespace NodeMonog
         public void GoIntoAGraph(Node enteredNode)
         {
             Graph g = enteredNode.SubGraph;
-            //visitedGraphs[historyIndex].Add((selectedNode.node.SubGraph, currentSimulation));
-            Simulation s = ranSimulations.Find(x => x.Graph == g);
-            if (s == null)
-            {
-#pragma warning disable CS0612 // 'Simulation.Simulation(Graph, float, float, float, float)' is obsolete
-                currentSimulation = new Simulation(selectedNode.node.SubGraph, 0.8f, 0.5f, 0.3f, 0.4f);
-                s = currentSimulation;
-#pragma warning restore CS0612 // 'Simulation.Simulation(Graph, float, float, float, float)' is obsolete
-                ranSimulations.Add(currentSimulation);
-                (Task simtask, _) = RunSimulation(currentSimulation);
-            }
-            else currentSimulation = s;
 
-            drawNodes = new List<DrawNode>();
-            foreach (Node n in g.Nodes)
-            {
-                drawNodes.Add(new DrawNode(Vector2.Zero, n, currentSimulation));
-            }
-            selectedNode = drawNodes[0];
-            engine.player.SelectNode(g.Nodes[0]);
+            PhysicsWrapper s = ranSimulations.Find(x => x.Graph == g) ?? new PhysicsWrapper(g, g.Nodes[0], degrees: SEPARATION, SIMULATION_PARAMS);
 
+            visitedGraphs.Add((s, enteredNode.Name));
             historyIndex++;
-            visitedGraphs.Add((g, s, enteredNode.Name));
+
+            selectedNode = s.SelectedDrawNode;
+            engine.player.SelectNode(g.Nodes[0]);
 
             cameraPosition = cameraGoal;
 
@@ -650,19 +536,10 @@ namespace NodeMonog
         {
             if (historyIndex > 0) {
                 historyIndex--;
-                Node newSelectedNode = visitedGraphs[historyIndex].Item1.Nodes.First(x => x.SubGraph == visitedGraphs[historyIndex + 1].Item1);
+                Node newSelectedNode = visitedGraphs[historyIndex].Item1.Graph.Nodes.First(x => x.SubGraph == visitedGraphs[historyIndex + 1].Item1.Graph);
 
                 visitedGraphs.RemoveAt(historyIndex + 1);
 
-                currentSimulation = visitedGraphs[historyIndex].Item2;
-
-                drawNodes = new List<DrawNode>();
-                for (int i = 0; i < visitedGraphs[historyIndex].Item1.Nodes.Count; i++)
-                {
-                    drawNodes.Add(new DrawNode(Vector2.Zero, visitedGraphs[historyIndex].Item1.Nodes[i], currentSimulation));
-                }
-                engine.player.SelectNode(newSelectedNode);
-                selectedNode = drawNodes.Find(x => x.node == newSelectedNode);
                 cameraPosition = selectedNode.Position.ToPoint();
 
                 UpdateHud();
@@ -716,6 +593,18 @@ namespace NodeMonog
 
             spriteBatch.Begin(SpriteSortMode.BackToFront);
 
+            (var bl_1, var bl_2) = currentSimulation.Simulation.GetBoundingBox();
+            var bottomleft = new Vector2(bl_1.X, bl_1.Y);
+            var topright = new Vector2(bl_2.X, bl_2.Y);
+
+            bottomleft = bottomleft * 50 + new Vector2(300, 300);
+            topright = topright * 50 + new Vector2(300, 300);
+
+            bottomleft = CameraTransform(bottomleft);
+            topright = CameraTransform(topright);
+
+            spriteBatch.Draw(square, new Rectangle(bottomleft.ToPoint(), (topright - bottomleft).ToPoint()), Color.Red);
+
 
             spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
             spriteBatch.DrawString(arial, "Tick", new Vector2(16, r.Height - 48), Color.Black);
@@ -723,36 +612,37 @@ namespace NodeMonog
 
             int centerX = r.Width / 3;
 
-            int k = 0;
-            foreach((Graph  g, Simulation s, string name) in visitedGraphs)
-            {
-                spriteBatch.DrawString(arial, name, new Vector2(centerX, k * 32), Color.Black);
-                k++;
+            for (int k = 0; k < visitedGraphs.Count; k++) {
+                spriteBatch.DrawString(arial, visitedGraphs[k].Item2, new Vector2(centerX, k * 32), Color.Black);
             }
 
             spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, (animation).ToString(), new Vector2(0, 32), Color.Black);
-            string simStatusString = simulationStatus.Status switch
+            string simStatusString = currentSimulation.SimulationStatus.Status switch
             {
                 Status.Running => $"Running\ntotal energy: {currentSimulation.GetTotalEnergy()}" +
-                $"\ntimestep: {simulationStatus.TimeStep}",
+                $"\ntimestep: {currentSimulation.SimulationStatus.TimeStep}",
                 Status.IterationCap => "Iteration cap reached",
                 Status.MinimaReached => "Local minima reached",
-                _ => "This should never happen"
+                Status.Idle => "idle",
+                Status.Cancelled => "Cancelled",
+                // _ => "This should never happen"
             };
             try {
                 spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
             } catch {
             }
             if (showGraph) {
-                float maxTime = Math.Max(1, simulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
-                float maxIter = 10000; // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
+                float maxTime = Math.Max(1, currentSimulation.SimulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
+                float maxIter = Math.Min(1000, currentSimulation.SimulationStatus.TimeStepHistory.Last().Item1); // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
 
                 float graphWidth = Window.ClientBounds.Width / 5f;
                 float graphHeight = Window.ClientBounds.Height / 4f;
 
-                foreach ((int iter, float timeStep) in simulationStatus.TimeStepHistory) {
+                foreach ((int iter, float timeStep) in currentSimulation.SimulationStatus.TimeStepHistory.Skip(
+                    Math.Min(0, currentSimulation.SimulationStatus.TimeStepHistory.Last().Item1 - 1000)))
+                {
                     var y = (Math.Log(timeStep) - Math.Log(0.01)) / (Math.Log(maxTime) - Math.Log(0.01)) * graphHeight;
                     var x = iter / maxIter * graphWidth;
                     spriteBatch.Draw(pixel,
@@ -764,34 +654,38 @@ namespace NodeMonog
 
 
 
-            for (int i = 0; i < visitedGraphs[historyIndex].Item1.Nodes.Count; i++)
+            //for (int i = 0; i < visitedGraphs[historyIndex].Item1.Graph.Nodes.Count; i++)
+            foreach (var currentDrawNode in currentSimulation.DrawNodes)
             {
-                Node currentNode = visitedGraphs[historyIndex].Item1.Nodes[i];
-                Vector2 currentNodePoistion = drawNodes.Find(x => x.node == currentNode).Position;
+                //Node currentNode = visitedGraphs[historyIndex].Item1.Graph.Nodes[i];
+                //Vector2 currentNodePosition = currentSimulation.DrawNodes.Find(x => x.node == currentNode).Position;
+
+                Node currentNode = currentDrawNode.node;
+                Vector2 currentNodePosition = currentDrawNode.Position;
 
                 Color selectcolour;
                 float depth = 0.5f;
-                if (selectedNode.node == currentNode)
-                {
+                if (selectedNode.node == currentNode) {
                     selectcolour = Color.Black;
                     depth = 0.2f;
                 }
                 else selectcolour = new Color(0, 0, 0, 15);
                 
-                foreach ((Connection c, Node n) in visitedGraphs[historyIndex].Item1.GetConnections(currentNode))
-                {
-                    Vector2 arrowVector = (drawNodes.Find(x => x.node == n).Position - currentNodePoistion);
+                foreach ((Connection c, Node n) in currentGraph.GetOutgoingConnections(currentNode)) {
+                    DrawNode otherDrawNode = currentSimulation.LookupDrawNode(n);
+                    if (otherDrawNode == null) continue;
+                    Vector2 arrowVector = otherDrawNode.Position - currentNodePosition;
                     double rotation = Math.Atan(arrowVector.Y / arrowVector.X);
                     if (arrowVector.X < 0) rotation += Math.PI;
 
                     Vector2 offsetPoint = new Vector2(
-                        (float)(circleDiameter / 2 ),
-                        (float)(circleDiameter / 2 ));
+                        circleDiameter / 2,
+                        circleDiameter / 2);
 
                     spriteBatch.Draw(pixel,
-                        destinationRectangle: new Rectangle(CameraTransform((currentNodePoistion + offsetPoint).ToPoint()),
+                        destinationRectangle: new Rectangle(CameraTransform((currentNodePosition + offsetPoint).ToPoint()),
                         new Point(
-                        (int)((arrowVector.Length()) * zoomlevel),
+                        (int)(arrowVector.Length() * zoomlevel),
                          CameraTransform(6) + 2)),
                         sourceRectangle: null,
                         color: selectcolour,
@@ -804,33 +698,37 @@ namespace NodeMonog
                     if (animations)
                     {
 
-                        Vector2 relativeMovement = ((arrowVector + offsetPoint)* (((animation) % (c.Strength() * 1000)) / (c.Strength() * 1000) ));
-                        spriteBatch.Draw(arrow,
-                        destinationRectangle: CameraTransform(new Rectangle(
-                            (currentNodePoistion + relativeMovement + offsetPoint).ToPoint(),
-                        new Point(32,16))),
-                        sourceRectangle: null,
-                        color: selectcolour,
-                        rotation: (float)rotation,
-                        origin: new Vector2(0.5f, 0.5f),
-                        effects: SpriteEffects.None,
-                        layerDepth: depth);
+                        Vector2 relativeMovement = 
+                            (arrowVector + offsetPoint) * (animation % (c.Strength() * 1000)) / (c.Strength() * 1000);
+                        spriteBatch.Draw(
+                            texture: arrow,
+                            destinationRectangle:
+                                CameraTransform(
+                                    new Rectangle(
+                                        location: (currentNodePosition + relativeMovement + offsetPoint).ToPoint(),
+                                        size: new Point(32, 16))),
+                            sourceRectangle: null,
+                            color: selectcolour,
+                            rotation: (float)rotation,
+                            origin: new Vector2(0.5f, 0.5f),
+                            effects: SpriteEffects.None,
+                            layerDepth: depth);
                     }
 
                 }
 
 
-                if (visitedGraphs[historyIndex].Item1.GetConnections(selectedNode.node).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
+                if (currentGraph.GetOutgoingConnections(selectedNode.node).Exists(x => x.Item2 == currentNode)) depth = 0.2f;
                 //Draws circles
                 var _color = Color.White;
                 if (currentNode.Statuses.Contains("Infected")) _color = Color.Red;
                 if (currentNode.Statuses.Contains("Dead")) _color = Color.Black;
                 if (currentNode.Statuses.Contains("Recovered")) _color = new Color(81, 182, 74);
                 spriteBatch.Draw(circle,
-                    destinationRectangle: new Rectangle(CameraTransform(currentNodePoistion).ToPoint(),
-                    new Point(
-                    (int)(circleDiameter * zoomlevel),
-                    (int)(circleDiameter * zoomlevel))),
+                    destinationRectangle: new Rectangle(CameraTransform(currentNodePosition).ToPoint(),
+                                                        new Point(
+                                                            (int)(circleDiameter * zoomlevel),
+                                                            (int)(circleDiameter * zoomlevel))),
                     sourceRectangle: null,
                     color: _color,
                     0,
@@ -845,13 +743,13 @@ namespace NodeMonog
                     if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
                     spriteBatch.DrawString(arial,
                         currentNode.Name,
-                        CameraTransform(currentNodePoistion),
+                        CameraTransform(currentNodePosition),
                         fadeColour,
                         0,
                         Vector2.Zero,
                         (float)(1 / zoomlevel / 32 + 1.2f),
                         SpriteEffects.None,
-                        0.1f);
+                        0.1f) ;
                 }
             }
 
