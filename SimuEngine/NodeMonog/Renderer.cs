@@ -455,8 +455,6 @@ namespace NodeMonog
 
                     if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released) {
                         foreach (var currentNode in currentSimulation.DrawNodes) {
-                            if (currentNode == null) continue;
-
                             if (new Rectangle(CameraTransform(currentNode.Position).ToPoint(), new Point(
                                 (int)(64 * zoomlevel),
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
@@ -542,14 +540,10 @@ namespace NodeMonog
             UpdateHud();
         }
 
-       public void GoOutAGraph()
-        {
+        public void GoOutAGraph() {
             if (historyIndex > 0) {
                 historyIndex--;
-                Node newSelectedNode = currentGraph.Nodes
-                    .First(x => ReferenceEquals(x.SubGraph, visitedGraphs[historyIndex + 1].Item1.Graph));
-
-                selectedNode = currentSimulation.LookupDrawNode(newSelectedNode);
+                engine.player.SelectNode(currentSimulation.SelectedNode);
 
                 visitedGraphs.RemoveAt(historyIndex + 1);
 

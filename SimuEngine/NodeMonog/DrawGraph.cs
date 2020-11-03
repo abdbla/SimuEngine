@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 
 using Simulation = Core.Physics.Simulation;
 using PVec2 = Core.Physics.Vector2;
+using System.Diagnostics;
 
 namespace NodeMonog
 {
@@ -15,20 +16,18 @@ namespace NodeMonog
     {
     }
 
+    [DebuggerDisplay("Inner node: {node.Name}")]
     class DrawNode
     {
         public Node node;
         public int separation;
 
-        public Vector2 Position
-        {
-            get
-            {
+        public Vector2 Position {
+            get {
                 var point = simulation.physicsNodes[node].Point.Position;
                 return new Vector2((point.X * 50) + 300, (point.Y * 50) + 300);
             }
-            set
-            {
+            set {
                 
             }
         }
