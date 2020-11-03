@@ -119,6 +119,7 @@ namespace NodeMonog
 
             //Gui initial Initialisation
             UserInterface.Initialize(Content, theme: "editorSourceCodePro");
+            UserInterface.Active.UseRenderTarget = true;
 
 
             outsidePanel = new Panel(new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height));
@@ -138,21 +139,25 @@ namespace NodeMonog
             Image groupI = new Image(Content.Load<Texture2D>(@"GroupIcon"), size: size * 2.25f, offset: offset, anchor: Anchor.TopCenter);
             groupI.ClickThrough = true;
             group.button.AddChild(groupI);
-            
+            //group.panel.PanelOverflowBehavior = PanelOverflowBehavior.VerticalScroll;
+
             person = tabs.AddTab("Person");
             Image personI = new Image(Content.Load<Texture2D>(@"PersonIcon") , size: size * 2.25f,offset: offset,anchor: Anchor.TopCenter);
             personI.ClickThrough = true;
             person.button.AddChild(personI);
-            
+            //person.panel.PanelOverflowBehavior = PanelOverflowBehavior.VerticalScroll;
+
             options = tabs.AddTab("Options");
             Image optI = new Image(Content.Load<Texture2D>(@"GearIcon"), size: size * 2.25f, anchor: Anchor.TopCenter, offset: offset);
             optI.ClickThrough = true;
             options.button.AddChild(optI);
+            //options.panel.PanelOverflowBehavior = PanelOverflowBehavior.VerticalScroll;
 
             stats = tabs.AddTab("Stats");
             Image satsI = new Image(Content.Load<Texture2D>(@"StatsIcon"), size: size * 2.25f, anchor: Anchor.TopCenter, offset: offset);
             satsI.ClickThrough = true;
             stats.button.AddChild(satsI);
+            //stats.panel.PanelOverflowBehavior = PanelOverflowBehavior.VerticalScroll;
 
             allTabs = new List<TabData>() { actions, group, person, options, stats };
             foreach (var tab in allTabs)
@@ -302,24 +307,53 @@ namespace NodeMonog
             options.panel.AddChild(cameraBox);
 
 
-            options.panel.AddChild(new Paragraph("Physics damp:"));
-            Slider sDamp = new Slider(0, 100);
-            sDamp.OnValueChange += _ => currentSimulation.Simulation.Damping = sDamp.Value / 100;
+
+            Slider sDamp = new Slider(0, 1000);
+            sDamp.OnMouseLeave += _ => sDamp.IsFocused = false;
+            sDamp.Value = (int)(currentSimulation.Simulation.Damping * 1000);
+            Paragraph sDampParagraph = new Paragraph("Physics Damp: " + ((float)sDamp.Value / 100));
+            options.panel.AddChild(sDampParagraph);
+            sDamp.OnValueChange += _ =>
+            {
+                currentSimulation.Simulation.Repulsion = sDamp.Value / 100;
+                sDampParagraph.Text = "Physics Damp: " + ((float)sDamp.Value / 100);
+            };
             options.panel.AddChild(sDamp);
 
-            options.panel.AddChild(new Paragraph("Physics Gravity:"));
-            Slider sGravity = new Slider(0, 100);
-            sGravity.OnValueChange += _ => currentSimulation.Simulation.Gravity = sGravity.Value / 100;
+            Slider sGravity = new Slider(0, 1000);
+            sGravity.OnMouseLeave += _ => sGravity.IsFocused = false;
+            sGravity.Value = (int)(currentSimulation.Simulation.Damping * 1000);
+            Paragraph sGravityParagraph = new Paragraph("Physics Gravity: " + ((float)sGravity.Value / 100));
+            options.panel.AddChild(sGravityParagraph);
+            sGravity.OnValueChange += _ =>
+            {
+                currentSimulation.Simulation.Repulsion = sGravity.Value / 100;
+                sGravityParagraph.Text = "Physics Gravity: " + ((float)sGravity.Value / 100);
+            };
             options.panel.AddChild(sGravity);
 
-            options.panel.AddChild(new Paragraph("Physics Repulstion:"));
-            Slider sRepulsion = new Slider(0, 100);
-            sRepulsion.OnValueChange += _ => currentSimulation.Simulation.Repulsion = sRepulsion.Value / 100;
+            Slider sRepulsion = new Slider(0, 1000);
+            sRepulsion.OnMouseLeave += _ => sRepulsion.IsFocused = false;
+            sRepulsion.Value = (int)(currentSimulation.Simulation.Damping * 1000);
+            Paragraph sRepulsionParagraph = new Paragraph("Physics Repulsion: " + ((float)sRepulsion.Value / 100));
+            options.panel.AddChild(sRepulsionParagraph);
+            sRepulsion.OnValueChange += _ =>
+            {
+                currentSimulation.Simulation.Repulsion = sRepulsion.Value / 100;
+                sRepulsionParagraph.Text = "Physics Repulsion: " + ((float)sRepulsion.Value / 100);
+            };
             options.panel.AddChild(sRepulsion);
 
-            options.panel.AddChild(new Paragraph("Physics Stiffnes:"));
-            Slider sStiffnes = new Slider(0, 100);
-            sStiffnes.OnValueChange += _ => currentSimulation.Simulation.Stiffness = sStiffnes.Value / 100;
+            Slider sStiffnes = new Slider(0, 1000);
+            sStiffnes.OnMouseLeave += _ => sStiffnes.IsFocused = false;
+            sStiffnes.Value = (int)(currentSimulation.Simulation.Damping * 1000);
+            Paragraph sStiffnesParagraph = new Paragraph("Physics Stiffnes: " + ((float)sStiffnes.Value / 100));
+            options.panel.AddChild(sStiffnesParagraph);
+            sStiffnes.OnValueChange += _ =>
+            {
+                currentSimulation.Simulation.Repulsion = sStiffnes.Value / 100;
+                sStiffnesParagraph.Text = "Physics Stiffnes: " + ((float)sStiffnes.Value / 100);
+            };
             options.panel.AddChild(sStiffnes);
 
 
@@ -536,7 +570,10 @@ namespace NodeMonog
         {
             if (historyIndex > 0) {
                 historyIndex--;
-                Node newSelectedNode = visitedGraphs[historyIndex].Item1.Graph.Nodes.First(x => x.SubGraph == visitedGraphs[historyIndex + 1].Item1.Graph);
+                Node newSelectedNode = currentGraph.Nodes
+                    .First(x => ReferenceEquals(x.SubGraph, visitedGraphs[historyIndex + 1].Item1.Graph));
+
+                selectedNode = currentSimulation.LookupDrawNode(newSelectedNode);
 
                 visitedGraphs.RemoveAt(historyIndex + 1);
 
@@ -587,6 +624,9 @@ namespace NodeMonog
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+
+            UserInterface.Active.Draw(spriteBatch);
+
             GraphicsDevice.Clear(Color.LightGray);
 
             Rectangle r = Window.ClientBounds;
@@ -763,11 +803,10 @@ namespace NodeMonog
 
 
 
-            
 
             spriteBatch.End();
 
-            UserInterface.Active.Draw(spriteBatch);
+            UserInterface.Active.DrawMainRenderTarget(spriteBatch);
 
             // TODO: Add your drawing code here
 
