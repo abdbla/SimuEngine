@@ -329,40 +329,40 @@ namespace NodeMonog
 
             Slider sliderRepulsion = new Slider(0, 500);
             float repulsion = currentSimulation.Simulation.Repulsion;
-            Paragraph sRepulsionParagraph = new Paragraph("Physics Repulsion: " + repulsion);
+            Paragraph sRepulsionParagraph = new Paragraph("Physics Rep: " + repulsion);
             options.panel.AddChild(sRepulsionParagraph);
             sliderRepulsion.Value = (int)((Math.Log10(repulsion) + 3) * 100);
             sliderRepulsion.OnValueChange += _ =>
             {
                 float repulsion = (float)Math.Pow(10f, ((float)sliderRepulsion.Value / 100) - 3);
                 currentSimulation.Simulation.Repulsion = repulsion;
-                sRepulsionParagraph.Text = "Physics Repulsion: " + repulsion;
+                sRepulsionParagraph.Text = "Physics Rep: " + repulsion;
             };
             options.panel.AddChild(sliderRepulsion);
 
             Slider sliderGravity = new Slider(0, 500);
             float gravity = currentSimulation.Simulation.Gravity;
-            Paragraph sGravityParagraph = new Paragraph("Physics Gravity: " + gravity);
+            Paragraph sGravityParagraph = new Paragraph("Physics Grav: " + gravity);
             options.panel.AddChild(sGravityParagraph);
             sliderGravity.Value = (int)((Math.Log10(gravity) + 3) * 100);
             sliderGravity.OnValueChange += _ =>
             {
                 float gravity = (float)Math.Pow(10f, ((float)sliderGravity.Value / 100) - 3);
                 currentSimulation.Simulation.Gravity = gravity;
-                sGravityParagraph.Text = "Physics Graity: " + gravity;
+                sGravityParagraph.Text = "Physics Grav: " + gravity;
             };
             options.panel.AddChild(sliderGravity);
 
             Slider sliderStiffness = new Slider(0, 500);
             float stiffness = currentSimulation.Simulation.Stiffness;
-            Paragraph sStiffParagraph = new Paragraph("Physics Stiffnes: " + stiffness);
+            Paragraph sStiffParagraph = new Paragraph("Physics Stiff: " + stiffness);
             options.panel.AddChild(sStiffParagraph);
             sliderStiffness.Value = (int)((Math.Log10(stiffness) + 3) * 100);
             sliderStiffness.OnValueChange += _ =>
             {
                 float stiffness = (float)Math.Pow(10f, ((float)sliderStiffness.Value / 100) - 3);
                 currentSimulation.Simulation.Stiffness = stiffness;
-                sStiffParagraph.Text = "Physics Stiffnes: " + stiffness;
+                sStiffParagraph.Text = "Physics Stiff: " + stiffness;
             };
             options.panel.AddChild(sliderStiffness);
 
