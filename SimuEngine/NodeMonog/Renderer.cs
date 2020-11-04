@@ -77,6 +77,7 @@ namespace NodeMonog
         bool cameraLock = true;
         bool showGraph = false;
         bool animations = false;
+        bool showBoundingBox = false;
 
         public Renderer(Engine engine)
         {
@@ -299,10 +300,15 @@ namespace NodeMonog
             cameraBox.Checked = cameraLock;
             cameraBox.OnValueChange += _ => cameraLock = cameraBox.Checked;
 
+            CheckBox boundingBox = new CheckBox("Show bounding box");
+            boundingBox.Checked = false;
+            boundingBox.OnValueChange += _ => showBoundingBox = boundingBox.Checked;
+
             
             options.panel.AddChild(graphBox);
             options.panel.AddChild(animationBox);
             options.panel.AddChild(cameraBox);
+            options.panel.AddChild(boundingBox);
 
 
 
@@ -606,18 +612,19 @@ namespace NodeMonog
 
             spriteBatch.Begin(SpriteSortMode.BackToFront);
 
-            (var bl_1, var bl_2) = currentSimulation.Simulation.GetBoundingBox();
-            var bottomleft = new Vector2(bl_1.X, bl_1.Y);
-            var topright = new Vector2(bl_2.X, bl_2.Y);
+            if (showBoundingBox) {
+                (var bl_1, var bl_2) = currentSimulation.Simulation.GetBoundingBox();
+                var bottomleft = new Vector2(bl_1.X, bl_1.Y);
+                var topright = new Vector2(bl_2.X, bl_2.Y);
 
-            bottomleft = bottomleft * 50 + new Vector2(300, 300);
-            topright = topright * 50 + new Vector2(300, 300);
+                bottomleft = bottomleft * 50 + new Vector2(300, 300);
+                topright = topright * 50 + new Vector2(300, 300);
 
-            bottomleft = CameraTransform(bottomleft);
-            topright = CameraTransform(topright);
+                bottomleft = CameraTransform(bottomleft);
+                topright = CameraTransform(topright);
 
-            spriteBatch.Draw(square, new Rectangle(bottomleft.ToPoint(), (topright - bottomleft).ToPoint()), Color.Red);
-
+                spriteBatch.Draw(square, new Rectangle(bottomleft.ToPoint(), (topright - bottomleft).ToPoint()), Color.Red);
+            }
 
             spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
             spriteBatch.DrawString(arial, "Tick", new Vector2(16, r.Height - 48), Color.Black);
