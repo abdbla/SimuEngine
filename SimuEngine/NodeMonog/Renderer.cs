@@ -438,12 +438,8 @@ namespace NodeMonog
             }
 
 
-            if (nkbs.IsKeyDown(Keys.LeftControl) && nkbs.IsKeyDown(Keys.R)
-                && !(okbs.IsKeyDown(Keys.LeftControl) || okbs.IsKeyDown(Keys.R))) {
-                currentSimulation.FullReset();
-            } else if (nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R)) {
-                currentSimulation.Restart();
-            }
+            
+            
 
             //Mouse is moved/pressed/Scrolled
             if (nms != oms) {
@@ -509,6 +505,19 @@ namespace NodeMonog
             if (cameraLock) {
                 cameraPosition += (cameraVelocity * gameTime.ElapsedGameTime.Milliseconds).ToPoint();
             }
+
+            if (nkbs.IsKeyDown(Keys.LeftControl) && nkbs.IsKeyDown(Keys.R)
+                && !(okbs.IsKeyDown(Keys.LeftControl) || okbs.IsKeyDown(Keys.R)))
+            {
+                currentSimulation.FullReset();
+            }
+            else if (nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R))
+            {
+                currentSimulation.Restart();
+            }
+
+            if (nkbs.IsKeyDown(Keys.C)) cameraPosition = cameraGoal;
+
 
             if (gameTime.ElapsedGameTime.Milliseconds != 0) frameRate = 1000 / gameTime.ElapsedGameTime.Milliseconds;
 
