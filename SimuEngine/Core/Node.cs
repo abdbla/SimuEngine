@@ -4,7 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 
 namespace Core {
-    [DebuggerDisplay("{Name}")]
+    [DebuggerDisplay("Name: {Name}")]
     public abstract class Node {
         public static Random rng = new Random(); 
         //Internal fields, only meant to be accessed by internal functions, such as Events and the PlayerObject.

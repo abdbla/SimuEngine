@@ -211,7 +211,7 @@ namespace Implementation
         }
     }
 
-    [DebuggerDisplay("name: {this.Name}")]
+    [DebuggerDisplay("Name: {this.Name}")]
     class Person : Node
     {
         static int id = 0;

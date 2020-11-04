@@ -462,7 +462,8 @@ namespace NodeMonog
                                 engine.player.SelectNode(currentNode.node);
                                 selectedNode = currentNode;
                                 UpdateHud();
-                            };
+                                break;
+                            }
 
                         }
 
