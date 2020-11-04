@@ -64,8 +64,8 @@ namespace Core {
         /// <param name="nodes">the nodes to remove</param>
         /// <returns>the number of nodes and connections that were removed</returns>
         public GraphCount RemoveNodes(IEnumerable<Node> nodes) {
-            var set = new Dictionary<Node, bool>();
-            foreach (var node in nodes) set.Add(node, false);
+            var set = new HashSet<Node>(nodes);
+            foreach (var node in nodes) set.Add(node);
 
             var toRemove = new List<(Node, Node)>();
 
@@ -74,14 +74,8 @@ namespace Core {
             foreach (var kv in adjacencyMatrix) {
                 bool rConn = false;
 
-                if (set.ContainsKey(kv.Key.Item1)) {
+                if (set.Contains(kv.Key.Item1) || set.Contains(kv.Key.Item2)) {
                     rConn = true;
-                    set[kv.Key.Item1] = true;
-                }
-
-                if (set.ContainsKey(kv.Key.Item2)) {
-                    rConn = true;
-                    set[kv.Key.Item2] = true;
                 }
 
                 if (rConn) {
@@ -90,7 +84,9 @@ namespace Core {
                 }
             }
 
-            var nodeCount = set.Select(kv => kv.Value ? 1 : 0).Sum();
+            var nodeCount = set.Count;
+
+            this.nodes.RemoveAll(n => set.Contains(n));
 
             foreach (var key in toRemove) {
                 adjacencyMatrix.Remove(key);
@@ -348,6 +344,10 @@ namespace Core {
         public GraphCount(int nodes, int connections) {
             Nodes = nodes;
             Connections = connections;
+        }
+
+        public override string ToString() {
+            return $"(V = {Nodes}, E = {Connections})";
         }
     }
 

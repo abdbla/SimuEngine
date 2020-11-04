@@ -32,8 +32,6 @@ namespace NodeMonog
         const int SEPARATION = 4;
         readonly static SimulationParams SIMULATION_PARAMS = new SimulationParams(0.8f, 0.5f, 0.3f, 0.4f);
 
-        bool ctrlr = false;
-
         int dragtimer = 0;
         Point cameraPosition = Point.Zero, cameraGoal = Point.Zero;
         Vector2 cameraVelocity = Vector2.Zero;
@@ -435,10 +433,7 @@ namespace NodeMonog
 
             if (nkbs.IsKeyDown(Keys.Space)) {
                 currentSimulation.AdvanceOnce();
-            }
-
-
-            
+            }            
             
 
             //Mouse is moved/pressed/Scrolled
@@ -506,9 +501,7 @@ namespace NodeMonog
                 cameraPosition += (cameraVelocity * gameTime.ElapsedGameTime.Milliseconds).ToPoint();
             }
 
-            if (nkbs.IsKeyDown(Keys.LeftControl) && nkbs.IsKeyDown(Keys.R)
-                && !(okbs.IsKeyDown(Keys.LeftControl) || okbs.IsKeyDown(Keys.R)))
-            {
+            if (nkbs.IsKeyDown(Keys.LeftControl) && nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R)) {
                 currentSimulation.FullReset();
             }
             else if (nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R))

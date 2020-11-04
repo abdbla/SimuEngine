@@ -188,30 +188,13 @@ namespace NodeMonog {
         }
 
         public void Restart() {
-            tokenSource.Cancel();
-            try {
-                simulationTask.Wait();
-            } catch (AggregateException e) {
-                Console.WriteLine("cancelled I think, ", e.ToString());
-            } finally {
-                simulationTask.Dispose();
-                tokenSource.Dispose();
-            }
+            Cancel();
             (simulationTask, SimulationStatus) = CreateSimulationTask();
             StartSimulation();
         }
 
         public void ResetAndRestart() {
-            tokenSource.Cancel();
-            try {
-                simulationTask.Wait();
-            } catch (AggregateException e) {
-                Console.WriteLine("cancelled I think, ", e.ToString());
-            } finally {
-                simulationTask.Dispose();
-                tokenSource.Dispose();
-            }
-            simulationTask.Dispose();
+            Cancel();
 
             (simulationTask, SimulationStatus) = CreateSimulationTask();
 
@@ -219,7 +202,7 @@ namespace NodeMonog {
             StartSimulation();
         }
 
-        public void FullReset() {
+        public void Cancel() {
             tokenSource.Cancel();
             try {
                 simulationTask.Wait();
@@ -230,12 +213,14 @@ namespace NodeMonog {
                 tokenSource.Dispose();
             }
             simulationTask.Dispose();
+        }
+ 
+        public void FullReset() {
+            Cancel();
 
             (simulationTask, SimulationStatus) = CreateSimulationTask();
 
             Simulation.ResetFull();
-
-            StartSimulation();
         }
 
         float singleTimeStep;
