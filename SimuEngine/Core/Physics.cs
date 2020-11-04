@@ -510,8 +510,6 @@ namespace Core.Physics {
 
         // Advance the simulation
         public void Advance(float timeStep) {
-            Console.WriteLine($"advanced time by {timeStep}");
-
             ApplyCoulombsLaw();
             ApplyHookesLaw();
             AttractToCenter();

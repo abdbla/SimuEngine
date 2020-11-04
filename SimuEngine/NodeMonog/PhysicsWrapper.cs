@@ -268,8 +268,8 @@ namespace NodeMonog {
                             Console.WriteLine($"Warning: newTotal / total = {newTotal / total}");
                             if (newTotal / total > 100.0) {
                                 Console.WriteLine($"Severe warning: newTotal / total = {newTotal / total}, stopping.");
-                                status.Status = Status.Cancelled;
-                                return;
+                                // status.Status = Status.Cancelled;
+                                // return;
                             }
                         }
                         total = newTotal;
