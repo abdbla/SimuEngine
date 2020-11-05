@@ -25,6 +25,8 @@ namespace NodeMonog
         MouseState oms = Mouse.GetState();
         KeyboardState okbs = Keyboard.GetState();
 
+        Random rng = new Random();
+
         // hud elements:
         Texture2D circle, pixel, tickButton, square, arrow;
         SpriteFont arial;
@@ -413,8 +415,6 @@ namespace NodeMonog
             square = Content.Load<Texture2D>(@"transparantSquare");
             arrow = Content.Load<Texture2D>(@"Arrow");
 
-
-
             // TODO: use this.Content to load your game content here
         }
 
@@ -445,9 +445,9 @@ namespace NodeMonog
             MouseState nms = Mouse.GetState();
             KeyboardState nkbs = Keyboard.GetState();
 
-            if (nkbs.IsKeyDown(Keys.Space)) {
+            if (nkbs.IsKeyDown(Keys.Space) && okbs.IsKeyUp(Keys.Space)) {
                 currentSimulation.AdvanceOnce();
-            }            
+            }
             
 
             //Mouse is moved/pressed/Scrolled
@@ -701,7 +701,12 @@ namespace NodeMonog
                     selectcolour = Color.Black;
                     depth = 0.2f;
                 }
-                else selectcolour = new Color(0, 0, 0, 15);
+                else selectcolour = new Color(
+                    0.7f, // (float)rng.NextDouble(),
+                    0.7f, // (float)rng.NextDouble(),
+                    0.7f, // (float)rng.NextDouble(),
+                    1.0f
+                );
                 
                 foreach ((Connection c, Node n) in currentGraph.GetOutgoingConnections(currentNode)) {
                     DrawNode otherDrawNode = currentSimulation.LookupDrawNode(n);
@@ -725,7 +730,7 @@ namespace NodeMonog
                         origin: new Vector2(0, 0.5f),
                         effects: SpriteEffects.None,
                         layerDepth: depth
-                        );
+                    );
 
                     if (animations)
                     {
@@ -762,8 +767,8 @@ namespace NodeMonog
                                                             (int)(circleDiameter * zoomlevel))),
                     sourceRectangle: null,
                     color: _color,
-                    0,
-                    Vector2.Zero,
+                    rotation: 0,
+                    origin: Vector2.Zero,
                     SpriteEffects.None,
                     depth / 2 + 0.01f);
 
@@ -792,7 +797,7 @@ namespace NodeMonog
                         Vector2.Zero,
                         (float)(1 / zoomlevel / 32 + 1f),
                         SpriteEffects.None,
-                        0.1f) ;
+                        0.1f);
                 }
             }
 
