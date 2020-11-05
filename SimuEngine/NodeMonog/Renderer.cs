@@ -520,7 +520,7 @@ namespace NodeMonog
             }
 
             if (nkbs.IsKeyDown(Keys.LeftControl) && nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R)) {
-                currentSimulation.FullReset();
+                currentSimulation.CompleteReset();
             }
             else if (nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R))
             {
