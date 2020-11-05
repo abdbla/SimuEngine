@@ -52,6 +52,8 @@ namespace NodeMonog
 
         Engine engine;
 
+        Task updateTask;
+
         Graph masterGraph;
         List<(PhysicsWrapper, string)> visitedGraphs = new List<(PhysicsWrapper, string)>();
         List<string> allActiveStatuses = new List<string>();
@@ -471,7 +473,6 @@ namespace NodeMonog
                         }
 
                         
-                        if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position)) {
                         if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position) && (updateTask?.IsCompleted ?? true)) {
                             //The tickbutton is pressed
                             Action action = ()  =>
@@ -686,7 +687,6 @@ namespace NodeMonog
 
 
             //for (int i = 0; i < visitedGraphs[historyIndex].Item1.Graph.Nodes.Count; i++)
-            foreach (var currentDrawNode in currentSimulation.DrawNodes)
             foreach (DrawNode currentDrawNode in currentSimulation.DrawNodes)
             {
                 //Node currentNode = visitedGraphs[historyIndex].Item1.Graph.Nodes[i];
@@ -780,7 +780,7 @@ namespace NodeMonog
                    depth / 2 + 0.02f);
 
                 //Draws node text
-                if(zoomlevel > 0.35f)
+                if (zoomlevel > 0.35f)
                 {
                     Color fadeColour = Color.Black;
                     if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
