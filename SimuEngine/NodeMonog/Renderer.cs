@@ -313,54 +313,60 @@ namespace NodeMonog
             options.panel.AddChild(boundingBox);
 
 
-
-            Slider sDamp = new Slider(0, 1000);
-            sDamp.OnMouseLeave += _ => sDamp.IsFocused = false;
-            sDamp.Value = (int)(currentSimulation.Simulation.Damping * 1000);
-            Paragraph sDampParagraph = new Paragraph("Physics Damp: " + ((float)sDamp.Value / 100));
+            Slider sliderDamp = new Slider(0, 500);
+            float damping = currentSimulation.Simulation.Damping;
+            Paragraph sDampParagraph = new Paragraph("Physics Damp: " + damping);
             options.panel.AddChild(sDampParagraph);
-            sDamp.OnValueChange += _ =>
+            sliderDamp.Value = (int)((Math.Log10(damping) + 3) * 100);
+            sliderDamp.OnValueChange += _ => 
             {
-                currentSimulation.Simulation.Repulsion = sDamp.Value / 100;
-                sDampParagraph.Text = "Physics Damp: " + ((float)sDamp.Value / 100);
+                float damping = (float) Math.Pow(10f, ((float)sliderDamp.Value / 100) - 3);
+                currentSimulation.Simulation.Damping = damping;
+                sDampParagraph.Text = "Physics Damp: " + damping;
             };
-            options.panel.AddChild(sDamp);
+            options.panel.AddChild(sliderDamp);
 
-            Slider sGravity = new Slider(0, 1000);
-            sGravity.OnMouseLeave += _ => sGravity.IsFocused = false;
-            sGravity.Value = (int)(currentSimulation.Simulation.Damping * 1000);
-            Paragraph sGravityParagraph = new Paragraph("Physics Gravity: " + ((float)sGravity.Value / 100));
-            options.panel.AddChild(sGravityParagraph);
-            sGravity.OnValueChange += _ =>
-            {
-                currentSimulation.Simulation.Repulsion = sGravity.Value / 100;
-                sGravityParagraph.Text = "Physics Gravity: " + ((float)sGravity.Value / 100);
-            };
-            options.panel.AddChild(sGravity);
 
-            Slider sRepulsion = new Slider(0, 1000);
-            sRepulsion.OnMouseLeave += _ => sRepulsion.IsFocused = false;
-            sRepulsion.Value = (int)(currentSimulation.Simulation.Damping * 1000);
-            Paragraph sRepulsionParagraph = new Paragraph("Physics Repulsion: " + ((float)sRepulsion.Value / 100));
+
+
+            Slider sliderRepulsion = new Slider(0, 500);
+            float repulsion = currentSimulation.Simulation.Repulsion;
+            Paragraph sRepulsionParagraph = new Paragraph("Physics Rep: " + repulsion);
             options.panel.AddChild(sRepulsionParagraph);
-            sRepulsion.OnValueChange += _ =>
+            sliderRepulsion.Value = (int)((Math.Log10(repulsion) + 3) * 100);
+            sliderRepulsion.OnValueChange += _ =>
             {
-                currentSimulation.Simulation.Repulsion = sRepulsion.Value / 100;
-                sRepulsionParagraph.Text = "Physics Repulsion: " + ((float)sRepulsion.Value / 100);
+                float repulsion = (float)Math.Pow(10f, ((float)sliderRepulsion.Value / 100) - 3);
+                currentSimulation.Simulation.Repulsion = repulsion;
+                sRepulsionParagraph.Text = "Physics Rep: " + repulsion;
             };
-            options.panel.AddChild(sRepulsion);
+            options.panel.AddChild(sliderRepulsion);
 
-            Slider sStiffnes = new Slider(0, 1000);
-            sStiffnes.OnMouseLeave += _ => sStiffnes.IsFocused = false;
-            sStiffnes.Value = (int)(currentSimulation.Simulation.Damping * 1000);
-            Paragraph sStiffnesParagraph = new Paragraph("Physics Stiffnes: " + ((float)sStiffnes.Value / 100));
-            options.panel.AddChild(sStiffnesParagraph);
-            sStiffnes.OnValueChange += _ =>
+            Slider sliderGravity = new Slider(0, 500);
+            float gravity = currentSimulation.Simulation.Gravity;
+            Paragraph sGravityParagraph = new Paragraph("Physics Grav: " + gravity);
+            options.panel.AddChild(sGravityParagraph);
+            sliderGravity.Value = (int)((Math.Log10(gravity) + 3) * 100);
+            sliderGravity.OnValueChange += _ =>
             {
-                currentSimulation.Simulation.Repulsion = sStiffnes.Value / 100;
-                sStiffnesParagraph.Text = "Physics Stiffnes: " + ((float)sStiffnes.Value / 100);
+                float gravity = (float)Math.Pow(10f, ((float)sliderGravity.Value / 100) - 3);
+                currentSimulation.Simulation.Gravity = gravity;
+                sGravityParagraph.Text = "Physics Grav: " + gravity;
             };
-            options.panel.AddChild(sStiffnes);
+            options.panel.AddChild(sliderGravity);
+
+            Slider sliderStiffness = new Slider(0, 500);
+            float stiffness = currentSimulation.Simulation.Stiffness;
+            Paragraph sStiffParagraph = new Paragraph("Physics Stiff: " + stiffness);
+            options.panel.AddChild(sStiffParagraph);
+            sliderStiffness.Value = (int)((Math.Log10(stiffness) + 3) * 100);
+            sliderStiffness.OnValueChange += _ =>
+            {
+                float stiffness = (float)Math.Pow(10f, ((float)sliderStiffness.Value / 100) - 3);
+                currentSimulation.Simulation.Stiffness = stiffness;
+                sStiffParagraph.Text = "Physics Stiff: " + stiffness;
+            };
+            options.panel.AddChild(sliderStiffness);
 
 
 
@@ -466,10 +472,15 @@ namespace NodeMonog
 
                         
                         if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position)) {
+                        if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position) && (updateTask?.IsCompleted ?? true)) {
                             //The tickbutton is pressed
-                            engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
-                            history.Add(new GameState(masterGraph));
-                            UpdateHud();
+                            Action action = ()  =>
+                            {
+                                engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
+                                history.Add(new GameState(masterGraph));
+                                UpdateHud();
+                            };
+                            updateTask = Task.Run(action);
                         }
                     }
 
@@ -676,6 +687,7 @@ namespace NodeMonog
 
             //for (int i = 0; i < visitedGraphs[historyIndex].Item1.Graph.Nodes.Count; i++)
             foreach (var currentDrawNode in currentSimulation.DrawNodes)
+            foreach (DrawNode currentDrawNode in currentSimulation.DrawNodes)
             {
                 //Node currentNode = visitedGraphs[historyIndex].Item1.Graph.Nodes[i];
                 //Vector2 currentNodePosition = currentSimulation.DrawNodes.Find(x => x.node == currentNode).Position;
@@ -739,7 +751,6 @@ namespace NodeMonog
                             effects: SpriteEffects.None,
                             layerDepth: depth);
                     }
-
                 }
 
 
@@ -761,6 +772,18 @@ namespace NodeMonog
                     SpriteEffects.None,
                     depth / 2 + 0.01f);
 
+                spriteBatch.Draw(circle,
+                   destinationRectangle: new Rectangle(CameraTransform(currentNodePosition - new Vector2(6)).ToPoint(),
+                                                       new Point(
+                                                           (int)(circleDiameter * zoomlevel + CameraTransform(12)),
+                                                           (int)(circleDiameter * zoomlevel + CameraTransform(12)))),
+                   sourceRectangle: null,
+                   color: Color.LightGray,
+                   0,
+                   Vector2.Zero,
+                   SpriteEffects.None,
+                   depth / 2 + 0.02f);
+
                 //Draws node text
                 if(zoomlevel > 0.35f)
                 {
@@ -768,11 +791,11 @@ namespace NodeMonog
                     if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
                     spriteBatch.DrawString(arial,
                         currentNode.Name,
-                        CameraTransform(currentNodePosition),
+                        CameraTransform(currentNodePosition + new Vector2(32 * (float)zoomlevel - (currentNode.Name.Length) * 8, 16 * (float)zoomlevel)),
                         fadeColour,
                         0,
                         Vector2.Zero,
-                        (float)(1 / zoomlevel / 32 + 1.2f),
+                        (float)(1 / zoomlevel / 32 + 1f),
                         SpriteEffects.None,
                         0.1f);
                 }
