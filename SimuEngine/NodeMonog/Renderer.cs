@@ -472,10 +472,15 @@ namespace NodeMonog
 
                         
                         if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position)) {
+                        if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position) && (updateTask?.IsCompleted ?? true)) {
                             //The tickbutton is pressed
-                            engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
-                            history.Add(new GameState(masterGraph));
-                            UpdateHud();
+                            Action action = ()  =>
+                            {
+                                engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
+                                history.Add(new GameState(masterGraph));
+                                UpdateHud();
+                            };
+                            updateTask = Task.Run(action);
                         }
                     }
 
@@ -682,6 +687,7 @@ namespace NodeMonog
 
             //for (int i = 0; i < visitedGraphs[historyIndex].Item1.Graph.Nodes.Count; i++)
             foreach (var currentDrawNode in currentSimulation.DrawNodes)
+            foreach (DrawNode currentDrawNode in currentSimulation.DrawNodes)
             {
                 //Node currentNode = visitedGraphs[historyIndex].Item1.Graph.Nodes[i];
                 //Vector2 currentNodePosition = currentSimulation.DrawNodes.Find(x => x.node == currentNode).Position;
@@ -740,7 +746,6 @@ namespace NodeMonog
                             effects: SpriteEffects.None,
                             layerDepth: depth);
                     }
-
                 }
 
 
@@ -762,6 +767,18 @@ namespace NodeMonog
                     SpriteEffects.None,
                     depth / 2 + 0.01f);
 
+                spriteBatch.Draw(circle,
+                   destinationRectangle: new Rectangle(CameraTransform(currentNodePosition - new Vector2(6)).ToPoint(),
+                                                       new Point(
+                                                           (int)(circleDiameter * zoomlevel + CameraTransform(12)),
+                                                           (int)(circleDiameter * zoomlevel + CameraTransform(12)))),
+                   sourceRectangle: null,
+                   color: Color.LightGray,
+                   0,
+                   Vector2.Zero,
+                   SpriteEffects.None,
+                   depth / 2 + 0.02f);
+
                 //Draws node text
                 if(zoomlevel > 0.35f)
                 {
@@ -769,11 +786,11 @@ namespace NodeMonog
                     if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
                     spriteBatch.DrawString(arial,
                         currentNode.Name,
-                        CameraTransform(currentNodePosition),
+                        CameraTransform(currentNodePosition + new Vector2(32 * (float)zoomlevel - (currentNode.Name.Length) * 8, 16 * (float)zoomlevel)),
                         fadeColour,
                         0,
                         Vector2.Zero,
-                        (float)(1 / zoomlevel / 32 + 1.2f),
+                        (float)(1 / zoomlevel / 32 + 1f),
                         SpriteEffects.None,
                         0.1f) ;
                 }
