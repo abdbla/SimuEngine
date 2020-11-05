@@ -32,6 +32,8 @@ namespace NodeMonog {
         public Graph Graph;
         Node selectedNode;
 
+        SimulationTaskState savedState = null;
+
         /// <summary>
         /// The currently selected node
         /// 
@@ -96,7 +98,7 @@ namespace NodeMonog {
 
         public uint Degrees { get; private set; }
 
-        public TaskStatus SimulationStatus { get; private set; }
+        public SimulationTaskStatus SimulationStatus { get; private set; }
 
         public PhysicsWrapper(Graph graph, Node selectedNode, uint degrees, SimulationParams @params) {
             this.selectedNode = selectedNode;
@@ -171,9 +173,21 @@ namespace NodeMonog {
         public void StartSimulation() {
             try {
                 simulationTask.Start();
-            } catch (InvalidOperationException) {
-                ResetAndRestart();
-            }
+            } catch (InvalidOperationException) {}
+        }
+
+        /// <summary>
+        /// Doing this while the simulation is running is a bad idea (I think)
+        /// </summary>
+        public void ResetSimulationState() {
+            lock (Simulation) { Simulation.Reset(); }
+        }
+
+        public void RestartSimulationTask() {
+            Cancel();
+            (simulationTask, SimulationStatus) = CreateSimulationTask();
+            savedState = null;
+            StartSimulation();
         }
 
         public float GetTotalEnergy() {
@@ -182,23 +196,17 @@ namespace NodeMonog {
             }
         }
 
-        public void ResetSimulation() {
-            
-            lock (Simulation) { Simulation.Reset(); }
-        }
-
         public void Restart() {
-            Cancel();
-            (simulationTask, SimulationStatus) = CreateSimulationTask();
-            StartSimulation();
+            RestartSimulationTask();
         }
 
         public void ResetAndRestart() {
             Cancel();
 
+            ResetSimulationState();
+
             (simulationTask, SimulationStatus) = CreateSimulationTask();
 
-            ResetSimulation();
             StartSimulation();
         }
 
@@ -206,16 +214,22 @@ namespace NodeMonog {
             tokenSource.Cancel();
             try {
                 simulationTask.Wait();
-            } catch (AggregateException e) {
-                Console.WriteLine("cancelled I think, ", e.ToString());
+            } catch (OperationCanceledException) {
+                // we cancelled successfully
+            } catch (AggregateException e) when (simulationTask.Exception == null) {
+                Console.WriteLine("Caught aggregate exception: ", e);
             } finally {
                 simulationTask.Dispose();
                 tokenSource.Dispose();
             }
             simulationTask.Dispose();
         }
+
+        public void Resume() {
+
+        }
  
-        public void FullReset() {
+        public void CompleteReset() {
             Cancel();
 
             (simulationTask, SimulationStatus) = CreateSimulationTask();
@@ -228,12 +242,16 @@ namespace NodeMonog {
 
         public void AdvanceOnce() {
             if (SimulationStatus.Status == Status.Running) return;
+
+            savedState ??= new SimulationTaskState((float)initialStep);
             
             lock (Simulation) {
-                Simulation.Advance(singleTimeStep);
+                Simulation.Advance(savedState.TimeStep);
             }
 
-            singleTimeStep = (float)timeStepFunction(singleIter++, singleTimeStep, Simulation.GetTotalEnergy());
+            savedState.TimeStep = (float)timeStepFunction(savedState.IterationCount++,
+                                                          savedState.TimeStep,
+                                                          Simulation.GetTotalEnergy());
         }
 
         public DrawNode LookupDrawNode(Node node) {
@@ -241,18 +259,27 @@ namespace NodeMonog {
             return success ? ret : null;
         }
 
-        (Task, TaskStatus) CreateSimulationTask() {
-            var status = new TaskStatus(Status.Idle);
+        (Task, SimulationTaskStatus) CreateSimulationTask() {
+            var status = new SimulationTaskStatus(Status.Idle);
             tokenSource = new CancellationTokenSource();
             var ct = tokenSource.Token;
 
             var task = new Task(() => {
                 float timeStep = SimulationStatus == null ? (float)initialStep : 0.0001f;
                 status.Status = Status.Running;
-                for (int i = 0; i < 1000000; i++) {
+
+                // if it's null, make a new one
+                savedState ??= new SimulationTaskState((float)initialStep);
+                int i = savedState.IterationCount;
+
+                for (; i < 1000000; i++) {
                     if (ct.IsCancellationRequested) {
                         status.Status = Status.Cancelled;
-                        return;
+                        lock (savedState) {
+                            savedState.IterationCount = i;
+                            savedState.TimeStep = timeStep;
+                        }
+                        throw new OperationCanceledException();
                     }
 
                     float total = Simulation.GetTotalEnergy();
@@ -302,7 +329,7 @@ namespace NodeMonog {
         }
     }
 
-    class TaskStatus {
+    class SimulationTaskStatus {
         private StatusWrapper status;
         public Status Status {
             get {
@@ -342,9 +369,24 @@ namespace NodeMonog {
 
         private List<(int, float)> iterations;
 
-        public TaskStatus(Status status) {
+        public SimulationTaskStatus(Status status) {
             this.status = new StatusWrapper(status);
             iterations = new List<(int, float)>();
+        }
+    }
+
+    class SimulationTaskState {
+        public int IterationCount;
+        public float TimeStep;
+
+        public SimulationTaskState(float initialStep) {
+            IterationCount = 0;
+            TimeStep = initialStep;
+        }
+
+        public SimulationTaskState(float currentTimeStep, int currentIterationCount) {
+            IterationCount = currentIterationCount;
+            TimeStep = currentTimeStep;
         }
     }
 }
