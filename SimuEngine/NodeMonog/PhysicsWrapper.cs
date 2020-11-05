@@ -138,8 +138,6 @@ namespace NodeMonog {
             Degrees = degrees;
             
             (simulationTask, SimulationStatus) = CreateSimulationTask();
-
-            singleTimeStep = (float)initialStep;
         }
 
         public void Update(Node newSelected) {
@@ -164,8 +162,6 @@ namespace NodeMonog {
             //ResetAndRestart();
 
             Restart();
-
-            singleTimeStep = (float)initialStep;
 
             drawNodes = null;
         }
@@ -216,7 +212,7 @@ namespace NodeMonog {
                 simulationTask.Wait();
             } catch (OperationCanceledException) {
                 // we cancelled successfully
-            } catch (AggregateException e) when (simulationTask.Exception == null) {
+            } catch (AggregateException e) when (e.InnerException is OperationCanceledException) {
                 Console.WriteLine("Caught aggregate exception: ", e);
             } finally {
                 simulationTask.Dispose();
@@ -236,9 +232,6 @@ namespace NodeMonog {
 
             Simulation.ResetFull();
         }
-
-        float singleTimeStep;
-        int singleIter;
 
         public void AdvanceOnce() {
             if (SimulationStatus.Status == Status.Running) return;
@@ -279,7 +272,7 @@ namespace NodeMonog {
                             savedState.IterationCount = i;
                             savedState.TimeStep = timeStep;
                         }
-                        throw new OperationCanceledException();
+                        ct.ThrowIfCancellationRequested();
                     }
 
                     float total = Simulation.GetTotalEnergy();
@@ -291,7 +284,7 @@ namespace NodeMonog {
                         }
 
                         var newTotal = Simulation.GetTotalEnergy();
-                        if (newTotal / total > 1.0 && total != 0) {
+                        if (newTotal / total > 1.5 && total != 0) {
                             Console.WriteLine($"Warning: newTotal / total = {newTotal / total}");
                             if (newTotal / total > 100.0) {
                                 Console.WriteLine($"Severe warning: newTotal / total = {newTotal / total}, stopping.");
