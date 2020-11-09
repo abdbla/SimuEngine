@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -9,6 +10,7 @@ namespace Core {
     /// <summary>
     /// A Graph class implemented using a list of Nodes and an adjacency matrix
     /// </summary>
+    [Serializable]
     public class Graph {
         int connId = 0;
 

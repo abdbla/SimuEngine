@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Dynamic;
+using System.Runtime.Serialization;
 
 namespace Core {
     [DebuggerDisplay("Name: {Name}")]
+    [Serializable]
     public abstract class Node {
         public static Random rng = new Random(); 
         //Internal fields, only meant to be accessed by internal functions, such as Events and the PlayerObject.

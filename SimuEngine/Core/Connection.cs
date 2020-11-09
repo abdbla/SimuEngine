@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Runtime.Serialization;
 
 namespace Core {
+    [Serializable]
     public abstract class Connection {
         //Internal fields, see Node
         public List<string> statuses;
