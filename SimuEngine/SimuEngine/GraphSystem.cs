@@ -3,8 +3,9 @@ using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
+
 
 using Core;
 
@@ -16,6 +17,10 @@ namespace SimuEngine {
             graph = new Graph();
         }
 
+        public GraphSystem(Graph graph) {
+            this.graph = graph;
+        }
+
         public void Create<T>(NodeCreationInfo info) where T : Node, new() {
             T node = new T();
             graph.Add(node);
@@ -24,15 +29,15 @@ namespace SimuEngine {
 
         public void Serialize(string fileName) {
             using (FileStream fs = File.Create(fileName)) {
-                var json = JsonSerializer.Serialize(this);
-                File.WriteAllText(fileName, json);
+                BinaryFormatter binaryFormatter = new BinaryFormatter();
+                binaryFormatter.Serialize(fs, graph);
             }
         }
 
         public static GraphSystem Deserialize(string fileName) {
             using (FileStream fs = File.OpenRead(fileName)) {
-                var json = File.ReadAllText(fileName);
-                return JsonSerializer.Deserialize<GraphSystem>(json);
+                BinaryFormatter binaryFormatter = new BinaryFormatter();
+                return new GraphSystem((Graph)binaryFormatter.Deserialize(fs));
             }
         }
     }
