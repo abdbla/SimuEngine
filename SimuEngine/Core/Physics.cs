@@ -288,8 +288,6 @@ namespace Core.Physics {
                 var x = MapInterval(rng.NextDouble(), 0, 1, bottomleft.X, topright.X);
                 var y = MapInterval(rng.NextDouble(), 0, 1, bottomleft.Y, topright.Y);
 
-                Console.WriteLine($"x: {x}, y: {y}");
-
                 var pNode = new PhysicsNode(n, new Vector2((float)x, (float)y));
 
                 conns.Add((pNode, InnerGraph.GetOutgoingConnections(n)));

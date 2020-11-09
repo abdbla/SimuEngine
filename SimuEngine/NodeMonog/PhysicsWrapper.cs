@@ -108,23 +108,23 @@ namespace NodeMonog {
                 biGraph.Add(n);
             }
 
-            foreach (Node n1 in graph.Nodes) {
-                foreach (Node n2 in graph.Nodes) {
-                    if (n1 != n2) {
-                        if (graph.TryGetDirectedConnection(n1, n2, out var n1_n2)) {
-                            if (graph.TryGetDirectedConnection(n2, n1, out var n2_n1)) {
-                                biGraph.AddConnection(n1, n2, n1_n2);
-                                biGraph.AddConnection(n2, n1, n2_n1);
-                            } else {
-                                biGraph.AddConnection(n1, n2, n1_n2);
-                                biGraph.AddConnection(n2, n1, new DuplicatedConnection(n1_n2));
-                            }
-                        }
-                    }
-                }
-            }
+            // foreach (Node n1 in graph.Nodes) {
+            //     foreach (Node n2 in graph.Nodes) {
+            //         if (n1 != n2) {
+            //             if (graph.TryGetDirectedConnection(n1, n2, out var n1_n2)) {
+            //                 if (graph.TryGetDirectedConnection(n2, n1, out var n2_n1)) {
+            //                     biGraph.AddConnection(n1, n2, n1_n2);
+            //                     biGraph.AddConnection(n2, n1, n2_n1);
+            //                 } else {
+            //                     biGraph.AddConnection(n1, n2, n1_n2);
+            //                     biGraph.AddConnection(n2, n1, new DuplicatedConnection(n1_n2));
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
 
-            this.Graph = biGraph;
+            this.Graph = graph;
 
             neighbors = this.Graph.GetNeighborsDegrees(selectedNode, degrees - 1).Take(MAXNODES).ToList();
             Simulation = new Simulation(this.Graph, @params, neighbors
