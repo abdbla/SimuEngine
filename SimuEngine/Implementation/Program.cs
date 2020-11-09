@@ -4,11 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using System.Runtime.Serialization;
 
 using Core;
 using SimuEngine;
 using NodeMonog;
 using System.Diagnostics;
+using System.IO;
 
 namespace Implementation
 {
@@ -20,101 +22,43 @@ namespace Implementation
 
         static void Main() {
             Program p = new Program();
+
+
             //TODO: Create implementation running code
             p.InitializeEngine();
-            List<Person> more = new List<Person>();
-            for (int i = 0; i < 30; i++) {
-                p.engine.system.graph.groups.Add(new PersonGroup());
-            }
-            for (int i = 0; i < 1000; i++) {
-                GraphSystem s = p.engine.system;
-                s.Create<Person>(NodeCreationInfo.SystemStart);
-                Node n = p.engine.system.graph.Nodes[i];
-                more.Add((Person)n);
-                n.Name = i.ToString();
-                n.groups.Add(s.graph.groups[i % 30]);
-                n.groups[0].members.Add(n);
-            }
 
-            Dictionary<Person, int> totalConns = new Dictionary<Person, int>();
-            Dictionary<Person, int> curConns = new Dictionary<Person, int>();
-            List<Person> remaining = new List<Person>();
-            List<bool> inters = new List<bool>();
-            remaining.AddRange(more);
-            foreach (Node node in more) { inters.Add(false); }
+            const string TEST_FILE_NAME = "testsave";
 
-            var rng = Node.rng;
-            for (int i = 0; i < more.Count; i++) {
-                totalConns[more[i]] = rng.Next(2, 7);
-                curConns[more[i]] = 0;
-            }
-
-            while (remaining.Count > 1) {
-                bool inter = false;
-                if (rng.NextDouble() <= 0.15) inter = true;
-                var x1 = rng.Next(remaining.Count);
-                if (inters[x1]) inter = false;
-                var x2 = rng.Next(remaining[x1].groups[0].members.Count);
-                if (inter) { x2 = rng.Next(remaining.Count); }
-                if (!inter && (remaining[x1] == remaining[x1].groups[0].members[x2])
-                    || (x1 == x2 && inter)) {
-                    continue;
-                }
-                var node1 = remaining[x1];
-                Person node2;
-                if (inter) {
-                    node2 = remaining[x2];
-                } else {
-                    node2 = (Person)remaining[x1].groups[0].members[x2];
-                }
-                string ctype = inter ? "Interconnection" : node2.groups[0].statuses[0];
-                p.engine.system.graph.AddConnection(node1, node2, new PersonConnection(ctype));
-                p.engine.system.graph.AddConnection(node2, node1, new PersonConnection(ctype));
-                if (inter) inters[x1] = true;
-                curConns[node1] += 1;
-                curConns[node2] += 1;
-                if (curConns[node1] == totalConns[node1]) {
-                    if (x1 < x2) {
-                        x2 -= 1;
-                    }
-                    remaining.RemoveAt(x1);
-                    inters.RemoveAt(x1);
-                }
-                if (curConns[node2] == totalConns[node2]) {
-                    int b = remaining.FindIndex(n => n == node2);
-                    remaining.RemoveAt(b);
-                    inters.RemoveAt(b);
+            if (File.Exists(TEST_FILE_NAME)) {
+                Console.WriteLine("Found save file");
+                try {
+                    DateTime now = DateTime.Now;
+                    p.engine.system = GraphSystem.Deserialize(TEST_FILE_NAME);
+                    TimeSpan elapsed = DateTime.Now - now;
+                    Console.WriteLine("Deserialized from save file");
+                    Console.WriteLine($"Elapsed time: {elapsed.TotalMinutes} minutes");
+                } catch (OutOfMemoryException) {
+                    Console.WriteLine("Ran out of memory while deserializing");
+                    throw new SystemException("Ran out of memory while deserializing");
+                } catch (SerializationException ex) {
+                    Console.WriteLine($"Error while deserializing ({ex}), deleting file.");
+                    File.Delete(TEST_FILE_NAME);
+                } finally {
+                    // File.Delete(TEST_FILE_NAME);
                 }
             }
-
-            Graph tmpsubgraph = new Graph();
-            { 
-            Person p1 = new Person();
-            p1.Name = "Billy";
-            tmpsubgraph.Add(p1);
-            Person p2 = new Person();
-            p2.Name = "Charlie";
-            tmpsubgraph.Add(p2);
-            tmpsubgraph.AddConnection(p1, p2, new PersonConnection("Family"));
-            tmpsubgraph.AddConnection(p2, p1, new PersonConnection("Family"));
-
-            p.engine.system.graph.FindNode(x => x.Name == "0").SubGraph = tmpsubgraph;
-
-            }
-
-            {
-                Graph tmptmpsubgraph = new Graph();
-                Person p1 = new Person();
-                p1.Name = "Charlie deep";
-                tmptmpsubgraph.Add(p1);
-                Person p2 = new Person();
-                p2.Name = "ALGNAIUSHDU";
-                tmptmpsubgraph.Add(p2);
-                tmptmpsubgraph.AddConnection(p1, p2, new PersonConnection("Family"));
-                tmptmpsubgraph.AddConnection(p2, p1, new PersonConnection("Family"));
-
-                tmpsubgraph.Nodes[0].SubGraph = tmptmpsubgraph;
-
+            if (p.engine.system.graph.Count.Nodes == 0) {
+                Console.WriteLine("No saved system found, recreating...");
+                p.InitializeGraphSystem();
+                Console.WriteLine("Finished initialization, serializing...");
+                try {
+                    p.engine.system.Serialize(TEST_FILE_NAME);
+                    Console.WriteLine("Graph initialization complete");
+                } catch (IOException) {
+                    Console.WriteLine("IO error while serializing, won't keep going");
+                } catch (OutOfMemoryException) {
+                    Console.WriteLine("Ran out of memory while serializing, no serialisation");
+                }
             }
 
             // p.engine.system.graph = new Graph();
@@ -156,54 +100,148 @@ namespace Implementation
             }
         }
 
+        private void InitializeGraphSystem() {
+            const int NUM_GROUPS = 100000;
+            const int NUM_PEOPLE = 500000;
+
+            List<Person> more = new List<Person>();
+            for (int i = 0; i < NUM_GROUPS; i++) {
+                engine.system.graph.groups.Add(new PersonGroup());
+            }
+            for (int i = 0; i < NUM_PEOPLE; i++) {
+                GraphSystem s = engine.system;
+                s.Create<Person>(NodeCreationInfo.SystemStart);
+                Node n = engine.system.graph.Nodes[i];
+                more.Add((Person)n);
+                n.Name = i.ToString();
+                n.groups.Add(s.graph.groups[i % NUM_GROUPS]);
+                n.groups[0].members.Add(n);
+            }
+
+            Dictionary<Person, int> totalConns = new Dictionary<Person, int>();
+            Dictionary<Person, int> curConns = new Dictionary<Person, int>();
+            List<Person> remaining = new List<Person>();
+            List<bool> inters = new List<bool>();
+            remaining.AddRange(more);
+            foreach (Node node in more) { inters.Add(false); }
+
+            var rng = Node.rng;
+            for (int i = 0; i < more.Count; i++) {
+                totalConns[more[i]] = rng.Next(2, 7);
+                curConns[more[i]] = 0;
+            }
+
+            while (remaining.Count > 1) {
+                if (remaining.Count % 100000 == 0 && remaining.Count < NUM_PEOPLE) {
+                    Console.WriteLine($"Remaining: {remaining.Count}");
+                }
+
+                bool inter = false;
+                if (rng.NextDouble() <= 0.15) inter = true;
+                var x1 = rng.Next(remaining.Count);
+                if (inters[x1]) inter = false;
+                var x2 = rng.Next(remaining[x1].groups[0].members.Count);
+                if (inter) { x2 = rng.Next(remaining.Count); }
+                if (!inter && (remaining[x1] == remaining[x1].groups[0].members[x2])
+                    || (x1 == x2 && inter)) {
+                    continue;
+                }
+                var node1 = remaining[x1];
+                Person node2;
+                if (inter) {
+                    node2 = remaining[x2];
+                } else {
+                    node2 = (Person)remaining[x1].groups[0].members[x2];
+                }
+                string ctype = inter ? "Interconnection" : node2.groups[0].statuses[0];
+                engine.system.graph.AddConnection(node1, node2, new PersonConnection(ctype));
+                engine.system.graph.AddConnection(node2, node1, new PersonConnection(ctype));
+                if (inter) inters[x1] = true;
+                curConns[node1] += 1;
+                curConns[node2] += 1;
+                if (curConns[node1] == totalConns[node1]) {
+                    if (x1 < x2) {
+                        x2 -= 1;
+                    }
+                    remaining.RemoveAt(x1);
+                    inters.RemoveAt(x1);
+                }
+                if (curConns[node2] == totalConns[node2]) {
+                    int b = remaining.FindIndex(n => n == node2);
+                    remaining.RemoveAt(b);
+                    inters.RemoveAt(b);
+                }
+            }
+
+            Graph tmpsubgraph = new Graph();
+            {
+                Person p1 = new Person();
+                p1.Name = "Billy";
+                tmpsubgraph.Add(p1);
+                Person p2 = new Person();
+                p2.Name = "Charlie";
+                tmpsubgraph.Add(p2);
+                tmpsubgraph.AddConnection(p1, p2, new PersonConnection("Family"));
+                tmpsubgraph.AddConnection(p2, p1, new PersonConnection("Family"));
+
+                engine.system.graph.FindNode(x => x.Name == "0").SubGraph = tmpsubgraph;
+
+            }
+
+            {
+                Graph tmptmpsubgraph = new Graph();
+                Person p1 = new Person();
+                p1.Name = "Charlie deep";
+                tmptmpsubgraph.Add(p1);
+                Person p2 = new Person();
+                p2.Name = "ALGNAIUSHDU";
+                tmptmpsubgraph.Add(p2);
+                tmptmpsubgraph.AddConnection(p1, p2, new PersonConnection("Family"));
+                tmptmpsubgraph.AddConnection(p2, p1, new PersonConnection("Family"));
+
+                tmpsubgraph.Nodes[0].SubGraph = tmptmpsubgraph;
+
+            }
+        }
+
         private void InitializeEngine() {
-            actions.Add(("Make healthy", new Event()));
-            actions[0].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
-                return 1;
-            });
-            actions[0].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
-                List<string> tStatus = engine.player.selectedNode.statuses;
-                tStatus.Add("Healthy");
-                tStatus.Remove("Infected");
-                tStatus.Remove("Dead");
-                tStatus.Remove("Recovered");
-            });
+            actions.Add(("make healthy", new ActionEvent(
+                delegate (Node n, Graph l, Graph w) {
+                    List<string> tStatus = engine.player.selectedNode.statuses;
+                    tStatus.Add("Healthy");
+                    tStatus.Remove("Infected");
+                    tStatus.Remove("Dead");
+                    tStatus.Remove("Recovered");
+                }
+            )));
 
-            actions.Add(("Make infected", new Event()));
-            actions[1].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
-                return 1;
-            });
-            actions[1].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
-                List<string> tStatus = engine.player.selectedNode.statuses;
-                tStatus.Remove("Healthy");
-                tStatus.Add("Infected");
-                tStatus.Remove("Dead");
-                tStatus.Remove("Recovered");
-            });
-            actions.Add(("Make dead", new Event()));
-            actions[2].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
-                return 1;
-            });
+            actions.Add(("Make infected", new ActionEvent(
+                delegate (Node n, Graph l, Graph w) {
+                    List<string> tStatus = engine.player.selectedNode.statuses;
+                    tStatus.Remove("Healthy");
+                    tStatus.Add("Infected");
+                    tStatus.Remove("Dead");
+                    tStatus.Remove("Recovered");
+                }
+            )));
 
-            actions[2].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
-                List<string> tStatus = engine.player.selectedNode.statuses;
-                tStatus.Remove("Healthy");
-                tStatus.Remove("Infected");
-                tStatus.Add("Dead");
-                tStatus.Remove("Recovered");
-            });
+            actions.Add(("Make dead", new ActionEvent(
+                delegate (Node n, Graph l, Graph w) {
+                    List<string> tStatus = engine.player.selectedNode.statuses;
+                    tStatus.Remove("Healthy");
+                    tStatus.Remove("Infected");
+                    tStatus.Add("Dead");
+                    tStatus.Remove("Recovered");
+                }
+            )));
 
-            actions.Add(("Make recovered", new Event()));
-            actions[3].Item2.ReqPossible.Add(delegate (Node n, Graph l, Graph w) {
-                return 1;
-            });
-            actions[3].Item2.Outcome.Add(delegate (Node n, Graph l, Graph w) {
+            actions.Add(("Make recovered", new ActionEvent(delegate (Node n, Graph l, Graph w) {
                 List<string> tStatus = engine.player.selectedNode.statuses;
                 tStatus.Remove("Healthy");
                 tStatus.Remove("Infected");
                 tStatus.Remove("Dead");
                 tStatus.Add("Recovered");
-            });
+            })));
 
             List<Event> personEvents = Person.InitializeEvents();
             eventList.AddEventList(typeof(Person), personEvents);
@@ -212,6 +250,7 @@ namespace Implementation
     }
 
     [DebuggerDisplay("Name: {this.Name}")]
+    [Serializable]
     class Person : Node
     {
         static int id = 0;
@@ -290,6 +329,7 @@ namespace Implementation
     }
 
     [DebuggerDisplay("Creation ID: {creationID}, Graph name: {graphName}")]
+    [Serializable]
     class PersonConnection : Connection
     {
         static int id = 0;
@@ -327,6 +367,7 @@ namespace Implementation
         }
     }
 
+    [Serializable]
     class PersonGroup : Group
     {
         static int id = 0;
