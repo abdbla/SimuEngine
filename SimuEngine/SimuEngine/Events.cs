@@ -54,13 +54,13 @@ namespace SimuEngine {
         public Event(Func<Node, Graph, Graph, double> reqPossible,
                      Func<Node, Graph, Graph, bool> reqGuaranteed,
                      Action<Node, Graph, Graph> outcome) {
-            ReqPossible.Add(reqPossible);
-            ReqGuaranteed.Add(reqGuaranteed);
+            if (reqPossible != null) ReqPossible.Add(reqPossible);
+            if (reqGuaranteed != null) ReqGuaranteed.Add(reqGuaranteed);
             Outcome.Add(outcome);
         }
     }
 
-    public class ActionEvent : Event {
-        public ActionEvent(Action<Node, Graph, Graph> outcome) : base((n, l, w) => 1, (n, l, w) => true, outcome) { }
+    public class GuaranteedEvent : Event {
+        public GuaranteedEvent(Action<Node, Graph, Graph> outcome) : base((n, l, w) => 1, (n, l, w) => true, outcome) { }
     }
 }

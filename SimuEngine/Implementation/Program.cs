@@ -205,7 +205,7 @@ namespace Implementation
         }
 
         private void InitializeEngine() {
-            actions.Add(("make healthy", new ActionEvent(
+            actions.Add(("make healthy", new GuaranteedEvent(
                 delegate (Node n, Graph l, Graph w) {
                     List<string> tStatus = engine.player.selectedNode.statuses;
                     tStatus.Add("Healthy");
@@ -215,7 +215,7 @@ namespace Implementation
                 }
             )));
 
-            actions.Add(("Make infected", new ActionEvent(
+            actions.Add(("Make infected", new GuaranteedEvent(
                 delegate (Node n, Graph l, Graph w) {
                     List<string> tStatus = engine.player.selectedNode.statuses;
                     tStatus.Remove("Healthy");
@@ -225,7 +225,7 @@ namespace Implementation
                 }
             )));
 
-            actions.Add(("Make dead", new ActionEvent(
+            actions.Add(("Make dead", new GuaranteedEvent(
                 delegate (Node n, Graph l, Graph w) {
                     List<string> tStatus = engine.player.selectedNode.statuses;
                     tStatus.Remove("Healthy");
@@ -235,7 +235,7 @@ namespace Implementation
                 }
             )));
 
-            actions.Add(("Make recovered", new ActionEvent(delegate (Node n, Graph l, Graph w) {
+            actions.Add(("Make recovered", new GuaranteedEvent(delegate (Node n, Graph l, Graph w) {
                 List<string> tStatus = engine.player.selectedNode.statuses;
                 tStatus.Remove("Healthy");
                 tStatus.Remove("Infected");
