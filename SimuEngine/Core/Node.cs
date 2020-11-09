@@ -39,7 +39,6 @@ namespace Core {
         /// </summary>
         /// <param name="info">The enum for whether it should create an empty node or pre-generate as part of the system</param>
         public Node() {
-            SubGraph = new Graph();
             statuses = new List<string>();
             traits = new Dictionary<string, int>();
             groups = new List<Group>();
