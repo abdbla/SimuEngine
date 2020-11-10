@@ -217,7 +217,7 @@ namespace NodeMonog
 
             actions.panel.AddChild(eventList);
             
-            if (selectedNode.node.SubGraph.Nodes.Count != 0) { 
+            if (selectedNode.node.SubGraph == null || selectedNode.node.SubGraph.Nodes.Count != 0) { 
             Button subGraphButton = new Button("Enter Subgraph");
                 subGraphButton.OnClick += x =>
                 {
