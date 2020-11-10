@@ -177,17 +177,19 @@ namespace NodeMonog
             resizeMenu(new object(), new EventArgs());
 
 
+
             UpdateHud();
             outsidePanel.AddChild(tabs);
 
             
-
             
             UserInterface.Active.AddEntity(outsidePanel);
             UserInterface.Active.ShowCursor = false;
 
 
             Window.ClientSizeChanged += resizeMenu;
+
+
 
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
             currentSimulation.StartSimulation();
@@ -220,20 +222,45 @@ namespace NodeMonog
                 subGraphButton.OnClick += x =>
                 {
                     GoIntoAGraph(selectedNode.node);
-
                 };
                 actions.panel.AddChild(subGraphButton);
             }
 
 
             group.panel.ClearChildren();
-            group.panel.AddChild(new Paragraph("Not implemented yet"));
-            stats.panel.ClearChildren();
-
-
+            SelectList fittingPeople = new SelectList();
+            fittingPeople.Size = new Vector2(fittingPeople.Size.X, Window.ClientBounds.Height - 200);
+            fittingPeople.Items = currentGraph.Nodes.Select(x => x.Name).ToArray();
+            DropDown drop = new DropDown(new Vector2(0, 280));
+            drop.AddItem("All");
+            foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
+            {
+                drop.AddItem(entry.Key);
+            }
+            drop.OnValueChange += _ => {
+                if (drop.SelectedValue == "All")
+                {
+                    fittingPeople.Items = currentGraph.Nodes.Select(x => x.Name).ToArray();
+                }
+                else
+                {
+                    fittingPeople.Items = currentGraph.FindAllNodes(x => x.statuses.Contains(drop.SelectedValue)).Select(x => x.Name).ToArray();
+                }
+            };
+            fittingPeople.OnValueChange += _ =>
+            {
+                    currentSimulation.SelectedNode = currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue);
+                
+                //catch (Exception)
+                //{
+                //    selectedNode = new DrawNode(currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue), currentSimulation.Simulation);
+                //}
+                
+            };
+            group.panel.AddChild(drop);
+            group.panel.AddChild(fittingPeople);
 
             person.panel.ClearChildren();
-
 
             person.panel.AddChild(new Header(engine.player.selectedNode.Name));
             SelectList connectionList = new SelectList();
@@ -371,7 +398,6 @@ namespace NodeMonog
             options.panel.AddChild(sliderStiffness);
 
 
-
             stats.panel.ClearChildren();
             stats.panel.AddChild(new Paragraph($"Ticks: {history.Count}"));
             foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
@@ -392,7 +418,7 @@ namespace NodeMonog
         {
             outsidePanel.Size = new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height);
             outsidePanel.Anchor = Anchor.TopRight;
-            
+            UpdateHud();
         }
 
         public void testDelegate(object sender, EventArgs e)
@@ -469,7 +495,6 @@ namespace NodeMonog
                                 UpdateHud();
                                 break;
                             }
-
                         }
 
                         

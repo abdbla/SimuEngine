@@ -251,8 +251,8 @@ namespace Core.Physics {
 
         public void Reset() {
             foreach (PhysicsNode pn in Graph.Nodes.Cast<PhysicsNode>()) {
-                pn.Point.Position.X = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.X - 5, Origin.X + 5);
-                pn.Point.Position.Y = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.Y - 5, Origin.Y + 5);
+                pn.Point.Position.X = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.X - 20, Origin.X + 20);
+                pn.Point.Position.Y = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.Y - 20, Origin.Y + 20);
 
                 pn.Point.Velocity = Vector2.Zero;
             }
@@ -261,12 +261,7 @@ namespace Core.Physics {
         public void ResetFull() {
             Origin = Vector2.Zero;
 
-            foreach (PhysicsNode pn in Graph.Nodes.Cast<PhysicsNode>()) {
-                pn.Point.Position.X = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.X - 5, Origin.X + 5);
-                pn.Point.Position.Y = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.Y - 5, Origin.Y + 5);
-
-                pn.Point.Velocity = Vector2.Zero;
-            }
+            Reset();
         }
 
         public void AddRange(IEnumerable<Node> nodes) {
