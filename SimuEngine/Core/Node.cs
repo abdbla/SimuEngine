@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Dynamic;
+using System.Runtime.Serialization;
 
 namespace Core {
     [DebuggerDisplay("Name: {Name}")]
+    [Serializable]
     public abstract class Node {
         public static Random rng = new Random(); 
         //Internal fields, only meant to be accessed by internal functions, such as Events and the PlayerObject.
@@ -36,7 +39,6 @@ namespace Core {
         /// </summary>
         /// <param name="info">The enum for whether it should create an empty node or pre-generate as part of the system</param>
         public Node() {
-            SubGraph = new Graph();
             statuses = new List<string>();
             traits = new Dictionary<string, int>();
             groups = new List<Group>();
