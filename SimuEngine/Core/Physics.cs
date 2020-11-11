@@ -19,11 +19,9 @@ namespace Core.Physics {
         public Node Inner { get; private set; }
         public bool Pinned;
         public PhysicsNode(Node node) {
-            var x = (float)((rng.NextDouble() - .5) * 10.0);
-            var y = (float)((rng.NextDouble() - .5) * 10.0);
             Inner = node;
             Mass = 1.0f;
-            Point = new Point(new Vector2(x, y));
+            Point = new Point(RandomPosition());
             Name = node.Name;
         }
 
@@ -32,6 +30,8 @@ namespace Core.Physics {
             Mass = 1.0f;
             Point = new Point(initialPosition);
         }
+
+        public static Vector2 RandomPosition(double bound = 20.0) => new Vector2(rng, (-bound, bound));
 
         public override void NodeCreation(Graph g, NodeCreationInfo info) {
             Inner.NodeCreation(g, info);
@@ -42,16 +42,62 @@ namespace Core.Physics {
         }
     }
 
-    public struct Vector2 {
-        public static readonly Vector2 Zero = new Vector2(0, 0);
+    public readonly struct Interval {
+        public readonly double Lower, Upper;
 
-        public float X;
-        public float Y;
+        public Interval(double lower, double upper) {
+            if (lower == upper) {
+                throw new ArgumentException("lower can't be equal to upper");
+            }
+
+            Lower = lower;
+            Upper = upper;
+        }
+
+        public double To(Interval newInterval, double x) => Utils.MapInterval(x, this, newInterval);
+
+        public static implicit operator Interval((double, double) t) => new Interval(t.Item1, t.Item2);
+    }
+
+    static class Utils {
+
+        /// <summary>
+        /// Linearly map a value x from the interval [a, b] to [c, d]
+        /// </summary>
+        /// <param name="x">the value to map</param>
+        /// <param name="a">lower bound of origin interval</param>
+        /// <param name="b">upper bound of origin interval</param>
+        /// <param name="c">lower bound of target interval</param>
+        /// <param name="d">upper bound of target interval</param>
+        /// <returns></returns>
+        public static double MapInterval(double x, double a, double b, double c, double d) =>
+            c + (d - c) / (b - a) * (x - a);
+
+        public static double MapInterval(double x, Interval src, Interval dst) =>
+            MapInterval(x, src.Lower, src.Upper, dst.Lower, dst.Upper);
+    }
+
+    public struct Vector2 {
+        public static readonly Vector2 Zero = new Vector2(0.0, 0.0);
+
+        public double X;
+        public double Y;
+
+        public Vector2(double x, double y) {
+            X = x;
+            Y = y;
+        }
 
         public Vector2(float x, float y) {
             X = x;
             Y = y;
         }
+
+        public Vector2(Random rng, Interval xInterval, Interval yInterval) :
+            this(new Interval(0, 1).To(xInterval, rng.NextDouble()),
+                 new Interval(0, 1).To(yInterval, rng.NextDouble())) { }
+
+        public Vector2(Random rng, Interval interval) : this(rng, interval, interval) { }
 
         public static Vector2 operator +(Vector2 v, Vector2 u) => new Vector2(v.X + u.X, v.Y + u.Y);
 
@@ -61,9 +107,9 @@ namespace Core.Physics {
 
         public static Vector2 operator *(Vector2 v, Vector2 u) => new Vector2(v.X * u.X, v.Y * u.Y);
 
-        public static Vector2 operator *(Vector2 v, float s) => new Vector2(v.X * s, v.Y * s);
+        public static Vector2 operator *(Vector2 v, double s) => new Vector2(v.X * s, v.Y * s);
 
-        public static Vector2 operator /(Vector2 v, float s) => new Vector2(v.X / s, v.Y / s);
+        public static Vector2 operator /(Vector2 v, double s) => new Vector2(v.X / s, v.Y / s);
 
         public float Magnitude() {
             return (float)Math.Sqrt(X * X + Y * Y);
@@ -251,8 +297,7 @@ namespace Core.Physics {
 
         public void Reset() {
             foreach (PhysicsNode pn in Graph.Nodes.Cast<PhysicsNode>()) {
-                pn.Point.Position.X = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.X - 20, Origin.X + 20);
-                pn.Point.Position.Y = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.Y - 20, Origin.Y + 20);
+                pn.Point.Position = PhysicsNode.RandomPosition();
 
                 pn.Point.Velocity = Vector2.Zero;
             }
@@ -280,10 +325,9 @@ namespace Core.Physics {
                     //     " NOTE: this exception only occurs in debug mode");
                 }
 
-                var x = MapInterval(rng.NextDouble(), 0, 1, bottomleft.X, topright.X);
-                var y = MapInterval(rng.NextDouble(), 0, 1, bottomleft.Y, topright.Y);
-
-                var pNode = new PhysicsNode(n, new Vector2((float)x, (float)y));
+                var pNode = new PhysicsNode(n, new Vector2(rng,
+                                                           (bottomleft.X, topright.X),
+                                                           (bottomleft.Y, topright.Y)));
 
                 conns.Add((pNode, InnerGraph.GetOutgoingConnections(n)));
 
@@ -332,18 +376,6 @@ namespace Core.Physics {
                 physicsNodes.Remove(n);
             }
         }
-
-        /// <summary>
-        /// Map a value x from the interval [a, b] to [c, d]
-        /// </summary>
-        /// <param name="x">the value to map</param>
-        /// <param name="a">lower bound of origin interval</param>
-        /// <param name="b">upper bound of origin interval</param>
-        /// <param name="c">lower bound of target interval</param>
-        /// <param name="d">upper bound of target interval</param>
-        /// <returns></returns>
-        double MapInterval(double x, double a, double b, double c, double d) =>
-            c + (d - c) / (b - a) * (x - a);
         
         /// <summary>
         /// Adds a new node and places it randomly on the bounding box of the system
@@ -356,9 +388,7 @@ namespace Core.Physics {
             var conns = InnerGraph.GetOutgoingConnections(n);
 
             (var bottomleft, var topright) = GetBoundingBox();
-            var x = MapInterval(rng.NextDouble(), 0, 1, bottomleft.X, topright.X);
-            var y = MapInterval(rng.NextDouble(), 0, 1, bottomleft.Y, topright.Y);
-            var pNode = new PhysicsNode(n, new Vector2((float)x, (float)y));
+            var pNode = new PhysicsNode(n, new Vector2(rng, (bottomleft.X, topright.X), (bottomleft.Y, topright.Y)));
 
             foreach ((var outgoing, var other) in conns) {
                 if (!physicsNodes.ContainsKey(other))
@@ -499,8 +529,7 @@ namespace Core.Physics {
                     || n.Point.Position.X != n.Point.Position.X
                     || n.Point.Position.Y != n.Point.Position.Y) {
 #pragma warning restore CS1718 // Comparison made to same variable
-                    n.Point.Position.X = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.X - 10.0, Origin.X + 10.0);
-                    n.Point.Position.Y = (float)MapInterval(rng.NextDouble(), 0, 1, Origin.Y - 10.0, Origin.Y + 10.0);
+                    n.Point.Position = PhysicsNode.RandomPosition();
                 }
             }
         }
