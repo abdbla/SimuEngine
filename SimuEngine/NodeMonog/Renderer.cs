@@ -651,8 +651,8 @@ namespace NodeMonog
 
             if (showBoundingBox) {
                 (var bl_1, var bl_2) = currentSimulation.Simulation.GetBoundingBox();
-                var bottomleft = new Vector2(bl_1.X, bl_1.Y);
-                var topright = new Vector2(bl_2.X, bl_2.Y);
+                Vector2 bottomleft = (VConv)(bl_1.X, bl_1.Y);
+                Vector2 topright = (VConv)(bl_2.X, bl_2.Y);
 
                 bottomleft = bottomleft * 50 + new Vector2(300, 300);
                 topright = topright * 50 + new Vector2(300, 300);

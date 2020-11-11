@@ -9,9 +9,24 @@ using Microsoft.Xna.Framework;
 using Simulation = Core.Physics.Simulation;
 using PVec2 = Core.Physics.Vector2;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace NodeMonog
 {
+    readonly struct VConv {
+        readonly float X, Y;
+
+        public VConv(float x, float y) {
+            X = x;
+            Y = y;
+        }
+
+        public static explicit operator VConv(PVec2 v) => new VConv((float)v.X, (float)v.Y);
+        public static implicit operator Vector2(VConv v) => new Vector2(v.X, v.Y);
+        public static implicit operator VConv((float, float) v) => new VConv(v.Item1, v.Item2);
+        public static explicit operator VConv((double, double) v) => new VConv((float)v.Item1, (float)v.Item2);
+    }
+
     class DrawGraph : Graph
     {
     }
@@ -25,7 +40,7 @@ namespace NodeMonog
         public Vector2 Position {
             get {
                 var point = simulation.physicsNodes[node].Point.Position;
-                return new Vector2((point.X * 50) + 300, (point.Y * 50) + 300);
+                return (VConv)(point * 50f + new PVec2(300));
             }
             set {
                 

@@ -1,15 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data.Common;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
-using System.Text;
 using System.Diagnostics;
-using System.Security.Cryptography.X509Certificates;
-using System.Runtime.InteropServices.ComTypes;
-using System.Security;
+using System.Data.Common;
 
 namespace Core.Physics {
     [DebuggerDisplay("Position: {Point.Position.X} {Point.Position.Y}")]
@@ -44,17 +37,19 @@ namespace Core.Physics {
 
     public readonly struct Interval {
         public readonly double Lower, Upper;
+        public readonly double Size { get => Upper - Lower; }
 
         public Interval(double lower, double upper) {
-            if (lower == upper) {
-                throw new ArgumentException("lower can't be equal to upper");
-            }
-
             Lower = lower;
             Upper = upper;
         }
 
-        public double To(Interval newInterval, double x) => Utils.MapInterval(x, this, newInterval);
+        public double To(Interval newInterval, double x) {
+            if (newInterval.Size == 0) return newInterval.Lower;
+            if (this.Size == 0) throw new InvalidOperationException("Can't map a zero-sized interval to a non-zero interval");
+
+            return Utils.MapInterval(x, this, newInterval);
+        }
 
         public static implicit operator Interval((double, double) t) => new Interval(t.Item1, t.Item2);
     }
@@ -82,6 +77,10 @@ namespace Core.Physics {
 
         public double X;
         public double Y;
+
+        public Vector2(double x) {
+            X = Y = x;
+        }
 
         public Vector2(double x, double y) {
             X = x;
