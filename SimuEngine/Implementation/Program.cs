@@ -66,7 +66,7 @@ namespace Implementation
             }
         }
 
-        private void InitializeGraphSystem() {
+        /*private void InitializeGraphSystem() {
             const int NUM_GROUPS = 100000;
             const int NUM_PEOPLE = 500000;
 
@@ -168,7 +168,7 @@ namespace Implementation
                 tmpsubgraph.Nodes[0].SubGraph = tmptmpsubgraph;
 
             }
-        }
+        }*/
 
         private void InitializeEngine() {
             actions.Add(("make healthy", new GuaranteedEvent(
