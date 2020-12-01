@@ -9,7 +9,6 @@ using System;
 using System.Threading.Tasks;
 using GeonBit.UI;
 using GeonBit.UI.Entities;
-using Simulation = Core.Physics.Simulation;
 using SimulationParams = Core.Physics.SimulationParams;
 using System.Xml.Schema;
 

@@ -52,6 +52,7 @@
     <Compile Include="Nodes.cs" />
     <Compile Include="Connections.cs" />
     <Compile Include="Groups.cs" />
+    <Compile Include="PersonEvents.cs" />
     <Compile Include="Program.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Threading.Tasks;
 using Core;
 
 namespace SimuEngine
 {
+    [Serializable]
     public class PlayerObject : Node
     {
         List<(string, Event)> actions;
@@ -24,6 +27,21 @@ namespace SimuEngine
                 }
             }
         }
+
+        public void Serialize(string filepath) {
+            using (FileStream fs = File.OpenWrite(filepath)) {
+                var bf = new BinaryFormatter();
+                bf.Serialize(fs, this);
+            }
+        }
+
+        public static PlayerObject Deserialize(string filepath) {
+            using (FileStream fs = File.OpenRead(filepath)) {
+                var bf = new BinaryFormatter();
+                return (PlayerObject)bf.Deserialize(fs);
+            }
+        }
+
         public void SelectNode(Node n) {
             selectedNode = n;
         }

@@ -27,24 +27,19 @@ namespace Implementation
             //TODO: Create implementation running code
             p.InitializeEngine();
 
-            const string TEST_FILE_NAME = "testsave";
+            const string TEST_FILE_DIR = @"C:\Users\theodor.strom\SimuEngine\";
 
-            if (File.Exists(TEST_FILE_NAME)) {
+            if (p.engine.SaveExists(TEST_FILE_DIR)) {
                 Console.WriteLine("Found save file");
                 try {
-                    DateTime now = DateTime.Now;
-                    p.engine.system = GraphSystem.Deserialize(TEST_FILE_NAME);
-                    TimeSpan elapsed = DateTime.Now - now;
+                    p.engine.Load(TEST_FILE_DIR);
                     Console.WriteLine("Deserialized from save file");
-                    Console.WriteLine($"Elapsed time: {elapsed.TotalMinutes} minutes");
                 } catch (OutOfMemoryException) {
                     Console.WriteLine("Ran out of memory while deserializing");
                     throw new SystemException("Ran out of memory while deserializing");
                 } catch (SerializationException ex) {
                     Console.WriteLine($"Error while deserializing ({ex}), deleting file.");
-                    File.Delete(TEST_FILE_NAME);
-                } finally {
-                    // File.Delete(TEST_FILE_NAME);
+                    p.engine.CleanDir(TEST_FILE_DIR);
                 }
             }
             if (p.engine.system.graph.Count.Nodes == 0) {
@@ -52,7 +47,7 @@ namespace Implementation
                 p.InitializeGraphSystem();
                 Console.WriteLine("Finished initialization, serializing...");
                 try {
-                    p.engine.system.Serialize(TEST_FILE_NAME);
+                    p.engine.Save(TEST_FILE_DIR);
                     Console.WriteLine("Graph initialization complete");
                 } catch (IOException) {
                     Console.WriteLine("IO error while serializing, won't keep going");
@@ -209,7 +204,7 @@ namespace Implementation
                 tStatus.Add("Recovered");
             })));
 
-            List<Event> personEvents = Person.InitializeEvents();
+            List<Event> personEvents = PersonEvents.InitializeEvents();
             eventList.AddEventList(typeof(Person), personEvents);
             engine = new Engine(actions, eventList);
         }

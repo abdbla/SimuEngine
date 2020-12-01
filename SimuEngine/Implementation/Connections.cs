@@ -14,6 +14,9 @@ namespace Implementation {
         string creationID;
         string graphName;
 
+        public double TemporalProximity { get; set; }
+        public double PhysicalProximity { get; set; }
+
         public override void SetName(string name) {
             graphName = name;
         }
