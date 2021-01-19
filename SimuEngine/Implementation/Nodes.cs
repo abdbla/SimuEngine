@@ -57,7 +57,7 @@ namespace Implementation {
     class District : Node
     {
         static int idCounter = 0;
-        int idx = ++idCounter;
+
         public override void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty) {
             int NUM_PEOPLE = traits["Population"];
             int NUM_FAMILIES = traits["Population"] / 5;
@@ -173,6 +173,7 @@ namespace Implementation {
         }
 
         public District(int population, int density) : base() {
+            int idx = Interlocked.Increment(ref idCounter);
             traits["Population"] = population;
             traits["Density"] = density;
             SubGraph = new Graph();
