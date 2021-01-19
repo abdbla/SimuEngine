@@ -117,6 +117,8 @@ namespace Implementation
                 n.statuses.Add("Recovered");
             });
 
+            ev.AppliesStatus = new HashSet<string>() { "Recovered" };
+
             return ev;
         }
 

@@ -28,7 +28,6 @@ namespace SimuEngine {
         // List<Func<Node, Graph, Graph, double>> reqPossible;
         // List<Func<Node, Graph, Graph, bool>> reqGuaranteed;
         // List<Action<Node, Graph, Graph>> outcome;
-
         public List<Func<Node, Graph, Graph, double>> ReqPossible {
             get; private set;
         } = new List<Func<Node, Graph, Graph, double>>();
@@ -38,6 +37,10 @@ namespace SimuEngine {
         public List<Action<Node, Graph, Graph>> Outcome {
             get; private set;
         } = new List<Action<Node, Graph, Graph>>();
+
+        public HashSet<string> RequiredStatuses { get; set; }
+        public HashSet<string> NegRequiredStatuses  { get; set; }
+        public HashSet<string> AppliesStatus { get; set; }
 
         public void AddReqPossible(Func<Node, Graph, Graph, double> req) {
             ReqPossible.Add(req);
