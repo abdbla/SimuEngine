@@ -80,9 +80,9 @@ namespace Implementation
                 }
                 n.statuses.Remove("WearingMask");
             });
+            ev.RequiredStatuses = new HashSet<string>() { "WearingMask" };
             return ev;
         }
-
         static Event IsolationEvent()
         {
             Event ev = new Event(delegate (Node n, Graph l, Graph w)
@@ -117,9 +117,10 @@ namespace Implementation
                 n.statuses.Add("Recovered");
             });
 
+            ev.AppliesStatus = new HashSet<string>() { "Recovered" };
+
             return ev;
         }
-
         static Event InfectionTimeUpdateEvent()
         {
             var ev = new Event();
@@ -134,7 +135,6 @@ namespace Implementation
 
             return ev;
         }
-
         public static List<Event> InitializeEvents()
         {
             List<Event> personEvents = new List<Event>() {
@@ -148,18 +148,6 @@ namespace Implementation
             };
 
             personEvents.Add(new Event());
-#if false
-            personEvents[0].AddReqPossible(delegate (Node n, Graph l, Graph w) {
-                double chance = 0;
-                if (!n.Statuses.Contains("Healthy")) return 0;
-                foreach ((Connection, Node) m in l.GetOutgoingConnections(n)) {
-                    if (m.Item2.Statuses.Contains("Infected")) {
-                        chance += (double)((m.Item1.Traits["Proximity"]) + (double)((100 - m.Item2.Traits["Hygiene"])) + (double)((100 - n.Traits["Hygiene"])) / 300);
-                    }
-                }
-                return chance;
-            });
-#endif
             return personEvents;
         }
     }

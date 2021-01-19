@@ -73,19 +73,23 @@ namespace SimuEngineTest
             Node node3 = graphSystem.graph.Nodes[2];
             Node node4 = graphSystem.graph.Nodes[3];
             Node node5 = graphSystem.graph.Nodes[4];
-            Connection connection = new ExampleConnection();
-            graphSystem.graph.AddConnection(node1, node2, connection);
-            graphSystem.graph.AddConnection(node1, node3, connection);
-            graphSystem.graph.AddConnection(node1, node4, connection);
-            graphSystem.graph.AddConnection(node1, node5, connection);
+            Connection c1, c2, c3, c4;
+            c1 = new ExampleConnection();
+            c2 = new ExampleConnection();
+            c3 = new ExampleConnection();
+            c4 = new ExampleConnection();
+            graphSystem.graph.AddConnection(node1, node2, c1);
+            graphSystem.graph.AddConnection(node1, node3, c2);
+            graphSystem.graph.AddConnection(node1, node4, c3);
+            graphSystem.graph.AddConnection(node1, node5, c4);
 
 
             //act
             List<(Connection, Node)> connectionList = new List<(Connection, Node)>();
-            connectionList.Add((connection, node2));
-            connectionList.Add((connection, node3));
-            connectionList.Add((connection, node4));
-            connectionList.Add((connection, node5));
+            connectionList.Add((c1, node2));
+            connectionList.Add((c2, node3));
+            connectionList.Add((c3, node4));
+            connectionList.Add((c4, node5));
 
             List<(Connection, Node)> getConnectionsList = graphSystem.graph.GetOutgoingConnections(node1);
 

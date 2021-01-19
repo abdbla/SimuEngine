@@ -30,48 +30,44 @@ namespace SimuEngine
             var worldGraph = graphs[0];
             var localGraph = graphs[graphs.Count - 1];
 
-            for (int i = 0; i < graph.Nodes.Count; i++) {
+            foreach (Node n in graph.Nodes) {
                 List<Event> posEvents = new List<Event>();
                 Random rng = Node.rng;
-                foreach (Event ev in events.GetEventList(graph.Nodes[i].GetType())) {
-                    bool req = true;
-                    bool pos = true;
-                    for (int j = 0; j < ev.ReqGuaranteed.Count; j++) { // Check each requirement
-                        if (!ev.ReqGuaranteed[j](graph.Nodes[i], localGraph, worldGraph)) {
-                            req = false; //if any are false, dont fire the event.
-                        }
-                    }
-                    if (ev.ReqGuaranteed.Count == 0) {
-                        req = false; //dont fire if it has no guaranteed requirements.
-                    }
-                    if (req) {
-                        foreach (var act in ev.Outcome) {
-                            stack.Add((graph.Nodes[i], act));
-                        }
-                    } else {
-                        for (int j = 0; j < ev.ReqPossible.Count; j++) {
-                            if (!(rng.NextDouble() <= ev.ReqPossible[j](graph.Nodes[i], localGraph, worldGraph))) {
-                                pos = false; //same over here as before, though the possible req returns a modifier on the chance to fire the event
-                            }
-                        }
-                        if (ev.ReqPossible.Count == 0) {
-                            pos = false; //same as before
-                        }
-                    }
-                    if (pos) {
-                        foreach (var act in ev.Outcome) {
-                            stack.Add((graph.Nodes[i], act));
-                        }
-                    }
+                foreach (Event ev in events.GetEventList(n.GetType())) {
+                    InvokeEvent(n, stack, ev, localGraph, worldGraph);
                 }
 
-                if (graph.Nodes[i].SubGraph != null) {
-                    Tick(graph.Nodes[i].SubGraph, graphs);
+                if (n.SubGraph != null) {
+                    Tick(n.SubGraph, graphs);
                 }
             }
 
             foreach (var item in stack) {
                 item.Item1.InvokeAction(item.Item2, localGraph, worldGraph);
+            }
+        }
+
+        void InvokeEvent(Node n, List<(Node, Action<Node, Graph, Graph>)> stack,
+                         Event ev, Graph localGraph, Graph worldGraph) {
+            bool? req = null;
+            bool? pos = null;
+            foreach (var guaranteedCheck in ev.ReqGuaranteed) { // Check each requirement
+                req = (req ?? true) && guaranteedCheck(n, localGraph, worldGraph);
+            }
+            if (req ?? false) {
+                foreach (var act in ev.Outcome) {
+                    stack.Add((n, act));
+                }
+            } else {
+                foreach (var possibleCheck in ev.ReqPossible) {
+                    //same over here as before, though the possible req returns a modifier on the chance to fire the event
+                    pos = (pos ?? true) && Node.rng.NextDouble() <= possibleCheck(n, localGraph, worldGraph);
+                }
+            }
+            if (pos ?? false) {
+                foreach (var act in ev.Outcome) {
+                    stack.Add((n, act));
+                }
             }
         }
 
