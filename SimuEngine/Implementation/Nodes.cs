@@ -63,6 +63,9 @@ namespace Implementation {
             int NUM_FAMILIES = traits["Population"] / 5;
             int NUM_WORK_GROUPS = traits["Population"] / 200;
             int NUM_FRIEND_GROUPS = traits["Population"] / 4;
+            List<PersonGroup> familyGroups = new List<PersonGroup>();
+            List<PersonGroup> workGroups = new List<PersonGroup>();
+            List<PersonGroup> friendGroups = new List<PersonGroup>();
 
             Dictionary<Person, PersonGroup> familyPairs = new Dictionary<Person, PersonGroup>();
             Dictionary<Person, PersonGroup> workPairs = new Dictionary<Person, PersonGroup>();
@@ -77,48 +80,35 @@ namespace Implementation {
             for (int i = 0; i < NUM_FAMILIES; i++) {
                 PersonGroup tempGroup = new PersonGroup("FAMILY");
                 g.groups.Add(tempGroup);
-                int tempAmount = Node.rng.Next(2, 8);
-                for (int j = 0; j < NUM_PEOPLE; j++) {
-                    if (!familyPairs.TryGetValue((Person)g.Nodes[j], out _)) {
-                        tempGroup.members.Add(g.Nodes[j]);
-                        g.Nodes[j].groups.Add(tempGroup);
-                        familyPairs[(Person)g.Nodes[j]] = tempGroup;
-                    }
-                    if (tempGroup.members.Count > tempAmount) break;
-                }
+                familyGroups.Add(tempGroup);
             }
             for (int i = 0; i < NUM_FRIEND_GROUPS; i++) {
                 PersonGroup tempGroup = new PersonGroup("FRIENDS");
                 g.groups.Add(tempGroup);
-                int tempAmount = Node.rng.Next(2, 8);
-                for (int j = 0; j < NUM_PEOPLE; j++) {
-                    (PersonGroup, PersonGroup) temp;
-                    friendPairs.TryGetValue((Person)g.Nodes[j], out temp);
-                    if (temp.Item2 == null && temp.Item1 != null) {
-                        tempGroup.members.Add(g.Nodes[j]);
-                        g.Nodes[j].groups.Add(tempGroup);
-                        friendPairs[(Person)g.Nodes[j]] = (friendPairs[(Person)g.Nodes[j]].Item1, tempGroup);
-                    }
-                    if (!friendPairs.TryGetValue((Person)g.Nodes[j], out _)) {
-                        tempGroup.members.Add(g.Nodes[j]);
-                        g.Nodes[j].groups.Add(tempGroup);
-                        friendPairs[(Person)g.Nodes[j]] = (tempGroup, null);
-                    }
-                    if (tempGroup.members.Count > tempAmount) break;
-                }
+                friendGroups.Add(tempGroup);
             }
             for (int i = 0; i < NUM_WORK_GROUPS; i++) {
                 PersonGroup tempGroup = new PersonGroup("WORK");
                 g.groups.Add(tempGroup);
-                int tempAmount = Node.rng.Next(100, 301);
-                for (int j = 0; j < NUM_PEOPLE; j++) {
-                    if (!workPairs.TryGetValue((Person)g.Nodes[j], out _)) {
-                        tempGroup.members.Add(g.Nodes[j]);
-                        g.Nodes[j].groups.Add(tempGroup);
-                        workPairs[(Person)g.Nodes[j]] = tempGroup;
-                    }
-                    if (tempGroup.members.Count > tempAmount) break;
-                }
+                workGroups.Add(tempGroup);
+            }
+            for (int j = 0; j < NUM_PEOPLE; j++) {
+                PersonGroup tempGroup = familyGroups[rng.Next(0, familyGroups.Count)];
+                g.Nodes[j].groups.Add(tempGroup);
+                tempGroup.members.Add(g.Nodes[j]);
+                familyPairs[(Person)g.Nodes[j]] = tempGroup;
+                tempGroup = friendGroups[rng.Next(0, friendGroups.Count)];
+                g.Nodes[j].groups.Add(tempGroup);
+                tempGroup.members.Add(g.Nodes[j]);
+                friendPairs[(Person)g.Nodes[j]] = (tempGroup, null);
+                tempGroup = friendGroups[rng.Next(0, friendGroups.Count)];
+                g.Nodes[j].groups.Add(tempGroup);
+                tempGroup.members.Add(g.Nodes[j]);
+                friendPairs[(Person)g.Nodes[j]] = (friendPairs[(Person)g.Nodes[j]].Item1, tempGroup);
+                tempGroup = workGroups[rng.Next(0, workGroups.Count)];
+                g.Nodes[j].groups.Add(tempGroup);
+                tempGroup.members.Add(g.Nodes[j]);
+                workPairs[(Person)g.Nodes[j]] = tempGroup;
             }
             foreach (Person currentPerson in g.Nodes.Cast<Person>()) {
                 if (!familyPairs[currentPerson].statuses.Contains("Initialized")) {
