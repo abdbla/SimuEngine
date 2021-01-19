@@ -25,7 +25,7 @@ namespace Implementation
 
             if (engine.SaveExists(TEST_FILE_DIR)) {
                 Console.WriteLine("Found save file");
-                Console.Write("Do you wish to use the save file? (Y/N)");
+                Console.Write("Do you wish to use the save file? (Y/N) ");
                 bool res = true;
                 while (res) {
                     var response = Console.ReadKey();
@@ -54,7 +54,7 @@ namespace Implementation
                             res = false;
                             break;
                         default:
-                            Console.WriteLine("Please press Y or N");
+                            Console.WriteLine("Please press Y or N.");
                             break;
                     }
                 }
