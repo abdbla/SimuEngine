@@ -9,7 +9,6 @@ using System.Runtime.Serialization;
 using Core;
 using SimuEngine;
 using NodeMonog;
-using System.Diagnostics;
 using System.IO;
 
 namespace Implementation
@@ -204,7 +203,7 @@ namespace Implementation
                 tStatus.Add("Recovered");
             })));
 
-            List<Event> personEvents = PersonEvents.InitializeEvents();
+            List<Event> personEvents = NodeEvents.InitializeEvents();
             eventList.AddEventList(typeof(Person), personEvents);
             engine = new Engine(actions, eventList);
         }
