@@ -64,8 +64,6 @@ namespace Implementation {
             int NUM_WORK_GROUPS = traits["Population"] / 200;
             int NUM_FRIEND_GROUPS = traits["Population"] / 4;
 
-            if (NUM_WORK_GROUPS == 0) NUM_WORK_GROUPS = 1;
-
             Dictionary<Person, PersonGroup> familyPairs = new Dictionary<Person, PersonGroup>();
             Dictionary<Person, PersonGroup> workPairs = new Dictionary<Person, PersonGroup>();
             Dictionary<Person, (PersonGroup, PersonGroup)> friendPairs = new Dictionary<Person, (PersonGroup, PersonGroup)>();
