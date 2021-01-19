@@ -52,10 +52,18 @@ namespace Core {
 
             if (!nodes.Remove(node)) return false;
 
+            // We can't remove stuff from the dict while iterating through it
+            // so we collect them up and do it in one go
+            var toRemove = new List<(Node, Node)>();
+            
             foreach (var key in adjacencyMatrix.Keys) {
                 if (key.Item1 == node || key.Item2 == node) {
-                    adjacencyMatrix.Remove(key);
+                    toRemove.Add(key);
                 }
+            }
+
+            foreach (var key in toRemove) {
+                adjacencyMatrix.Remove(key);
             }
 
             return true;
