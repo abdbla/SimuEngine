@@ -689,7 +689,7 @@ namespace NodeMonog
                 Status.MinimaReached => "Local minima reached",
                 Status.Idle => "idle",
                 Status.Cancelled => "Cancelled",
-                // _ => "This should never happen"
+                Status otherwise => $"This variant wasn't considered yet ({otherwise})",
             };
             try {
                 spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
