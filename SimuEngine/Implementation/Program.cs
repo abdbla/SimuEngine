@@ -15,8 +15,6 @@ namespace Implementation
 {
     class Program
     {
-
-
         static void Main() {
             Engine engine = InitializeEngine();
 
