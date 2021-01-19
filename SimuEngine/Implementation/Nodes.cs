@@ -7,7 +7,7 @@ using System.Diagnostics;
 
 using Core;
 using SimuEngine;
-
+using System.Threading;
 
 namespace Implementation {
     [Serializable]
@@ -16,10 +16,19 @@ namespace Implementation {
         const int DISTRICT_AMOUNT = 17;
         public override void NodeCreation(Graph g, NodeCreationInfo creationInfo = NodeCreationInfo.Empty) {
             int tempPopulation = traits["Population"];
+            List<Task<District>> districtCreationTasks = new List<Task<District>>();
+
             for (int i = 0; i < DISTRICT_AMOUNT; i++) {
                 if (i != 16) tempPopulation /= 2;
-                SubGraph.Add(new District(tempPopulation, Node.rng.Next(traits["Density"] - 10, traits["Density"] + 11)));
+                int n = rng.Next(traits["Density"] - 10, traits["Density"] + 11);
+                districtCreationTasks.Add(
+                    Task.Run(() => { int x = i; return new District(tempPopulation, n); }));  ;
             }
+            Task.WaitAll(districtCreationTasks.ToArray());
+            foreach (Task<District> dt in districtCreationTasks) {
+                SubGraph.Add(dt.Result);
+            }
+
             for (int i = 0; i < DISTRICT_AMOUNT - 1; i++) {
                 g.AddConnection(g.Nodes[i], g.Nodes[i + 1], new DistrictConnection());
             }
@@ -67,7 +76,7 @@ namespace Implementation {
                 g.groups.Add(tempGroup);
                 int tempAmount = Node.rng.Next(2, 8);
                 for (int j = 0; j < NUM_PEOPLE; j++) {
-                    if (!familyPairs.TryGetValue((Person)g.Nodes[i], out _)) {
+                    if (!familyPairs.TryGetValue((Person)g.Nodes[j], out _)) {
                         tempGroup.members.Add(g.Nodes[j]);
                         g.Nodes[j].groups.Add(tempGroup);
                         familyPairs[(Person)g.Nodes[j]] = tempGroup;
@@ -172,7 +181,7 @@ namespace Implementation {
     class Person : Node {
         static int id = 0;
         public Person() : base() {
-            this.Name = id++.ToString();
+            this.Name = Interlocked.Increment(ref id).ToString();
             return;
         }
 
