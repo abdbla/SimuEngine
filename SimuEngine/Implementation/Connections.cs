@@ -19,7 +19,7 @@ namespace Implementation {
         }
 
         public DistrictConnection() {
-            traits["Interconnectivity"] = Node.rng.Next(70, 131);
+            Traits["Interconnectivity"] = Node.rng.Next(70, 131);
         }
     }
 
@@ -42,19 +42,19 @@ namespace Implementation {
 
             switch (t.ToUpper()) {
                 case "FAMILY":
-                    traits.Add("Proximity", Node.rng.Next(75, 101));
+                    Traits.Add("Proximity", Node.rng.Next(75, 101));
                     break;
                 case "FRIENDS":
-                    traits.Add("Proximity", Node.rng.Next(40, 76));
+                    Traits.Add("Proximity", Node.rng.Next(40, 76));
                     break;
                 case "WORK":
-                    traits.Add("Proximity", Node.rng.Next(25, 61));
+                    Traits.Add("Proximity", Node.rng.Next(25, 61));
                     break;
                 case "ACQUIANTANCES":
-                    traits.Add("Proximity", Node.rng.Next(5, 46));
+                    Traits.Add("Proximity", Node.rng.Next(5, 46));
                     break;
                 default:
-                    traits.Add("Proximity", Node.rng.Next(1, 101));
+                    Traits.Add("Proximity", Node.rng.Next(1, 101));
                     break;
             }
         }

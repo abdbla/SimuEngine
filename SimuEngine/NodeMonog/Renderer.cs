@@ -265,7 +265,7 @@ namespace NodeMonog
             SelectList connectionList = new SelectList();
             foreach ((Connection c, Node n) in currentGraph.GetOutgoingConnections(engine.player.selectedNode))
             {
-                connectionList.AddItem(n.Name + ": " + c.Traits["Proximity"]);
+                connectionList.AddItem((n.Name == "" ? "<empty name>" : n.Name) + ": ...");
             }
             connectionList.OnValueChange += delegate (Entity target)
             {

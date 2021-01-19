@@ -213,7 +213,7 @@ namespace NodeMonog {
             } catch (OperationCanceledException) {
                 // we cancelled successfully
             } catch (AggregateException e) when (e.InnerException is OperationCanceledException) {
-                Console.WriteLine("Caught aggregate exception: ", e);
+                Console.WriteLine("Caught OperationCanceledException");
             } finally {
                 simulationTask.Dispose();
                 tokenSource.Dispose();

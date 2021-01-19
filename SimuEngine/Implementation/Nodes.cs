@@ -111,7 +111,9 @@ namespace Implementation {
                 workPairs[(Person)g.Nodes[j]] = tempGroup;
             }
             foreach (Person currentPerson in g.Nodes.Cast<Person>()) {
-                if (!familyPairs[currentPerson].statuses.Contains("Initialized")) {
+                // TODO: fix this bandaid solution and figure out why this happens
+                if (!familyPairs[currentPerson].statuses.Contains("Initialized")
+                    && familyPairs[currentPerson].members.Count > 1) {
                     PersonGroup family = familyPairs[currentPerson];
                     Person t1 = (Person)family.members[0];
                     Person t2 = (Person)family.members[1];
