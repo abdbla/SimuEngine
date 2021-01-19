@@ -266,7 +266,7 @@ namespace Core {
         /// <returns>a list of all the outwards connections plus the nodes they go to</returns>
         public List<(Connection, Node)> GetOutgoingConnections(Node node) {
             if (!connectionLists.TryGetValue(node, out List<Connection> conns)) {
-                throw new NodeNotFoundException("Tried to get outgoing connections for non-existent node");
+                return new List<(Connection, Node)>();
             }
             var ret = (from conn in conns
                        select (conn, reverseLookup[conn].Item2)).ToList();

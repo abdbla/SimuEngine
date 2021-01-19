@@ -55,13 +55,13 @@ namespace SimuEngine {
             if (File.Exists(pp)) File.Delete(pp);
         }
 
-        public void Load(string directoryPath) {
+        public void Load(string directoryPath, List<(string, Event)> actions = null) {
             string dir = Path.GetDirectoryName(directoryPath);
             string playerPath = PlayerPath(dir);
             string graphPath = GraphPath(dir);
 
             system = GraphSystem.Deserialize(graphPath);
-            player = PlayerObject.Deserialize(playerPath);
+            player = PlayerObject.Deserialize(playerPath, actions ?? new List<(string, Event)>());
         }
     }
 }
