@@ -143,7 +143,8 @@ namespace Implementation
                 RecoveryEvent(),
                 InfectionTimeUpdateEvent(),
                 WearingMask(),
-                RemovinggMask()
+                RemovinggMask(),
+                IsolationEvent()
             };
 
             personEvents.Add(new Event());
