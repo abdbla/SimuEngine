@@ -57,14 +57,12 @@ namespace Implementation {
     class District : Node
     {
         static int idCounter = 0;
-        int idx = ++idCounter;
+
         public override void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty) {
             int NUM_PEOPLE = traits["Population"];
             int NUM_FAMILIES = traits["Population"];
             int NUM_WORK_GROUPS = traits["Population"];
             int NUM_FRIEND_GROUPS = traits["Population"];
-
-            if (NUM_WORK_GROUPS == 0) NUM_WORK_GROUPS = 1;
 
             Dictionary<Person, PersonGroup> familyPairs = new Dictionary<Person, PersonGroup>();
             Dictionary<Person, PersonGroup> workPairs = new Dictionary<Person, PersonGroup>();
@@ -173,6 +171,7 @@ namespace Implementation {
         }
 
         public District(int population, int density) : base() {
+            int idx = Interlocked.Increment(ref idCounter);
             traits["Population"] = population;
             traits["Density"] = density;
             SubGraph = new Graph();
