@@ -82,7 +82,6 @@ namespace Implementation
             });
             return ev;
         }
-
         static Event IsolationEvent()
         {
             Event ev = new Event(delegate (Node n, Graph l, Graph w)
