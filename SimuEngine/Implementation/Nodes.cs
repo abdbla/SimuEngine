@@ -19,7 +19,8 @@ namespace Implementation {
             List<Task<District>> districtCreationTasks = new List<Task<District>>();
 
             for (int i = 0; i < DISTRICT_AMOUNT; i++) {
-                if (i != 16) tempPopulation /= 2;
+                if (i < 2) tempPopulation /= 2;
+                if (i >= 2) tempPopulation = (traits["Population"] - 262500) / 15;
                 int n = rng.Next(traits["Density"] - 10, traits["Density"] + 11);
                 districtCreationTasks.Add(
                     Task.Run(() => { int x = i; return new District(tempPopulation, n); }));  ;
