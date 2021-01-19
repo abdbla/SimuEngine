@@ -38,7 +38,9 @@ namespace Implementation
             if (engine.system.graph.Count.Nodes == 0) {
                 Console.WriteLine("No saved system found, recreating...");
 
-                engine.system.graph.Add(new City(350000, 100));
+                City c = new City(350000, 100);
+                engine.system.graph.Add(c);
+                c.NodeCreation(engine.system.graph);
 
                 Console.WriteLine("Finished initialization, serializing...");
                 try {

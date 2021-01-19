@@ -24,17 +24,17 @@ namespace Implementation {
         public PersonConnection(string t) : base() {
             creationID = id++.ToString();
 
-            switch (t) {
-                case "Family":
+            switch (t.ToUpper()) {
+                case "FAMILY":
                     traits.Add("Proximity", Node.rng.Next(75, 101));
                     break;
-                case "Friends":
+                case "FRIENDS":
                     traits.Add("Proximity", Node.rng.Next(40, 76));
                     break;
-                case "Work":
+                case "WORK":
                     traits.Add("Proximity", Node.rng.Next(25, 61));
                     break;
-                case "Acquiantances":
+                case "ACQUIANTANCES":
                     traits.Add("Proximity", Node.rng.Next(5, 46));
                     break;
                 default:
