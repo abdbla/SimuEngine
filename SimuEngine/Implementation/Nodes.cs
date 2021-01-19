@@ -18,17 +18,27 @@ namespace Implementation {
             int tempPopulation = traits["Population"];
             for (int i = 0; i < DISTRICT_AMOUNT; i++) {
                 if (i != 16) tempPopulation /= 2;
-                District d = new District(tempPopulation, Node.rng.Next(traits["Density"] - 10, traits["Density"] + 11));
-                SubGraph.Add(d);
-                d.NodeCreation(SubGraph);
+                SubGraph.Add(new District(tempPopulation, Node.rng.Next(traits["Density"] - 10, traits["Density"] + 11)));
             }
-            
+            for (int i = 0; i < DISTRICT_AMOUNT - 1; i++) {
+                g.AddConnection(g.Nodes[i], g.Nodes[i + 1], new DistrictConnection());
+            }
+            g.AddConnection(g.Nodes[0], g.Nodes[16], new DistrictConnection());
+            foreach (var district in g.Nodes) {
+                for (int i = 0; i < Node.rng.Next(0, 3); i++) {
+                    int temp = rng.Next(0, DISTRICT_AMOUNT);
+                    if (district != g.Nodes[temp]) {
+                        g.AddConnection(district, g.Nodes[temp], new DistrictConnection());
+                    }
+                }
+            }
         }
 
         public City(int population, int density) {
             traits["Population"] = population;
             traits["Density"] = density;
             SubGraph = new Graph();
+            NodeCreation(SubGraph);
         }
     }
 
@@ -153,6 +163,7 @@ namespace Implementation {
             traits["Population"] = population;
             traits["Density"] = density;
             SubGraph = new Graph();
+            NodeCreation(SubGraph);
         }
     }
 

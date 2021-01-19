@@ -9,6 +9,22 @@ using Core;
 namespace Implementation {
     [DebuggerDisplay("Creation ID: {creationID}, Graph name: {graphName}")]
     [Serializable]
+    class DistrictConnection : Connection {
+        static int id = 0;
+        string creationID = id++.ToString();
+        string graphName; 
+        
+        public override void SetName(string name) {
+            graphName = name;
+        }
+
+        public DistrictConnection() {
+            traits["Interconnectivity"] = Node.rng.Next(70, 131);
+        }
+    }
+
+    [DebuggerDisplay("Creation ID: {creationID}, Graph name: {graphName}")]
+    [Serializable]
     class PersonConnection : Connection {
         static int id = 0;
         string creationID;
