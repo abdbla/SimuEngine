@@ -19,8 +19,6 @@ namespace Implementation
 
         static void Main() {
             Engine engine = InitializeEngine();
-            List<(string, Event)> actions = new List<(string, Event)>();
-            EventListContainer eventList = new EventListContainer();
 
             //TODO: Create implementation running code
 
