@@ -25,7 +25,7 @@ namespace Implementation
             if (engine.SaveExists(TEST_FILE_DIR)) {
                 Console.WriteLine("Found save file");
                 try {
-                    engine.Load(TEST_FILE_DIR);
+                    engine.Load(TEST_FILE_DIR, engine.player.Actions);
                     Console.WriteLine("Deserialized from save file");
                 } catch (OutOfMemoryException) {
                     Console.WriteLine("Ran out of memory while deserializing");
