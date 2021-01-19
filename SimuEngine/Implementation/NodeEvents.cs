@@ -76,7 +76,12 @@ namespace Implementation {
         }
 
         public static List<Event> InitializeEvents() {
-            List<Event> personEvents = new List<Event>() { InfectionEvent(), DeathEvent(), RecoveryEvent() };
+            List<Event> personEvents = new List<Event>() {
+                InfectionEvent(),
+                DeathEvent(),
+                RecoveryEvent(),
+                InfectionTimeUpdateEvent(),
+            };
 
             personEvents.Add(new Event());
 #if false
