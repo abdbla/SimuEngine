@@ -80,6 +80,7 @@ namespace Implementation
                 }
                 n.statuses.Remove("WearingMask");
             });
+            ev.RequiredStatuses = new HashSet<string>() { "WearingMask" };
             return ev;
         }
         static Event IsolationEvent()
