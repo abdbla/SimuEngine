@@ -45,6 +45,11 @@ namespace Core {
             connections = new List<Connection>();
             Name = "";
         }
+
+        public Node(Graph g, NodeCreationInfo info) : this() {
+            NodeCreation(g, info);
+        }
+
         public abstract void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty);
         public void InvokeAction(Action<Node, Graph, Graph> action, Graph localGraph, Graph worldGraph) {
             action(this, localGraph, worldGraph);
