@@ -18,21 +18,25 @@ namespace Implementation {
             int tempPopulation = traits["Population"];
             for (int i = 0; i < DISTRICT_AMOUNT; i++) {
                 if (i != 16) tempPopulation /= 2;
-                SubGraph.Add(new District(tempPopulation, Node.rng.Next(traits["Density"] - 10, traits["Density"] + 11)));
+                District d = new District(tempPopulation, Node.rng.Next(traits["Density"] - 10, traits["Density"] + 11));
+                SubGraph.Add(d);
+                d.NodeCreation(SubGraph);
             }
+            
         }
 
         public City(int population, int density) {
             traits["Population"] = population;
             traits["Density"] = density;
             SubGraph = new Graph();
-            NodeCreation(SubGraph);
         }
     }
 
     [Serializable]
     class District : Node
     {
+        static int idCounter = 0;
+        int idx = ++idCounter;
         public override void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty) {
             int NUM_PEOPLE = traits["Population"];
             int NUM_FAMILIES = traits["Population"] / 5;
@@ -55,6 +59,7 @@ namespace Implementation {
                 for (int j = 0; j < NUM_PEOPLE; j++) {
                     if (!familyPairs.TryGetValue((Person)g.Nodes[i], out _)) {
                         tempGroup.members.Add(g.Nodes[j]);
+                        g.Nodes[j].groups.Add(tempGroup);
                         familyPairs[(Person)g.Nodes[j]] = tempGroup;
                     }
                     if (tempGroup.members.Count > tempAmount) break;
@@ -69,10 +74,12 @@ namespace Implementation {
                     friendPairs.TryGetValue((Person)g.Nodes[j], out temp);
                     if (temp.Item2 == null && temp.Item1 != null) {
                         tempGroup.members.Add(g.Nodes[j]);
+                        g.Nodes[j].groups.Add(tempGroup);
                         friendPairs[(Person)g.Nodes[j]] = (friendPairs[(Person)g.Nodes[j]].Item1, tempGroup);
                     }
                     if (!friendPairs.TryGetValue((Person)g.Nodes[j], out _)) {
                         tempGroup.members.Add(g.Nodes[j]);
+                        g.Nodes[j].groups.Add(tempGroup);
                         friendPairs[(Person)g.Nodes[j]] = (tempGroup, null);
                     }
                     if (tempGroup.members.Count > tempAmount) break;
@@ -81,22 +88,71 @@ namespace Implementation {
             for (int i = 0; i < NUM_WORK_GROUPS; i++) {
                 PersonGroup tempGroup = new PersonGroup("WORK");
                 g.groups.Add(tempGroup);
-                int tempAmount = Node.rng.Next(2, 8);
+                int tempAmount = Node.rng.Next(100, 301);
                 for (int j = 0; j < NUM_PEOPLE; j++) {
                     if (!workPairs.TryGetValue((Person)g.Nodes[j], out _)) {
                         tempGroup.members.Add(g.Nodes[j]);
+                        g.Nodes[j].groups.Add(tempGroup);
                         workPairs[(Person)g.Nodes[j]] = tempGroup;
                     }
                     if (tempGroup.members.Count > tempAmount) break;
                 }
             }
+            for (int i = 0; i < NUM_PEOPLE; i++) {
+                if (!familyPairs[(Person)g.Nodes[i]].statuses.Contains("Initialized")) {
+                    PersonGroup family = familyPairs[(Person)g.Nodes[i]];
+                    Person t1 = (Person)family.members[0];
+                    Person t2 = (Person)family.members[1];
+                    for (int k = 0; k < family.members.Count; k++) {
+                        if (family.members[k].traits["Age"] > t1.traits["Age"]) {
+                            t2 = t1;
+                            t1 = (Person)family.members[k];
+                        }
+                    }
+                    t1.statuses.Add("Parent");
+                    t2.statuses.Add("Parent");
+                    for (int k = 0; k < family.members.Count; k++) {
+                        if (!family.members[k].statuses.Contains("Parent")) {
+                            family.members[k].statuses.Add("Child");
+                        }
+                    }
+                    family.statuses.Add("Initialized");
+                }
+                foreach (var person in familyPairs[(Person)g.Nodes[i]].members) {
+                    if (person != g.Nodes[i] && g.GetDirectedConnection(person, g.Nodes[i]) == null) {
+                        g.AddConnection(person, g.Nodes[i], new PersonConnection("Family"));
+                    }
+                }
+                for (int j = 0; j < rng.Next(2, 8); j++) {
+                    int iTemp = rng.Next(0, workPairs[(Person)g.Nodes[i]].members.Count);
+                    if (g.Nodes[iTemp] != g.Nodes[i] && g.GetDirectedConnection(workPairs[(Person)g.Nodes[i]].members[iTemp], g.Nodes[i]) != null) {
+                        g.AddConnection(g.Nodes[i], workPairs[(Person)g.Nodes[i]].members[iTemp], new PersonConnection("Work"));
+                    }
+                }
+                foreach (var person in friendPairs[(Person)g.Nodes[i]].Item1.members) {
+                    if (Node.rng.Next(0, 3) == 0) {
+                        g.AddConnection(person, g.Nodes[i], new PersonConnection("Friend"));
+                    }
+                }
+                foreach (var person in friendPairs[(Person)g.Nodes[i]].Item2.members) {
+                    if (Node.rng.Next(0, 3) == 0) {
+                        g.AddConnection(person, g.Nodes[i], new PersonConnection("Friend"));
+                    }
+                }
+                for (int j = 0; j < rng.Next(2, 6); j++) {
+                    int iTemp = rng.Next(0, NUM_PEOPLE);
+                    if (g.Nodes[iTemp] != g.Nodes[i] && g.GetDirectedConnection(g.Nodes[iTemp], g.Nodes[i]) != null) {
+                        g.AddConnection(g.Nodes[i], g.Nodes[iTemp], new PersonConnection("Acquiantance"));
+                    }
+                }
+            }
+            Console.WriteLine($"District {idx} finished.");
         }
 
         public District(int population, int density) : base() {
             traits["Population"] = population;
             traits["Density"] = density;
             SubGraph = new Graph();
-            NodeCreation(SubGraph);
         }
     }
 
