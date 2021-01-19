@@ -572,6 +572,12 @@ namespace NodeMonog
         public void GoIntoAGraph(Node enteredNode) {
             Graph g = enteredNode.SubGraph;
 
+            if (g == null) {
+                var errorTask = MessageBox.Show("Error", "There is no subgraph on this node!", new[] { "ok" });
+                errorTask.Wait();
+                return;
+            }
+
             PhysicsWrapper s = ranSimulations.Find(x => x.Graph == g) ?? new PhysicsWrapper(g, g.Nodes[0], degrees: SEPARATION, SIMULATION_PARAMS);
 
             visitedGraphs.Add((s, enteredNode.Name));
@@ -683,7 +689,7 @@ namespace NodeMonog
                 Status.MinimaReached => "Local minima reached",
                 Status.Idle => "idle",
                 Status.Cancelled => "Cancelled",
-                // _ => "This should never happen"
+                Status otherwise => $"This variant wasn't considered yet ({otherwise})",
             };
             try {
                 spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
