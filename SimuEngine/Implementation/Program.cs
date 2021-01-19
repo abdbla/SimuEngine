@@ -21,22 +21,49 @@ namespace Implementation
             //TODO: Create implementation running code
 
             const string TEST_FILE_DIR = @"C:\Users\theodor.strom\SimuEngine\";
+            bool readFailed = false;
 
             if (engine.SaveExists(TEST_FILE_DIR)) {
                 Console.WriteLine("Found save file");
-                try {
-                    engine.Load(TEST_FILE_DIR, engine.player.Actions);
-                    Console.WriteLine("Deserialized from save file");
-                } catch (OutOfMemoryException) {
-                    Console.WriteLine("Ran out of memory while deserializing");
-                    throw new SystemException("Ran out of memory while deserializing");
-                } catch (SerializationException ex) {
-                    Console.WriteLine($"Error while deserializing ({ex}), deleting file.");
-                    engine.CleanDir(TEST_FILE_DIR);
+                Console.Write("Do you wish to use the save file? (Y/N)");
+                bool res = true;
+                while (res) {
+                    var response = Console.ReadKey();
+                    Console.WriteLine();
+                    switch (response.KeyChar) {
+                        case 'y':
+                        case 'Y':
+                            try {
+                                engine.Load(TEST_FILE_DIR, engine.player.Actions);
+                                Console.WriteLine("Deserialized from save file");
+                            } catch (OutOfMemoryException) {
+                                Console.WriteLine("Ran out of memory while deserializing");
+                                throw new SystemException("Ran out of memory while deserializing");
+                            } catch (SerializationException ex) {
+                                Console.WriteLine($"Error while deserializing ({ex}), deleting file.");
+                                engine.CleanDir(TEST_FILE_DIR);
+                            }
+                            res = false;
+                            readFailed = true;
+                            break;
+                        case 'N':
+                        case 'n':
+                            City c = new City(350000, 100);
+                            engine.system.graph.Add(c);
+                            c.NodeCreation(engine.system.graph);
+                            res = false;
+                            break;
+                        default:
+                            Console.WriteLine("Please press Y or N");
+                            break;
+                    }
                 }
+            } else {
+                Console.WriteLine("No saved system found");
             }
+
             if (engine.system.graph.Count.Nodes == 0) {
-                Console.WriteLine("No saved system found, recreating...");
+                Console.WriteLine("Creating a new system");
 
                 City c = new City(350000, 100);
                 engine.system.graph.Add(c);
