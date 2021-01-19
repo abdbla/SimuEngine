@@ -30,6 +30,7 @@ namespace Implementation
             get; private set;
         } = new List<Action<Node, Graph, Graph>>();
 
+        public string Name;
 
 
         public void AddReqPossible(Func<Node, Graph, Graph, double> req)
@@ -45,22 +46,24 @@ namespace Implementation
             Outcome.Add(ev);
         }
 
-        public Event() { }
+        public Event(string name) { }
 
         public Event(Func<Node, Graph, Graph, double> reqPossible,
                      Func<Node, Graph, Graph, bool> reqGuaranteed,
-                     Action<Node, Graph, Graph> outcome)
+                     Action<Node, Graph, Graph> outcome,
+                     string name)
         {
             if (reqPossible != null) ReqPossible.Add(reqPossible);
             if (reqGuaranteed != null) ReqGuaranteed.Add(reqGuaranteed);
             Outcome.Add(outcome);
+            Name = name;
         }
 
         public static List<Event> InitializeEvents()
         {
             List<Event> personEvents = new List<Event>();
 
-            personEvents.Add(new Event());
+            personEvents.Add(new Event(""));
             personEvents[0].AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
                 if (!n.Statuses.Contains("Healthy")) return 0;
@@ -78,7 +81,7 @@ namespace Implementation
                 n.statuses.Add("Infected");
             });
 
-            personEvents.Add(new Event());
+            personEvents.Add(new Event(""));
             personEvents[1].AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
@@ -91,7 +94,7 @@ namespace Implementation
                 n.statuses.Add("Dead");
             });
 
-            personEvents.Add(new Event());
+            personEvents.Add(new Event(""));
             personEvents[2].AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
@@ -103,13 +106,23 @@ namespace Implementation
                 n.statuses.Add("Recovered");
             });
 
-            personEvents.Add(new Event());
+            personEvents.Add(new Event(""));
             personEvents[3].AddReqGuaranteed(delegate (Node n, Graph l, Graph w) {
                 return n.Statuses.Contains("Infected") ? true : false;
             });
             personEvents[3].AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.traits["Infected Time"]++;
             });
+
+            personEvents.Add(new Event(""));
+            personEvents[3].AddReqGuaranteed(delegate (Node n, Graph l, Graph w) {
+                return n.Statuses.Contains("Infected") ? true : false;
+            });
+            personEvents[3].AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.traits["Infected Time"]++;
+            });
+
+
 
             return personEvents;
         }
