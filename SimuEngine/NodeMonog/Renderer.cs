@@ -30,7 +30,7 @@ namespace NodeMonog
         Texture2D circle, pixel, tickButton, square, arrow;
         SpriteFont arial;
 
-        const int SEPARATION = 4;
+        const int SEPARATION = 3;
         readonly static SimulationParams SIMULATION_PARAMS = new SimulationParams(0.8f, 0.5f, 0.3f, 0.4f);
 
         int dragtimer = 0;
@@ -503,7 +503,7 @@ namespace NodeMonog
                             {
                                 engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
                                 history.Add(new GameState(masterGraph));
-                                UpdateHud();
+                                //UpdateHud();
                             };
                             updateTask = Task.Run(action);
                         }
@@ -681,16 +681,25 @@ namespace NodeMonog
             spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, (animation).ToString(), new Vector2(0, 32), Color.Black);
+
+            double sum = 0;
+            foreach (var v in currentSimulation.Simulation.DiffVelocity().Values) {
+                var m = v.Magnitude();
+                sum += m * m;
+            }
+
+            sum = Math.Sqrt(sum);
+
             string simStatusString = currentSimulation.SimulationStatus.Status switch
             {
-                Status.Running => $"Running\ntotal energy: {currentSimulation.GetTotalEnergy()}" +
+                Status.Running => $"Running" +
                 $"\ntimestep: {currentSimulation.SimulationStatus.TimeStep}",
                 Status.IterationCap => "Iteration cap reached",
                 Status.MinimaReached => "Local minima reached",
                 Status.Idle => "idle",
                 Status.Cancelled => "Cancelled",
                 Status otherwise => $"This variant wasn't considered yet ({otherwise})",
-            };
+            } + $"\ndv: {sum}";
             try {
                 spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
             } catch {
@@ -714,7 +723,7 @@ namespace NodeMonog
                 }
             }
 
-
+            var dv = currentSimulation.Simulation.DiffVelocity();
 
             //for (int i = 0; i < visitedGraphs[historyIndex].Item1.Graph.Nodes.Count; i++)
             foreach (DrawNode currentDrawNode in currentSimulation.DrawNodes)
@@ -815,14 +824,22 @@ namespace NodeMonog
                    depth / 2 + 0.02f);
 
                 //Draws node text
-                if (zoomlevel > 0.35f)
+                if (zoomlevel > 0.35f || true)
                 {
                     Color fadeColour = Color.Black;
                     if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
+
+                    var p = currentSimulation.Simulation.physicsNodes[currentNode].Point.Velocity;
+                    var c =
+                        LabColor.LabToRgb(
+                        LabColor.LinearGradient(LabColor.RgbToLab(Color.Green), LabColor.RgbToLab(Color.Red),
+                        (float)(Math.Log10(Math.Min(dv[currentNode].Magnitude(), 1e4)) / 3))
+                    );
+
                     spriteBatch.DrawString(arial,
-                        currentNode.Name,
+                        string.Format("{0:f2}\ndv: {1:f3}", p.Magnitude(), dv[currentNode].Magnitude()),
                         CameraTransform(currentNodePosition + new Vector2(32 * (float)zoomlevel - (currentNode.Name.Length) * 8, 16 * (float)zoomlevel)),
-                        fadeColour,
+                        c,
                         0,
                         Vector2.Zero,
                         (float)(1 / zoomlevel / 32 + 1f),

@@ -164,6 +164,7 @@ namespace Implementation {
 
         public District(int population, int density) : base() {
             int idx = Interlocked.Increment(ref idCounter);
+            Name = $"District {idx}";
             traits["Population"] = population;
             traits["Density"] = density;
             SubGraph = new Graph();

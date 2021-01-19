@@ -5,16 +5,16 @@ using System.Diagnostics;
 using System.Data.Common;
 
 namespace Core.Physics {
-    [DebuggerDisplay("Position: {Point.Position.X} {Point.Position.Y}")]
+    [DebuggerDisplay("Acceleration: {Point.Acceleration.X} {Point.Acceleration.Y}")]
     public class PhysicsNode : Node {
         public float Mass { get; set; }
         public Point Point;
         public Node Inner { get; private set; }
         public bool Pinned;
-        public PhysicsNode(Node node) {
+        public PhysicsNode(Random rng, Node node) {
             Inner = node;
             Mass = 1.0f;
-            Point = new Point(RandomPosition());
+            Point = new Point(RandomPosition(rng));
             Name = node.Name;
         }
 
@@ -24,14 +24,14 @@ namespace Core.Physics {
             Point = new Point(initialPosition);
         }
 
-        public static Vector2 RandomPosition(double bound = 20.0) => new Vector2(rng, (-bound, bound));
+        public static Vector2 RandomPosition(Random rng, double bound = 20.0) => new Vector2(rng, (-bound, bound));
 
         public override void NodeCreation(Graph g, NodeCreationInfo info) {
             Inner.NodeCreation(g, info);
         }
 
         public void ApplyForce(Vector2 force) {
-            Point.Acceleration += force / Mass;
+            Point.Acceleration += force;
         }
     }
 
@@ -72,6 +72,7 @@ namespace Core.Physics {
             MapInterval(x, src.Lower, src.Upper, dst.Lower, dst.Upper);
     }
 
+    [DebuggerDisplay("({X}, {Y})")]
     public struct Vector2 {
         public static readonly Vector2 Zero = new Vector2(0.0, 0.0);
 
@@ -92,11 +93,11 @@ namespace Core.Physics {
             Y = y;
         }
 
-        public Vector2(NodeRandom rng, Interval xInterval, Interval yInterval) :
+        public Vector2(Random rng, Interval xInterval, Interval yInterval) :
             this(new Interval(0, 1).To(xInterval, rng.NextDouble()),
                  new Interval(0, 1).To(yInterval, rng.NextDouble())) { }
 
-        public Vector2(NodeRandom rng, Interval interval) : this(rng, interval, interval) { }
+        public Vector2(Random rng, Interval interval) : this(rng, interval, interval) { }
 
         public static Vector2 operator +(Vector2 v, Vector2 u) => new Vector2(v.X + u.X, v.Y + u.Y);
 
@@ -116,8 +117,11 @@ namespace Core.Physics {
 
         public Vector2 Normalize() {
             float m = Magnitude();
+            if (m == 0.0) throw new SystemException("Tried to normalize a zero vector");
             return this * (1 / m);
         }
+
+        public bool IsNaN() => double.IsNaN(X) || double.IsNaN(Y);
 
         public override string ToString() {
             return $"({X}, {Y})";
@@ -179,7 +183,7 @@ namespace Core.Physics {
         public float Threshold;
         public float Gravity;
         public bool WithinThreshold;
-        private Random rng;
+        private Random rng = new Random();
 
         public Vector2 Origin { get; set; } = Vector2.Zero;
 
@@ -200,20 +204,22 @@ namespace Core.Physics {
             Damping = @params.damping;
             Gravity = @params.gravity;
             Threshold = 0f;
+            rng = new Random();
             var physicsGraph = new Graph();
 
             var nodeMap = new Dictionary<Node, PhysicsNode>();
             foreach (var node in graph.Nodes) {
-                var physicsNode = new PhysicsNode(node);
+                var physicsNode = new PhysicsNode(rng, node);
                 physicsGraph.Add(physicsNode);
                 nodeMap.Add(node, physicsNode);
             }
 
             physicsNodes = nodeMap;
-            rng = new Random();
 
             foreach (PhysicsNode node in nodeMap.Values) {
                 foreach ((var conn1, var conn2, Node other) in graph.GetNeighbors(node.Inner)) {
+                    if (other == node.Inner) { continue; }
+
                     PhysicsNode node2 = nodeMap[other];
                     if (physicsGraph.TryGetDirectedConnection(node2, node, out Connection conn)) {
                         var spring = (Spring)conn;
@@ -253,7 +259,8 @@ namespace Core.Physics {
 
             var nodeMap = new Dictionary<Node, PhysicsNode>();
             foreach (var node in includedNodes) {
-                var physicsNode = new PhysicsNode(node);
+                if (nodeMap.ContainsKey(node)) Console.WriteLine("wtffffffffffffffffffffffffffff");
+                var physicsNode = new PhysicsNode(rng, node);
                 physicsGraph.Add(physicsNode);
                 nodeMap.Add(node, physicsNode);
             }
@@ -290,13 +297,16 @@ namespace Core.Physics {
                 }
             }
 
-            Graph = physicsGraph;
+            var removed = springs.RemoveAll((s) => s.n1 == s.n2);
 
+            if (removed > 0) Console.WriteLine($"!!!!!! # Cringe: {removed} !!!!!!");
+
+            Graph = physicsGraph;
         }
 
         public void Reset() {
             foreach (PhysicsNode pn in Graph.Nodes.Cast<PhysicsNode>()) {
-                pn.Point.Position = PhysicsNode.RandomPosition();
+                pn.Point.Position = PhysicsNode.RandomPosition(rng);
 
                 pn.Point.Velocity = Vector2.Zero;
             }
@@ -429,11 +439,9 @@ namespace Core.Physics {
                     smallestY = p;
                 }
 
-                bottomLeft.X = Math.Min(p.X, bottomLeft.X);
-                bottomLeft.Y = Math.Min(p.Y, bottomLeft.Y);
+                bottomLeft = new Vector2(Math.Min(p.X, bottomLeft.X), Math.Min(p.Y, bottomLeft.Y));
 
-                topRight.X = Math.Max(p.X, topRight.X);
-                topRight.Y = Math.Max(p.Y, topRight.Y);
+                topRight = new Vector2(Math.Max(p.X, topRight.X), Math.Max(p.Y, topRight.Y));
             }
 
             return (bottomLeft, topRight);
@@ -445,6 +453,8 @@ namespace Core.Physics {
                 foreach (var n2 in Graph.Nodes.Cast<PhysicsNode>()) {
                     if (ReferenceEquals(n1, n2)) {
                         continue;
+                    } else if (ReferenceEquals(n1.Point, n2.Point)) {
+                        throw new SystemException("What the actual fuck");
                     }
 
                     var p2 = n2.Point;
@@ -468,6 +478,7 @@ namespace Core.Physics {
             foreach (var spring in springs) {
                 var n1 = spring.n1;
                 var n2 = spring.n2;
+                if (ReferenceEquals(n1, n2)) continue;
                 var d = spring.n1.Point.Position - spring.n2.Point.Position;
                 var dist = d.Magnitude();
                 //dist -= spring.Length;
@@ -528,8 +539,59 @@ namespace Core.Physics {
                     || n.Point.Position.X != n.Point.Position.X
                     || n.Point.Position.Y != n.Point.Position.Y) {
 #pragma warning restore CS1718 // Comparison made to same variable
-                    n.Point.Position = PhysicsNode.RandomPosition();
+                    n.Point.Position = PhysicsNode.RandomPosition(rng);
                 }
+            }
+        }
+
+        public bool AnyNans() {
+            foreach (PhysicsNode n in physicsNodes.Values) {
+                Vector2 p, v, a;
+                p = n.Point.Position;
+                v = n.Point.Velocity;
+                a = n.Point.Acceleration;
+
+                bool ret = false;
+
+                if (p.IsNaN()) {
+                    Console.WriteLine($"!!!!!!! Cringe warning on position of {n.Inner.Name}");
+                    ret = true;
+                }
+
+                if (v.IsNaN()) {
+                    Console.WriteLine($"!!!!!!! Cringe warning on velocity of {n.Inner.Name}");
+                    ret = true;
+                }
+
+                if (a.IsNaN()) {
+                    Console.WriteLine($"!!!!!!! Cringe warning on acceleration of {n.Inner.Name}");
+                    ret = true;
+                }
+
+                if (ret) return true;
+            }
+
+            return false;
+        }
+
+        public Dictionary<Node, Vector2> DiffVelocity() {
+            var dv = new Dictionary<Node, Vector2>();
+
+            ApplyCoulombsLaw();
+            ApplyHookesLaw();
+            AttractToCenter();
+            
+            foreach (var n in physicsNodes.Values) {
+                dv[n.Inner] = n.Point.Acceleration * Damping;
+                n.Point.Acceleration = Vector2.Zero;
+            }
+
+            return dv;
+        }
+
+        public void ZeroAccel() {
+            foreach (var pn in physicsNodes.Values) {
+                pn.Point.Acceleration = Vector2.Zero;
             }
         }
 
@@ -540,7 +602,8 @@ namespace Core.Physics {
             AttractToCenter();
             UpdateVelocity(timeStep);
 
-            WithinThreshold = GetTotalEnergy() <= Threshold;
+            var total = GetTotalEnergy();
+            WithinThreshold = total <= Threshold && false;
         }
     }
 }

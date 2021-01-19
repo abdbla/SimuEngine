@@ -125,7 +125,6 @@ namespace NodeMonog {
             // }
 
             this.Graph = graph;
-
             neighbors = this.Graph.GetNeighborsDegrees(selectedNode, degrees - 1).Take(MAXNODES).ToList();
             Simulation = new Simulation(this.Graph, @params, neighbors
                 .Select(x => x.Item1)
@@ -239,7 +238,7 @@ namespace NodeMonog {
             savedState ??= new SimulationTaskState((float)initialStep);
             
             lock (Simulation) {
-                Simulation.Advance(savedState.TimeStep);
+                Simulation.Advance(0.01f);
             }
 
             savedState.TimeStep = (float)timeStepFunction(savedState.IterationCount++,
@@ -277,20 +276,26 @@ namespace NodeMonog {
 
                     float total = Simulation.GetTotalEnergy();
                     lock (Simulation) {
-                        Simulation.Advance(timeStep);
+                        Simulation.Advance(0.01f);
                         if (Simulation.WithinThreshold) {
                             status.Status = Status.MinimaReached;
                             return;
                         }
 
+                        double dv_mag = 0;
+                        foreach (var v in Simulation.DiffVelocity().Values) {
+                            dv_mag += v.Magnitude() * v.Magnitude();
+                        }
+                        dv_mag = Math.Sqrt(dv_mag);
+
                         var newTotal = Simulation.GetTotalEnergy();
-                        if (newTotal / total > 1.5 && total != 0) {
-                            Console.WriteLine($"Warning: newTotal / total = {newTotal / total}");
-                            if (newTotal / total > 100.0) {
-                                Console.WriteLine($"Severe warning: newTotal / total = {newTotal / total}, stopping.");
-                                // status.Status = Status.Cancelled;
-                                // return;
-                            }
+                        if (dv_mag > 10000) {
+                            Console.WriteLine($"\tSevere warning: dv = {dv_mag}, stopping.");
+                            status.Status = Status.Cancelled;
+                            return;
+                        } else if (dv_mag > 1e4) {
+                            Console.WriteLine($"\tWarning: dv = {dv_mag}");
+
                         }
                         total = newTotal;
                     }
