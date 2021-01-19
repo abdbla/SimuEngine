@@ -19,7 +19,8 @@ namespace Implementation {
             List<Task<District>> districtCreationTasks = new List<Task<District>>();
 
             for (int i = 0; i < DISTRICT_AMOUNT; i++) {
-                if (i != 16) tempPopulation /= 2;
+                if (i < 2) tempPopulation /= 2;
+                else tempPopulation = (traits["Population"] - 262500) / 13;
                 int n = rng.Next(traits["Density"] - 10, traits["Density"] + 11);
                 districtCreationTasks.Add(
                     Task.Run(() => { int x = i; return new District(tempPopulation, n); }));  ;
@@ -61,6 +62,8 @@ namespace Implementation {
             int NUM_FAMILIES = traits["Population"] / 5;
             int NUM_WORK_GROUPS = traits["Population"] / 200;
             int NUM_FRIEND_GROUPS = traits["Population"] / 4;
+
+            if (NUM_WORK_GROUPS == 0) NUM_WORK_GROUPS = 1;
 
             Dictionary<Person, PersonGroup> familyPairs = new Dictionary<Person, PersonGroup>();
             Dictionary<Person, PersonGroup> workPairs = new Dictionary<Person, PersonGroup>();
@@ -118,9 +121,9 @@ namespace Implementation {
                     if (tempGroup.members.Count > tempAmount) break;
                 }
             }
-            for (int i = 0; i < NUM_PEOPLE; i++) {
-                if (!familyPairs[(Person)g.Nodes[i]].statuses.Contains("Initialized")) {
-                    PersonGroup family = familyPairs[(Person)g.Nodes[i]];
+            foreach (Person currentPerson in g.Nodes.Cast<Person>()) {
+                if (!familyPairs[currentPerson].statuses.Contains("Initialized")) {
+                    PersonGroup family = familyPairs[currentPerson];
                     Person t1 = (Person)family.members[0];
                     Person t2 = (Person)family.members[1];
                     for (int k = 0; k < family.members.Count; k++) {
@@ -138,31 +141,31 @@ namespace Implementation {
                     }
                     family.statuses.Add("Initialized");
                 }
-                foreach (var person in familyPairs[(Person)g.Nodes[i]].members) {
-                    if (person != g.Nodes[i] && g.GetDirectedConnection(person, g.Nodes[i]) == null) {
-                        g.AddConnection(person, g.Nodes[i], new PersonConnection("Family"));
+                foreach (var person in familyPairs[currentPerson].members) {
+                    if (person != currentPerson && g.GetDirectedConnection(person, currentPerson) == null) {
+                        g.AddConnection(person, currentPerson, new PersonConnection("Family"));
                     }
                 }
                 for (int j = 0; j < rng.Next(2, 8); j++) {
-                    int iTemp = rng.Next(0, workPairs[(Person)g.Nodes[i]].members.Count);
-                    if (g.Nodes[iTemp] != g.Nodes[i] && g.GetDirectedConnection(workPairs[(Person)g.Nodes[i]].members[iTemp], g.Nodes[i]) != null) {
-                        g.AddConnection(g.Nodes[i], workPairs[(Person)g.Nodes[i]].members[iTemp], new PersonConnection("Work"));
+                    int iTemp = rng.Next(0, workPairs[currentPerson].members.Count);
+                    if (g.Nodes[iTemp] != currentPerson && g.GetDirectedConnection(workPairs[currentPerson].members[iTemp], currentPerson) != null) {
+                        g.AddConnection(currentPerson, workPairs[currentPerson].members[iTemp], new PersonConnection("Work"));
                     }
                 }
-                foreach (var person in friendPairs[(Person)g.Nodes[i]].Item1.members) {
+                foreach (var person in friendPairs[currentPerson].Item1.members) {
                     if (Node.rng.Next(0, 3) == 0) {
-                        g.AddConnection(person, g.Nodes[i], new PersonConnection("Friend"));
+                        g.AddConnection(person, currentPerson, new PersonConnection("Friend"));
                     }
                 }
-                foreach (var person in friendPairs[(Person)g.Nodes[i]].Item2.members) {
+                foreach (var person in friendPairs[currentPerson].Item2.members) {
                     if (Node.rng.Next(0, 3) == 0) {
-                        g.AddConnection(person, g.Nodes[i], new PersonConnection("Friend"));
+                        g.AddConnection(person, currentPerson, new PersonConnection("Friend"));
                     }
                 }
                 for (int j = 0; j < rng.Next(2, 6); j++) {
                     int iTemp = rng.Next(0, NUM_PEOPLE);
-                    if (g.Nodes[iTemp] != g.Nodes[i] && g.GetDirectedConnection(g.Nodes[iTemp], g.Nodes[i]) != null) {
-                        g.AddConnection(g.Nodes[i], g.Nodes[iTemp], new PersonConnection("Acquiantance"));
+                    if (g.Nodes[iTemp] != currentPerson && g.GetDirectedConnection(g.Nodes[iTemp], currentPerson) != null) {
+                        g.AddConnection(currentPerson, g.Nodes[iTemp], new PersonConnection("Acquiantance"));
                     }
                 }
             }
