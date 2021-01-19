@@ -47,6 +47,40 @@ namespace Implementation {
             return ev;
         }
 
+        static Event WearingMask()
+        {
+            var ev = new Event(delegate (Node n, Graph l, Graph w) {
+                if (n.Statuses.Contains("WearingMask")) return 0;
+                else return n.Traits["Awareness"] / 100;
+            }, null, delegate (Node n, Graph l, Graph w) {
+                foreach(PersonConnection c in n.connections)
+                {
+                    c.PhysicalProximity -= 20;
+                }
+                n.statuses.Add("WearingMask");
+            });
+            return ev;
+        }
+        static Event RemovinggMask()
+        {
+            var ev = new Event(delegate (Node n, Graph l, Graph w) {
+                if (n.Statuses.Contains("WearingMask")) return n.Traits["Awareness"] / 1000;
+                else return 0;
+            }, null, delegate (Node n, Graph l, Graph w) {
+                foreach (PersonConnection c in n.connections)
+                {
+                    c.PhysicalProximity += 20;
+                }
+                n.statuses.Remove("WearingMask");
+            });
+            return ev;
+        }
+
+
+
+
+
+
         static Event RecoveryEvent() {
             var ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {

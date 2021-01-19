@@ -127,6 +127,7 @@ namespace Implementation {
                 traits.Add("Hygiene", rng.Next(1, 101));
                 traits.Add("Age", rng.Next(1, 101));
                 traits.Add("Infected Time", 0);
+                traits.Add("Awareness", 0);
                 if (rng.NextDouble() <= 0.3) {
                     statuses.Add("Asthmatic");
                 }
