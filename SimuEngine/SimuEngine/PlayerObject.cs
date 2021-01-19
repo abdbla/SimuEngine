@@ -28,19 +28,17 @@ namespace SimuEngine
             }
         }
 
-        public void Serialize(string filepath) {
-            using (FileStream fs = File.OpenWrite(filepath)) {
-                var bf = new BinaryFormatter();
-                bf.Serialize(fs, this);
-            }
+        public static implicit operator PartialPlayerObject(PlayerObject player) {
+            return new PartialPlayerObject(player.localGraph, player.worldGraph, player.selectedNode);
         }
 
-        public static PlayerObject Deserialize(string filepath) {
-            using (FileStream fs = File.OpenRead(filepath)) {
-                var bf = new BinaryFormatter();
-                return (PlayerObject)bf.Deserialize(fs);
-            }
+        public void Serialize(string filepath) {
+            ((PartialPlayerObject)this).Serialize(filepath);
         }
+
+        public static PartialPlayerObject Deserialize(string filepath) => PartialPlayerObject.Deserialize(filepath);
+        public static PlayerObject Deserialize(string filepath, List<(string, Event)> actions)
+            => new PlayerObject(PartialPlayerObject.Deserialize(filepath), actions);
 
         public void SelectNode(Node n) {
             selectedNode = n;
@@ -72,6 +70,39 @@ namespace SimuEngine
             localGraph = _localGraph;
             worldGraph = _worldGraph;
             actions = _actions;
+        }
+
+        public PlayerObject(PartialPlayerObject part, List<(string, Event)> _actions) {
+            localGraph = part.localGraph;
+            worldGraph = part.worldGraph;
+            selectedNode = part.selectedNode;
+            actions = _actions;
+        }
+    }
+
+    [Serializable]
+    public class PartialPlayerObject {
+        public Graph localGraph, worldGraph;
+        public Node selectedNode;
+
+        public PartialPlayerObject(Graph lg, Graph wg, Node sn) {
+            localGraph = lg;
+            worldGraph = wg;
+            selectedNode = sn;
+        }
+
+        public void Serialize(string filepath) {
+            using (FileStream fs = File.OpenWrite(filepath)) {
+                var bf = new BinaryFormatter();
+                bf.Serialize(fs, this);
+            }
+        }
+
+        public static PartialPlayerObject Deserialize(string filepath) {
+            using (FileStream fs = File.OpenRead(filepath)) {
+                var bf = new BinaryFormatter();
+                return (PartialPlayerObject)bf.Deserialize(fs);
+            }
         }
     }
 }
