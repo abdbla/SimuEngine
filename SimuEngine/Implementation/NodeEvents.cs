@@ -80,7 +80,6 @@ namespace Implementation
                 }
                 n.statuses.Remove("WearingMask");
             });
-            ev.RequiredStatuses = new HashSet<string>() { "WearingMask" };
             return ev;
         }
         static Event IsolationEvent()
@@ -103,7 +102,7 @@ namespace Implementation
         }
         static Event RecoveryEvent()
         {
-            var ev = new Event();
+            Event ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w)
             {
                 double chance = 0;
@@ -121,18 +120,32 @@ namespace Implementation
 
             return ev;
         }
+         
+        static Event LocalWork()
+        {
+            Event ev = new Event();
+            ev.AddReqGuaranteed(delegate (Node n, Graph l, Graph w)
+            {
+                return n.Statuses.Contains("Working") && !n.Statuses.Contains("Isolated");
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w)
+            {
+                InfectionEvent();
+            });
+            return ev;
+        }
+
         static Event InfectionTimeUpdateEvent()
         {
-            var ev = new Event();
+            Event ev = new Event();
             ev.AddReqGuaranteed(delegate (Node n, Graph l, Graph w)
             {
                 return n.Statuses.Contains("Infected");
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w)
             {
-                n.traits["Infected Time"]++;
+                InfectionEvent();
             });
-
             return ev;
         }
         public static List<Event> InitializeEvents()
@@ -144,7 +157,8 @@ namespace Implementation
                 InfectionTimeUpdateEvent(),
                 WearingMask(),
                 RemovinggMask(),
-                IsolationEvent()
+                IsolationEvent(),
+                LocalWork()
             };
 
             personEvents.Add(new Event());

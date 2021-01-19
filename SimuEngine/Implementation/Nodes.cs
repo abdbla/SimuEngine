@@ -24,7 +24,7 @@ namespace Implementation {
 
                 int n = rng.Next(traits["Density"] - 10, traits["Density"] + 11);
                 districtCreationTasks.Add(
-                    Task.Run(() => { int x = i; return new District(tempPopulation, n); }));  ;
+                    Task.Run(() => { return new District(tempPopulation, n); }));
             }
             Task.WaitAll(districtCreationTasks.ToArray());
             foreach (Task<District> dt in districtCreationTasks) {
@@ -60,9 +60,9 @@ namespace Implementation {
         int idx = ++idCounter;
         public override void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty) {
             int NUM_PEOPLE = traits["Population"];
-            int NUM_FAMILIES = traits["Population"] / 5;
-            int NUM_WORK_GROUPS = traits["Population"] / 200;
-            int NUM_FRIEND_GROUPS = traits["Population"] / 4;
+            int NUM_FAMILIES = traits["Population"];
+            int NUM_WORK_GROUPS = traits["Population"];
+            int NUM_FRIEND_GROUPS = traits["Population"];
 
             if (NUM_WORK_GROUPS == 0) NUM_WORK_GROUPS = 1;
 
@@ -89,7 +89,7 @@ namespace Implementation {
                     if (tempGroup.members.Count > tempAmount) break;
                 }
             }
-            for (int i = 0; i < NUM_FRIEND_GROUPS; i++) {
+            for (int i = 0; i < NUM_FRIEND_GROUPS + 1; i++) {
                 PersonGroup tempGroup = new PersonGroup("FRIENDS");
                 g.groups.Add(tempGroup);
                 int tempAmount = Node.rng.Next(2, 8);
@@ -123,7 +123,7 @@ namespace Implementation {
                 }
             }
             foreach (Person currentPerson in g.Nodes.Cast<Person>()) {
-                if (!familyPairs[currentPerson].statuses.Contains("Initialized")) {
+                if (!familyPairs[currentPerson].statuses.Contains("Initialized") && familyPairs[currentPerson].members.Count > 2) {
                     PersonGroup family = familyPairs[currentPerson];
                     Person t1 = (Person)family.members[0];
                     Person t2 = (Person)family.members[1];
