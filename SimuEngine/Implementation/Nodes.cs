@@ -60,6 +60,7 @@ namespace Implementation {
             for (int i = 0; i < NUM_PEOPLE; i++) {
                 Person p = new Person();
                 p.Name = i.ToString();
+                p.NodeCreation(SubGraph, NodeCreationInfo.SystemStart);
                 SubGraph.Add(p);
             }
             for (int i = 0; i < NUM_FAMILIES; i++) {
@@ -67,7 +68,7 @@ namespace Implementation {
                 g.groups.Add(tempGroup);
                 int tempAmount = Node.rng.Next(2, 8);
                 for (int j = 0; j < NUM_PEOPLE; j++) {
-                    if (!familyPairs.TryGetValue((Person)g.Nodes[i], out _)) {
+                    if (!familyPairs.TryGetValue((Person)g.Nodes[j], out _)) {
                         tempGroup.members.Add(g.Nodes[j]);
                         g.Nodes[j].groups.Add(tempGroup);
                         familyPairs[(Person)g.Nodes[j]] = tempGroup;
@@ -156,7 +157,6 @@ namespace Implementation {
                     }
                 }
             }
-            Console.WriteLine($"District {idx} finished.");
         }
 
         public District(int population, int density) : base() {
@@ -164,6 +164,7 @@ namespace Implementation {
             traits["Density"] = density;
             SubGraph = new Graph();
             NodeCreation(SubGraph);
+            Console.WriteLine($"District {idx} finished.");
         }
     }
 
