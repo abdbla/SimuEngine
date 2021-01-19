@@ -11,15 +11,15 @@ namespace Implementation {
     class PersonGroup : Group {
         static int id = 0;
         int idx;
-        public PersonGroup() : base() {
-            switch (Node.rng.Next(1, 5)) {
-                case 1:
+        public PersonGroup(string type) : base() {
+            switch (type.ToUpper()) {
+                case "FAMILY":
                     statuses.Add($"Family");
                     break;
-                case 2:
+                case "WORK":
                     statuses.Add($"Work");
                     break;
-                case 3:
+                case "FRIENDS":
                     statuses.Add($"Friends");
                     break;
                 default:

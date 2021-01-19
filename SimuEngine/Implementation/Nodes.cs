@@ -26,6 +26,7 @@ namespace Implementation {
             traits["Population"] = population;
             traits["Density"] = density;
             SubGraph = new Graph();
+            NodeCreation(SubGraph);
         }
     }
 
@@ -34,81 +35,68 @@ namespace Implementation {
     {
         public override void NodeCreation(Graph g, NodeCreationInfo info = NodeCreationInfo.Empty) {
             int NUM_PEOPLE = traits["Population"];
-            int NUM_GROUPS = 0;
+            int NUM_FAMILIES = traits["Population"] / 5;
+            int NUM_WORK_GROUPS = traits["Population"] / 200;
+            int NUM_FRIEND_GROUPS = traits["Population"] / 4;
 
-            List<Person> more = new List<Person>();
-            for (int i = 0; i < NUM_GROUPS; i++) {
-                g.groups.Add(new PersonGroup());
-            }
+            Dictionary<Person, PersonGroup> familyPairs = new Dictionary<Person, PersonGroup>();
+            Dictionary<Person, PersonGroup> workPairs = new Dictionary<Person, PersonGroup>();
+            Dictionary<Person, (PersonGroup, PersonGroup)> friendPairs = new Dictionary<Person, (PersonGroup, PersonGroup)>();
+
             for (int i = 0; i < NUM_PEOPLE; i++) {
-                GraphSystem s = engine.system;
-                s.Create<Person>(NodeCreationInfo.SystemStart);
-                Node n = g.Nodes[i];
-                more.Add((Person)n);
-                n.Name = i.ToString();
-                n.groups.Add(s.graph.groups[i % NUM_GROUPS]);
-                n.groups[0].members.Add(n);
+                Person p = new Person();
+                p.Name = i.ToString();
+                SubGraph.Add(p);
             }
-
-            Dictionary<Person, int> totalConns = new Dictionary<Person, int>();
-            Dictionary<Person, int> curConns = new Dictionary<Person, int>();
-            List<Person> remaining = new List<Person>();
-            List<bool> inters = new List<bool>();
-            remaining.AddRange(more);
-            foreach (Node node in more) { inters.Add(false); }
-
-            var rng = Node.rng;
-            for (int i = 0; i < more.Count; i++) {
-                totalConns[more[i]] = rng.Next(2, 7);
-                curConns[more[i]] = 0;
-            }
-
-            while (remaining.Count > 1) {
-                if (remaining.Count % 100000 == 0 && remaining.Count < NUM_PEOPLE) {
-                    Console.WriteLine($"Remaining: {remaining.Count}");
-                }
-
-                bool inter = false;
-                if (rng.NextDouble() <= 0.15) inter = true;
-                var x1 = rng.Next(remaining.Count);
-                if (inters[x1]) inter = false;
-                var x2 = rng.Next(remaining[x1].groups[0].members.Count);
-                if (inter) { x2 = rng.Next(remaining.Count); }
-                if (!inter && (remaining[x1] == remaining[x1].groups[0].members[x2])
-                    || (x1 == x2 && inter)) {
-                    continue;
-                }
-                var node1 = remaining[x1];
-                Person node2;
-                if (inter) {
-                    node2 = remaining[x2];
-                } else {
-                    node2 = (Person)remaining[x1].groups[0].members[x2];
-                }
-                string ctype = inter ? "Interconnection" : node2.groups[0].statuses[0];
-                engine.system.graph.AddConnection(node1, node2, new PersonConnection(ctype));
-                engine.system.graph.AddConnection(node2, node1, new PersonConnection(ctype));
-                if (inter) inters[x1] = true;
-                curConns[node1] += 1;
-                curConns[node2] += 1;
-                if (curConns[node1] == totalConns[node1]) {
-                    if (x1 < x2) {
-                        x2 -= 1;
+            for (int i = 0; i < NUM_FAMILIES; i++) {
+                PersonGroup tempGroup = new PersonGroup("FAMILY");
+                g.groups.Add(tempGroup);
+                int tempAmount = Node.rng.Next(2, 8);
+                for (int j = 0; j < NUM_PEOPLE; j++) {
+                    if (!familyPairs.TryGetValue((Person)g.Nodes[i], out _)) {
+                        tempGroup.members.Add(g.Nodes[j]);
+                        familyPairs[(Person)g.Nodes[j]] = tempGroup;
                     }
-                    remaining.RemoveAt(x1);
-                    inters.RemoveAt(x1);
+                    if (tempGroup.members.Count > tempAmount) break;
                 }
-                if (curConns[node2] == totalConns[node2]) {
-                    int b = remaining.FindIndex(n => n == node2);
-                    remaining.RemoveAt(b);
-                    inters.RemoveAt(b);
+            }
+            for (int i = 0; i < NUM_FRIEND_GROUPS; i++) {
+                PersonGroup tempGroup = new PersonGroup("FRIENDS");
+                g.groups.Add(tempGroup);
+                int tempAmount = Node.rng.Next(2, 8);
+                for (int j = 0; j < NUM_PEOPLE; j++) {
+                    (PersonGroup, PersonGroup) temp;
+                    friendPairs.TryGetValue((Person)g.Nodes[j], out temp);
+                    if (temp.Item2 == null && temp.Item1 != null) {
+                        tempGroup.members.Add(g.Nodes[j]);
+                        friendPairs[(Person)g.Nodes[j]] = (friendPairs[(Person)g.Nodes[j]].Item1, tempGroup);
+                    }
+                    if (!friendPairs.TryGetValue((Person)g.Nodes[j], out _)) {
+                        tempGroup.members.Add(g.Nodes[j]);
+                        friendPairs[(Person)g.Nodes[j]] = (tempGroup, null);
+                    }
+                    if (tempGroup.members.Count > tempAmount) break;
+                }
+            }
+            for (int i = 0; i < NUM_WORK_GROUPS; i++) {
+                PersonGroup tempGroup = new PersonGroup("WORK");
+                g.groups.Add(tempGroup);
+                int tempAmount = Node.rng.Next(2, 8);
+                for (int j = 0; j < NUM_PEOPLE; j++) {
+                    if (!workPairs.TryGetValue((Person)g.Nodes[j], out _)) {
+                        tempGroup.members.Add(g.Nodes[j]);
+                        workPairs[(Person)g.Nodes[j]] = tempGroup;
+                    }
+                    if (tempGroup.members.Count > tempAmount) break;
                 }
             }
         }
 
-        public District(int population, int density) {
+        public District(int population, int density) : base() {
             traits["Population"] = population;
             traits["Density"] = density;
+            SubGraph = new Graph();
+            NodeCreation(SubGraph);
         }
     }
 
@@ -127,6 +115,7 @@ namespace Implementation {
                 traits.Add("Hygiene", rng.Next(1, 101));
                 traits.Add("Age", rng.Next(1, 101));
                 traits.Add("Infected Time", 0);
+                traits.Add("Awareness", 0);
                 if (rng.NextDouble() <= 0.3) {
                     statuses.Add("Asthmatic");
                 }

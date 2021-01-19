@@ -40,7 +40,7 @@ namespace Implementation
             if (engine.system.graph.Count.Nodes == 0) {
                 Console.WriteLine("No saved system found, recreating...");
 
-                CreateGraphSystem(); // this doesn't exist
+                engine.system.graph.Add(new City(350000, 100));
 
                 Console.WriteLine("Finished initialization, serializing...");
                 try {
