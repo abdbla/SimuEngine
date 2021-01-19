@@ -32,7 +32,7 @@ namespace SimuEngine
 
             foreach (Node n in graph.Nodes) {
                 List<Event> posEvents = new List<Event>();
-                Random rng = Node.rng;
+                NodeRandom rng = Node.rng;
                 foreach (Event ev in events.GetEventList(n.GetType())) {
                     InvokeEvent(n, stack, ev, localGraph, worldGraph);
                 }

@@ -6,10 +6,41 @@ using System.Dynamic;
 using System.Runtime.Serialization;
 
 namespace Core {
+    public class NodeRandom {
+        Random _instance = new Random();
+        public NodeRandom() {}
+        NodeRandom(Random rng) {
+            _instance = rng;
+        }
+
+        public int Next(int low, int high) {
+            lock (_instance) {
+                return _instance.Next(low, high);
+            }
+        }
+
+        public int Next(int n) {
+            lock (_instance) {
+                return _instance.Next(n);
+            }
+        }
+
+        public double NextDouble() {
+            lock (_instance) {
+                return _instance.NextDouble();
+            }
+        }
+
+        public static implicit operator NodeRandom(Random rng) {
+            return new NodeRandom(rng);
+        }
+    }
+
     [DebuggerDisplay("Name: {Name}")]
     [Serializable]
     public abstract class Node {
-        public static Random rng = new Random(); 
+        public static NodeRandom rng = new NodeRandom();
+
         //Internal fields, only meant to be accessed by internal functions, such as Events and the PlayerObject.
         public Dictionary<string, int> traits;
         public List<string> statuses;

@@ -92,11 +92,11 @@ namespace Core.Physics {
             Y = y;
         }
 
-        public Vector2(Random rng, Interval xInterval, Interval yInterval) :
+        public Vector2(NodeRandom rng, Interval xInterval, Interval yInterval) :
             this(new Interval(0, 1).To(xInterval, rng.NextDouble()),
                  new Interval(0, 1).To(yInterval, rng.NextDouble())) { }
 
-        public Vector2(Random rng, Interval interval) : this(rng, interval, interval) { }
+        public Vector2(NodeRandom rng, Interval interval) : this(rng, interval, interval) { }
 
         public static Vector2 operator +(Vector2 v, Vector2 u) => new Vector2(v.X + u.X, v.Y + u.Y);
 
