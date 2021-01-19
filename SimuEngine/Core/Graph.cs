@@ -14,6 +14,7 @@ namespace Core {
     public class Graph {
         int connId = 0;
 
+        // TODO: Add tratis and statuses, maybe
         public IEnumerable<Connection> Connections { get => adjacencyMatrix.Values; }
         private List<Node> nodes;
         public ReadOnlyCollection<Node> Nodes => nodes.AsReadOnly();
