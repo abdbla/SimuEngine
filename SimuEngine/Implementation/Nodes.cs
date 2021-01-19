@@ -26,6 +26,7 @@ namespace Implementation {
             traits["Population"] = population;
             traits["Density"] = density;
             SubGraph = new Graph();
+            NodeCreation(SubGraph);
         }
     }
 
@@ -66,7 +67,7 @@ namespace Implementation {
                 for (int j = 0; j < NUM_PEOPLE; j++) {
                     (PersonGroup, PersonGroup) temp;
                     friendPairs.TryGetValue((Person)g.Nodes[j], out temp);
-                    if (temp.Item2 == null) {
+                    if (temp.Item2 == null && temp.Item1 != null) {
                         tempGroup.members.Add(g.Nodes[j]);
                         friendPairs[(Person)g.Nodes[j]] = (friendPairs[(Person)g.Nodes[j]].Item1, tempGroup);
                     }
@@ -91,9 +92,10 @@ namespace Implementation {
             }
         }
 
-        public District(int population, int density) {
+        public District(int population, int density) : base() {
             traits["Population"] = population;
             traits["Density"] = density;
+            SubGraph = new Graph();
             NodeCreation(SubGraph);
         }
     }
