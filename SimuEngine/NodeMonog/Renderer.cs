@@ -572,6 +572,12 @@ namespace NodeMonog
         public void GoIntoAGraph(Node enteredNode) {
             Graph g = enteredNode.SubGraph;
 
+            if (g == null) {
+                var errorTask = MessageBox.Show("Error", "There is no subgraph on this node!", new[] { "ok" });
+                errorTask.Wait();
+                return;
+            }
+
             PhysicsWrapper s = ranSimulations.Find(x => x.Graph == g) ?? new PhysicsWrapper(g, g.Nodes[0], degrees: SEPARATION, SIMULATION_PARAMS);
 
             visitedGraphs.Add((s, enteredNode.Name));
