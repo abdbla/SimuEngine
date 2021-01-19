@@ -119,7 +119,6 @@ namespace Implementation
 
             return ev;
         }
-
         static Event InfectionTimeUpdateEvent()
         {
             var ev = new Event();
@@ -134,10 +133,9 @@ namespace Implementation
 
             return ev;
         }
-
         public static List<Event> InitializeEvents()
         {
-            return new List<Event>() {
+            List<Event> personEvents = new List<Event>() {
                 InfectionEvent(),
                 DeathEvent(),
                 RecoveryEvent(),
@@ -146,6 +144,9 @@ namespace Implementation
                 RemovinggMask(),
                 IsolationEvent()
             };
+
+            personEvents.Add(new Event());
+            return personEvents;
         }
     }
 }
