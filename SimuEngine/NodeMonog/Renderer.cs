@@ -11,6 +11,7 @@ using GeonBit.UI;
 using GeonBit.UI.Entities;
 using SimulationParams = Core.Physics.SimulationParams;
 using System.Xml.Schema;
+using System.Text;
 
 namespace NodeMonog
 {
@@ -31,7 +32,7 @@ namespace NodeMonog
         SpriteFont arial;
 
         const int SEPARATION = 3;
-        readonly static SimulationParams SIMULATION_PARAMS = new SimulationParams(0.8f, 0.5f, 0.3f, 0.4f);
+        readonly static SimulationParams SIMULATION_PARAMS = new SimulationParams(0.8f, 0.5f, 0.8f, 0.2f);
 
         int dragtimer = 0;
         Point cameraPosition = Point.Zero, cameraGoal = Point.Zero;
@@ -44,6 +45,8 @@ namespace NodeMonog
         int animation = 0;
 
         const int circleDiameter = 64;
+
+        List<(string, Func<string>)> debugStats;
 
 
         DrawNode selectedNode { get => currentSimulation.SelectedDrawNode; set => currentSimulation.SelectedDrawNode = value; }
@@ -195,6 +198,47 @@ namespace NodeMonog
             // remove this line if you wanna stop the async hack stuff, and advance the simulation elsewhere
             currentSimulation.StartSimulation();
 
+            debugStats = new List<(string, Func<string>)>();
+
+            debugStats.Add(("Simulation status", () => currentSimulation.SimulationStatus.Status switch {
+                Status.Running => $"Running" +
+                $"\ntimestep: {currentSimulation.SimulationStatus.TimeStep}",
+                Status.IterationCap => "Iteration cap reached",
+                Status.MinimaReached => "Local minima reached",
+                Status.Idle => "idle",
+                Status.Cancelled => "Cancelled",
+                Status otherwise => $"This variant wasn't considered yet ({otherwise})",
+            }));
+
+            debugStats.Add(("Δv Magnitude", () =>
+                Math.Sqrt((from Δv in currentSimulation.Simulation.ΔV.Values
+                           select Δv.X * Δv.X + Δv.Y * Δv.Y).Sum()).ToString("f3")
+            ));
+
+            debugStats.Add(("Δv MAD", () => {
+                Core.Physics.Vector2 μ = Core.Physics.Vector2.Zero;
+                foreach (var Δv in currentSimulation.Simulation.ΔV.Values) {
+                    μ += Δv;
+                }
+                μ *= 1.0 / currentSimulation.Simulation.ΔV.Count;
+                double MAD = 0.0;
+                foreach (var Δv in currentSimulation.Simulation.ΔV.Values) {
+                    MAD += (Δv - μ).Magnitude();
+                }
+                MAD /= currentSimulation.Simulation.ΔV.Count;
+                return MAD.ToString("f3");
+            }));
+
+            debugStats.Add(("μ of |v|", () => {
+                double μ = 0;
+                foreach (var Δv in currentSimulation.Simulation.ΔV.Values) {
+                    μ += Δv.Magnitude();
+                }
+                μ *= 1.0 / currentSimulation.Simulation.ΔV.Count;
+                return μ.ToString("f3");
+            }));
+
+
             base.Initialize();
         }
 
@@ -238,12 +282,9 @@ namespace NodeMonog
                 drop.AddItem(entry.Key);
             }
             drop.OnValueChange += _ => {
-                if (drop.SelectedValue == "All")
-                {
+                if (drop.SelectedValue == "All") {
                     fittingPeople.Items = currentGraph.Nodes.Select(x => x.Name).ToArray();
-                }
-                else
-                {
+                } else {
                     fittingPeople.Items = currentGraph.FindAllNodes(x => x.statuses.Contains(drop.SelectedValue)).Select(x => x.Name).ToArray();
                 }
             };
@@ -528,7 +569,7 @@ namespace NodeMonog
                             {
                                 engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
                                 history.Add(new GameState(masterGraph));
-                                //UpdateHud();
+                                UpdateHud();
                             };
                             updateTask = Task.Run(action);
                         }
@@ -700,34 +741,28 @@ namespace NodeMonog
 
             int centerX = r.Width / 3;
 
+            string visitedGraphString = "";
+
             for (int k = 0; k < visitedGraphs.Count; k++) {
-                spriteBatch.DrawString(arial, visitedGraphs[k].Item2, new Vector2(centerX, k * 32), Color.Black);
+                visitedGraphString += visitedGraphs[k].Item2 + "\n";
             }
+            spriteBatch.DrawString(arial, visitedGraphString, new Vector2(centerX, 0), Color.Black);
 
             spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
 
             spriteBatch.DrawString(arial, (animation).ToString(), new Vector2(0, 32), Color.Black);
 
-            double sum = 0;
-            foreach (var v in currentSimulation.Simulation.DiffVelocity().Values) {
-                var m = v.Magnitude();
-                sum += m * m;
+
+            StringBuilder debugText = new StringBuilder();
+
+            foreach ((string debugField, Func<string> f) in debugStats) {
+                debugText.Append(debugField);
+                debugText.Append(": ");
+                debugText.AppendLine(f());
             }
 
-            sum = Math.Sqrt(sum);
-
-            string simStatusString = currentSimulation.SimulationStatus.Status switch
-            {
-                Status.Running => $"Running" +
-                $"\ntimestep: {currentSimulation.SimulationStatus.TimeStep}",
-                Status.IterationCap => "Iteration cap reached",
-                Status.MinimaReached => "Local minima reached",
-                Status.Idle => "idle",
-                Status.Cancelled => "Cancelled",
-                Status otherwise => $"This variant wasn't considered yet ({otherwise})",
-            } + $"\ndv: {sum}";
             try {
-                spriteBatch.DrawString(arial, simStatusString, new Vector2(0, 48), Color.Black);
+                spriteBatch.DrawString(arial, debugText.ToString(), new Vector2(0, 48), Color.Black);
             } catch {
             }
             if (showGraph) {
@@ -749,7 +784,7 @@ namespace NodeMonog
                 }
             }
 
-            var dv = currentSimulation.Simulation.DiffVelocity();
+            var dvs = currentSimulation.Simulation.ΔV;
 
             //for (int i = 0; i < visitedGraphs[historyIndex].Item1.Graph.Nodes.Count; i++)
             foreach (DrawNode currentDrawNode in currentSimulation.DrawNodes)
@@ -859,16 +894,16 @@ namespace NodeMonog
                     var c =
                         LabColor.LabToRgb(
                         LabColor.LinearGradient(LabColor.RgbToLab(Color.Green), LabColor.RgbToLab(Color.Red),
-                        (float)(Math.Log10(Math.Min(dv[currentNode].Magnitude(), 1e4)) / 3))
+                        (float)(Math.Log10(Math.Min(dvs[currentNode].Magnitude(), 1e4)) / 3))
                     );
 
                     spriteBatch.DrawString(arial,
-                        string.Format("{0:f2}\ndv: {1:f3}", p.Magnitude(), dv[currentNode].Magnitude()),
+                        string.Format("{0:f2}\ndv: {1:f3}", p.Magnitude(), dvs[currentNode].Magnitude()),
                         CameraTransform(currentNodePosition + new Vector2(32 * (float)zoomlevel - (currentNode.Name.Length) * 8, 16 * (float)zoomlevel)),
                         c,
                         0,
                         Vector2.Zero,
-                        (float)(1 / zoomlevel / 32 + 1f),
+                        Math.Min((float)(1 / zoomlevel / 32 + 1f), 1f),
                         SpriteEffects.None,
                         0.1f);
                 }

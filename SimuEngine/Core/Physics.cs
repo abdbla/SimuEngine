@@ -190,6 +190,7 @@ namespace Core.Physics {
         public Graph Graph { get; private set; }
         public Graph InnerGraph { get; private set; }
         public Dictionary<Node, PhysicsNode> physicsNodes;
+        public Dictionary<Node, Vector2> ΔV;
         private List<Spring> springs;
 
         [Obsolete]
@@ -601,6 +602,7 @@ namespace Core.Physics {
             ApplyHookesLaw();
             AttractToCenter();
             UpdateVelocity(timeStep);
+            ΔV = DiffVelocity();
 
             var total = GetTotalEnergy();
             WithinThreshold = total <= Threshold && false;
