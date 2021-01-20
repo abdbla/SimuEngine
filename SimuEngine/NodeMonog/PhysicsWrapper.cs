@@ -271,6 +271,7 @@ namespace NodeMonog {
                             savedState.IterationCount = i;
                             savedState.TimeStep = timeStep;
                         }
+                        
                         ct.ThrowIfCancellationRequested();
                     }
 

@@ -47,6 +47,8 @@ namespace NodeMonog
 
 
         DrawNode selectedNode { get => currentSimulation.SelectedDrawNode; set => currentSimulation.SelectedDrawNode = value; }
+        Connection selectedConnection;
+
         List<DrawNode> drawNodes { get => currentSimulation.DrawNodes.ToList(); set { } }
 
         List<GameState> history = new List<GameState>();
@@ -225,7 +227,6 @@ namespace NodeMonog
                 actions.panel.AddChild(subGraphButton);
             }
 
-
             group.panel.ClearChildren();
             SelectList fittingPeople = new SelectList();
             fittingPeople.Size = new Vector2(fittingPeople.Size.X, Window.ClientBounds.Height - 200);
@@ -269,10 +270,7 @@ namespace NodeMonog
             }
             connectionList.OnValueChange += delegate (Entity target)
             {
-                Node clickedNode = currentGraph.GetOutgoingConnections(selectedNode.node)[connectionList.SelectedIndex].Item2;
-                engine.player.SelectNode(clickedNode);
-                currentSimulation.SelectedNode = clickedNode;
-                Console.WriteLine();
+                selectedConnection = currentGraph.GetOutgoingConnections(selectedNode.node)[connectionList.SelectedIndex].Item1;
                 UpdateHud();
                 return;
             };
@@ -283,8 +281,35 @@ namespace NodeMonog
             person.panel.AddChild(p);
             person.panel.AddChild(connectionList);
 
+            if(selectedConnection != null) { 
+            Paragraph connectionTraitHeader = new Paragraph("Selected Connection:", scale: 1.20f);
+            connectionTraitHeader.WrapWords = false;
+            person.panel.AddChild(connectionTraitHeader);
+            SelectList cTraitList = new SelectList();
+            List<string> cTraitNames = new List<string>();
+            List<string> cTraitValues = new List<string>();
+            int cNameMaxWidth = 0;
+            int cValMaxWidth = 0;
+            foreach (var kv in selectedNode.node.Traits)
+            {
+                var traitVal = kv.Value.ToString();
+                cTraitNames.Add(kv.Key);
+                cTraitValues.Add(traitVal);
+                cNameMaxWidth = Math.Max(cNameMaxWidth, kv.Key.Length);
+                cValMaxWidth = Math.Max(cValMaxWidth, traitVal.Length);
+            }
+            foreach ((var name, var val) in cTraitNames.Zip(cTraitValues, (x, y) => (x, y)))
+            {
+                cTraitList.AddItem(name.PadRight(cNameMaxWidth + 1) + val.PadLeft(cValMaxWidth));
+            }
+            foreach (string status in selectedNode.node.Statuses)
+            {
+                cTraitList.AddItem(status);
+            }
 
-
+            person.panel.AddChild(cTraitList);
+            }
+            { 
             Paragraph traitHeader = new Paragraph("Traits:", scale: 1.20f);
             traitHeader.WrapWords = false;
             person.panel.AddChild(traitHeader);
@@ -308,7 +333,7 @@ namespace NodeMonog
             }
 
             person.panel.AddChild(traitList);
-
+            }
             //SCrolbar, if only
             //VerticalScrollbar scrollbar = new VerticalScrollbar(0, 10, Anchor.CenterRight);
             //scrollbar.
@@ -559,6 +584,7 @@ namespace NodeMonog
             animation += gameTime.ElapsedGameTime.Milliseconds;
 
             UserInterface.Active.Update(gameTime);
+
 
             oms = nms;
             okbs = nkbs;
