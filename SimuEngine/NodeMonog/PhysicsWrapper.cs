@@ -26,7 +26,7 @@ namespace NodeMonog {
     }
 
     class PhysicsWrapper {
-        const int MAXNODES = 100;
+        const int MAXNODES = 150;
 
         public Simulation Simulation;
         public Graph Graph;
@@ -107,25 +107,31 @@ namespace NodeMonog {
             foreach (Node n in graph.Nodes) {
                 biGraph.Add(n);
             }
+            #region Bigraph shit
+#if false
+            foreach (Node n1 in graph.Nodes) {
+                foreach (Node n2 in graph.Nodes) {
+                    if (n1 != n2) {
+                        if (graph.TryGetDirectedConnection(n1, n2, out var n1_n2)) {
+                            if (graph.TryGetDirectedConnection(n2, n1, out var n2_n1)) {
+                                biGraph.AddConnection(n1, n2, n1_n2);
+                                biGraph.AddConnection(n2, n1, n2_n1);
+                            } else {
+                                biGraph.AddConnection(n1, n2, n1_n2);
+                                biGraph.AddConnection(n2, n1, new DuplicatedConnection(n1_n2));
+                            }
+                        }
+                    }
+                }
+            }
+#endif
+#endregion
 
-            // foreach (Node n1 in graph.Nodes) {
-            //     foreach (Node n2 in graph.Nodes) {
-            //         if (n1 != n2) {
-            //             if (graph.TryGetDirectedConnection(n1, n2, out var n1_n2)) {
-            //                 if (graph.TryGetDirectedConnection(n2, n1, out var n2_n1)) {
-            //                     biGraph.AddConnection(n1, n2, n1_n2);
-            //                     biGraph.AddConnection(n2, n1, n2_n1);
-            //                 } else {
-            //                     biGraph.AddConnection(n1, n2, n1_n2);
-            //                     biGraph.AddConnection(n2, n1, new DuplicatedConnection(n1_n2));
-            //                 }
-            //             }
-            //         }
-            //     }
-            // }
-
-            this.Graph = graph;
-            neighbors = this.Graph.GetNeighborsDegrees(selectedNode, degrees - 1).Take(MAXNODES).ToList();
+            Graph = graph;
+            neighbors = (from ns in Graph.GetNeighborsDegrees(selectedNode, Degrees - 1)
+                         let sep = ns.Item2
+                         orderby sep ascending
+                         select ns).Take(MAXNODES).ToList();
             Simulation = new Simulation(this.Graph, @params, neighbors
                 .Select(x => x.Item1)
                 .Except(new[] { selectedNode })
@@ -140,7 +146,11 @@ namespace NodeMonog {
         }
 
         public void Update(Node newSelected) {
-            var newNeighbors = Graph.GetNeighborsDegrees(newSelected, Degrees - 1).Take(MAXNODES).ToList();
+            var newNeighbors = (from node in Graph.GetNeighborsDegrees(newSelected, Degrees - 1)
+                                let sep = node.Item2
+                                orderby sep ascending
+                                select node
+                                ).Take(MAXNODES).ToList();
             var newSet = new HashSet<Node>(newNeighbors.Select(x => x.Item1).Prepend(newSelected));
             var oldSet = new HashSet<Node>(neighbors.Select(x => x.Item1).Prepend(selectedNode));
 
@@ -282,19 +292,33 @@ namespace NodeMonog {
                             return;
                         }
 
-                        double dv_mag = 0;
-                        foreach (var v in Simulation.DiffVelocity().Values) {
-                            dv_mag += v.Magnitude() * v.Magnitude();
+
+
+                        double dvMagnitude = 0.0, dvMAD = 0.0;
+                        Vector2 dvAvg = Vector2.Zero;
+                        Dictionary<Node, Vector2> dvs = Simulation.DiffVelocity();
+
+                        foreach (Vector2 dv in dvs.Values) {
+                            double vMagSquared = dv.X * dv.X + dv.Y * dv.Y;
+
+                            dvMagnitude += vMagSquared;
+                            dvAvg += dv;
                         }
-                        dv_mag = Math.Sqrt(dv_mag);
+                        dvMagnitude = Math.Sqrt(dvMagnitude);
+                        dvAvg *= 1.0 / dvs.Count;
+
+                        foreach (Vector2 dv in dvs.Values) {
+                            dvMAD += (dv - dvAvg).Magnitude();
+                        }
+                        dvMAD /= dvs.Count;
 
                         var newTotal = Simulation.GetTotalEnergy();
-                        if (dv_mag > 10000) {
-                            Console.WriteLine($"\tSevere warning: dv = {dv_mag}, stopping.");
+                        if (dvMAD > 1e4) {
+                            Console.WriteLine($"\tSevere warning: dv = {dvMagnitude}, stopping.");
                             status.Status = Status.Cancelled;
                             return;
-                        } else if (dv_mag > 1e4) {
-                            Console.WriteLine($"\tWarning: dv = {dv_mag}");
+                        } else if (dvMagnitude > 1e4) {
+                            Console.WriteLine($"\tWarning: dv = {dvMagnitude}");
 
                         }
                         total = newTotal;
