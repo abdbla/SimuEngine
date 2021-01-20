@@ -166,6 +166,8 @@ namespace Core {
         /// <param name="target">the target node</param>
         /// <param name="conn">the type of connection to add</param>
         public void AddConnection(Node src, Node target, Connection conn) {
+            // if (src == target) { throw new SystemException("wtf"); }
+
             if (!connectionLists.ContainsKey(src)) {
                 connectionLists.Add(src, new List<Connection>());
             }

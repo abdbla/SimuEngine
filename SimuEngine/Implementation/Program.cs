@@ -22,61 +22,54 @@ namespace Implementation
 
             const string TEST_FILE_DIR = @"C:\Users\theodor.strom\SimuEngine\";
             bool readFailed = false;
+            bool createNew = false;
 
             if (engine.SaveExists(TEST_FILE_DIR)) {
                 Console.WriteLine("Found save file");
-                Console.Write("Do you wish to use the save file? (Y/N) ");
-                bool res = true;
-                while (res) {
-                    var response = Console.ReadKey();
-                    Console.WriteLine();
-                    switch (response.KeyChar) {
-                        case 'y':
-                        case 'Y':
-                            try {
-                                engine.Load(TEST_FILE_DIR, engine.player.Actions);
-                                Console.WriteLine("Deserialized from save file");
-                            } catch (OutOfMemoryException) {
-                                Console.WriteLine("Ran out of memory while deserializing");
-                                throw new SystemException("Ran out of memory while deserializing");
-                            } catch (SerializationException ex) {
-                                Console.WriteLine($"Error while deserializing ({ex}), deleting file.");
-                                engine.CleanDir(TEST_FILE_DIR);
-                            }
-                            res = false;
-                            readFailed = true;
-                            break;
-                        case 'N':
-                        case 'n':
-                            City c = new City(350000, 100);
-                            engine.system.graph.Add(c);
-                            c.NodeCreation(engine.system.graph);
-                            res = false;
-                            break;
-                        default:
-                            Console.WriteLine("Please press Y or N.");
-                            break;
+                bool useSave = YesNo("Do you wish to use the save?");
+
+                if (useSave) {
+                    try {
+                        engine.Load(TEST_FILE_DIR, engine.player.Actions);
+                        Console.WriteLine("Deserialized from save file");
+                    } catch (OutOfMemoryException e) {
+                        Console.WriteLine("Ran out of memory while deserializing");
+                        readFailed = true;
+                        throw new SystemException("Ran out of memory while deserializing", e);
+                    } catch (SerializationException ex) {
+                        Console.WriteLine($"Error while deserializing ({ex}), deleting file.");
+                        engine.CleanDir(TEST_FILE_DIR);
+                        readFailed = true;
                     }
+                } else {
+                    //City c = new City(350000, 100);
+                    //engine.system.graph.Add(c);
+                    //// c.NodeCreation(engine.system.graph);
+                    createNew = true;
                 }
             } else {
                 Console.WriteLine("No saved system found");
             }
 
-            if (engine.system.graph.Count.Nodes == 0) {
+            if (engine.system.graph.Count.Nodes == 0 || readFailed || createNew) {
                 Console.WriteLine("Creating a new system");
 
                 City c = new City(350000, 100);
                 engine.system.graph.Add(c);
-                c.NodeCreation(engine.system.graph);
+                // c.NodeCreation(engine.system.graph);
 
-                Console.WriteLine("Finished initialization, serializing...");
-                try {
-                    engine.Save(TEST_FILE_DIR);
-                    Console.WriteLine("Graph initialization complete");
-                } catch (IOException) {
-                    Console.WriteLine("IO error while serializing, won't keep going");
-                } catch (OutOfMemoryException) {
-                    Console.WriteLine("Ran out of memory while serializing, no serialisation");
+                bool ser = YesNo("Initialization finished, serialize?");
+
+                if (ser) {
+                    Console.WriteLine("Serializing...");
+                    try {
+                        engine.Save(TEST_FILE_DIR);
+                        Console.WriteLine("Graph initialization complete");
+                    } catch (IOException) {
+                        Console.WriteLine("IO error while serializing, won't keep going");
+                    } catch (OutOfMemoryException) {
+                        Console.WriteLine("Ran out of memory while serializing, no serialisation");
+                    }
                 }
             }
 
@@ -87,6 +80,25 @@ namespace Implementation
 
         static void CreateGraphSystem() {
             throw new SystemException("this isn't real");
+        }
+
+        static bool YesNo(string prompt) {
+            Console.Write(prompt + " (Y/N) ");
+            while (true) {
+                var k = Console.ReadKey();
+                Console.WriteLine();
+                switch (k.KeyChar) {
+                    case 'Y':
+                    case 'y':
+                        return true;
+                    case 'N':
+                    case 'n':
+                        return false;
+                    default:
+                        Console.Write("(Y)es or (N)o, please. ");
+                        break;
+                }
+            }
         }
 
         static Engine InitializeEngine() {

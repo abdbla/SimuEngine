@@ -11,16 +11,16 @@ namespace Core {
         public Dictionary<string, int> traits;
 
         //External properties, see Node.
-        public ReadOnlyDictionary<string, int> Traits {
-            get => new ReadOnlyDictionary<string, int>(traits);
+        public Dictionary<string, int> Traits {
+            get => traits ??= new Dictionary<string, int>();
         }
-        public ReadOnlyCollection<string> Statuses {
-            get => statuses.AsReadOnly();
+        public List<string> Statuses {
+            get => statuses ??= new List<string>();
         }
 
         public Connection() {
-            statuses = new List<string>();
-            traits = new Dictionary<string, int>();
+            statuses = null;
+            traits = null;
         }
 
         public virtual float Strength() => 0.0f;
