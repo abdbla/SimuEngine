@@ -416,7 +416,7 @@ namespace NodeMonog
             {
                 float damping = (float) Math.Pow(10f, ((float)sliderDamp.Value / 100) - 3);
                 currentSimulation.Simulation.Damping = damping;
-                sDampParagraph.Text = "Physics Damp: " + damping;
+                sDampParagraph.Text = "Physics Damp: " + damping.ToString("f3");
             };
             options.panel.AddChild(sliderDamp);
 
@@ -432,7 +432,7 @@ namespace NodeMonog
             {
                 float repulsion = (float)Math.Pow(10f, ((float)sliderRepulsion.Value / 100) - 3);
                 currentSimulation.Simulation.Repulsion = repulsion;
-                sRepulsionParagraph.Text = "Physics Rep: " + repulsion;
+                sRepulsionParagraph.Text = "Physics Rep: " + repulsion.ToString("f3");
             };
             options.panel.AddChild(sliderRepulsion);
 
@@ -445,7 +445,7 @@ namespace NodeMonog
             {
                 float gravity = (float)Math.Pow(10f, ((float)sliderGravity.Value / 100) - 3);
                 currentSimulation.Simulation.Gravity = gravity;
-                sGravityParagraph.Text = "Physics Grav: " + gravity;
+                sGravityParagraph.Text = "Physics Grav: " + gravity.ToString("f3");
             };
             options.panel.AddChild(sliderGravity);
 
@@ -458,7 +458,7 @@ namespace NodeMonog
             {
                 float stiffness = (float)Math.Pow(10f, ((float)sliderStiffness.Value / 100) - 3);
                 currentSimulation.Simulation.Stiffness = stiffness;
-                sStiffParagraph.Text = "Physics Stiff: " + stiffness;
+                sStiffParagraph.Text = "Physics Stiff: " + stiffness.ToString("f3");
             };
             options.panel.AddChild(sliderStiffness);
 
@@ -953,22 +953,19 @@ namespace NodeMonog
             Dictionary<string, List<int>> allStatuses = new Dictionary<string, List<int>>();
 
 
-            foreach (Node n in allNodes)
-               {
-                   foreach (string s in n.Statuses)
-                   {
-                       if (allTraits.Keys.Contains(s)) allTraits[s]++;
-                       else allTraits.Add(s, 1);
-                   }
-                   foreach(KeyValuePair<string,int> kvp in n.Traits)
-                {
+            foreach (Node n in allNodes) {
+                foreach (string s in n.Statuses) {
+                    if (allTraits.Keys.Contains(s)) allTraits[s]++;
+                    else allTraits.Add(s, 1);
+                }
+                foreach (KeyValuePair<string, int> kvp in n.Traits) {
                     if (allStatuses.Keys.Contains(kvp.Key)) allStatuses[kvp.Key].Add(kvp.Value);
                     else {
-                        List<int> x = new List<int>  { kvp.Value };
+                        List<int> x = new List<int> { kvp.Value };
                         allStatuses.Add(kvp.Key, x);
                     }
                 }
-               }
+            }
             
             this.allTraits = allTraits;
             this.allStatuses = allStatuses;
