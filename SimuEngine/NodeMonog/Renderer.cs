@@ -485,13 +485,14 @@ namespace NodeMonog
             save.panel.ClearChildren();
             save.panel.AddChild(new Paragraph("Enter path:"));
             TextInput pathBox = new TextInput(false);
-            pathBox.Value = @"% AppData %\SimuEngine";
+            pathBox.Value = @"%LocalAppData%\SimuEngine";
             save.panel.AddChild(pathBox);
 
             Button serializeButton = new Button("serialize");
             serializeButton.OnClick += x =>
             {
-                engine.SaveExists(pathBox.Value);
+                string saveDir = Environment.ExpandEnvironmentVariables(pathBox.Value);
+                engine.SaveExists(saveDir);
             };
             save.panel.AddChild(serializeButton);
         }
