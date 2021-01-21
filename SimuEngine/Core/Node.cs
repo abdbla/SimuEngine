@@ -19,6 +19,16 @@ namespace Core {
             }
         }
 
+        public int NextGaussian(int average, int stddev) {
+            lock (_instance) {
+                int output = 0;
+                for (int i = 0; i < 25; i++) {
+                    output += _instance.Next(1, 8);
+                }
+                return output;
+            }
+        }
+
         public int Next(int n) {
             lock (_instance) {
                 return _instance.Next(n);
