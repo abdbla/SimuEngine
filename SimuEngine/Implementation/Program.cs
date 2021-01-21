@@ -20,21 +20,23 @@ namespace Implementation
 
             //TODO: Create implementation running code
 
-            const string FILE_DIR = @"%AppData%\SimuEngine";
-            if (!Directory.Exists(FILE_DIR)) {
-                Directory.CreateDirectory(FILE_DIR);
+            string saveDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                @"SimuEngine");
+            if (!Directory.Exists(saveDir)) {
+                Directory.CreateDirectory(saveDir);
             }
 
             bool readFailed = false;
             bool createNew = false;
 
-            if (engine.SaveExists(FILE_DIR)) {
+            if (engine.SaveExists(saveDir)) {
                 Console.WriteLine("Found save file");
                 bool useSave = YesNo("Do you wish to use the save?");
 
                 if (useSave) {
                     try {
-                        engine.Load(FILE_DIR, engine.player.Actions);
+                        engine.Load(saveDir, engine.player.Actions);
                         Console.WriteLine("Deserialized from save file");
                     } catch (OutOfMemoryException e) {
                         Console.WriteLine("Ran out of memory while deserializing");
@@ -42,7 +44,7 @@ namespace Implementation
                         throw new SystemException("Ran out of memory while deserializing", e);
                     } catch (SerializationException ex) {
                         Console.WriteLine($"Error while deserializing ({ex}), deleting file.");
-                        engine.CleanDir(FILE_DIR);
+                        engine.CleanDir(saveDir);
                         readFailed = true;
                     }
                 } else {
@@ -68,7 +70,7 @@ namespace Implementation
                 if (ser) {
                     Console.WriteLine("Serializing...");
                     try {
-                        engine.Save(FILE_DIR);
+                        engine.Save(saveDir);
                         Console.WriteLine("Graph initialization complete");
                     } catch (IOException) {
                         Console.WriteLine("IO error while serializing, won't keep going");
