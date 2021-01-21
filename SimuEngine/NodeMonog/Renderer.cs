@@ -80,6 +80,7 @@ namespace NodeMonog
         TabData person;
         TabData stats;
         TabData options;
+        TabData save;
 
         //Options
         bool cameraLock = true;
@@ -166,7 +167,12 @@ namespace NodeMonog
             stats.button.AddChild(satsI);
             //stats.panel.PanelOverflowBehavior = PanelOverflowBehavior.VerticalScroll;
 
-            allTabs = new List<TabData>() { actions, group, person, options, stats };
+            save = tabs.AddTab("Save");
+            Image saveI = new Image(Content.Load<Texture2D>(@"Floppy"), size: size * 2.25f, anchor: Anchor.TopCenter, offset: offset);
+            saveI.ClickThrough = true;
+            save.button.AddChild(saveI);
+
+            allTabs = new List<TabData>() { actions, group, person, options, stats, save };
             foreach (var tab in allTabs)
             {
                 tab.button.ButtonParagraph.Visible = false;
@@ -331,7 +337,7 @@ namespace NodeMonog
             List<string> cTraitValues = new List<string>();
             int cNameMaxWidth = 0;
             int cValMaxWidth = 0;
-            foreach (var kv in selectedNode.node.Traits)
+            foreach (var kv in selectedConnection.traits)
             {
                 var traitVal = kv.Value.ToString();
                 cTraitNames.Add(kv.Key);
@@ -343,12 +349,13 @@ namespace NodeMonog
             {
                 cTraitList.AddItem(name.PadRight(cNameMaxWidth + 1) + val.PadLeft(cValMaxWidth));
             }
-            foreach (string status in selectedNode.node.Statuses)
+            if(selectedConnection.Statuses != null) { 
+            foreach (string status in selectedConnection.statuses)
             {
                 cTraitList.AddItem(status);
             }
-
-            person.panel.AddChild(cTraitList);
+                }
+                person.panel.AddChild(cTraitList);
             }
             { 
             Paragraph traitHeader = new Paragraph("Traits:", scale: 1.20f);
@@ -475,7 +482,20 @@ namespace NodeMonog
                 stats.panel.AddChild(new Paragraph(entry.Key + " average: " + entry.Value.Average()));
             }
 
+            save.panel.ClearChildren();
+            save.panel.AddChild(new Paragraph("Enter path:"));
+            TextInput pathBox = new TextInput(false);
+            pathBox.Value = @"% AppData %\SimuEngine";
+            save.panel.AddChild(pathBox);
+
+            Button serializeButton = new Button("serialize");
+            serializeButton.OnClick += x =>
+            {
+                engine.SaveExists(pathBox.Value);
+            };
+            save.panel.AddChild(serializeButton);
         }
+    
 
 
 
