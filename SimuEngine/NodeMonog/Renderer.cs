@@ -584,7 +584,7 @@ namespace NodeMonog
                         }
 
                         
-                        if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position) && (updateTask?.IsCompleted ?? true)) {
+                        if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position) && (updateTask?.IsCompleted ?? true) || Keyboard.GetState().IsKeyDown(Keys.T)) {
                             //The tickbutton is pressed
                             Action action = ()  =>
                             {
