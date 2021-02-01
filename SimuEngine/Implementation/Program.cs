@@ -80,8 +80,14 @@ namespace Implementation
                 }
             }
 
+            ExcelExport export = new ExcelExport();
+
             using (Renderer renderer = new Renderer(engine)) {
+
+                renderer.OnTickFinished += export.OnTick;
                 renderer.Run();
+                export.Save(new FileInfo(
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "excel_export.xlsx")));
             }
         }
 
