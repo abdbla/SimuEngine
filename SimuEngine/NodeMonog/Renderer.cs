@@ -27,6 +27,8 @@ namespace NodeMonog
 
         Random rng = new Random();
 
+        
+
         // hud elements:
         Texture2D circle, pixel, tickButton, square, arrow;
         SpriteFont arial;
@@ -49,7 +51,6 @@ namespace NodeMonog
         const int circleDiameter = 64;
 
         List<(string, Func<string>)> debugStats;
-
 
         DrawNode selectedNode { get => currentSimulation.SelectedDrawNode; set => currentSimulation.SelectedDrawNode = value; }
         Connection selectedConnection;
@@ -359,7 +360,7 @@ namespace NodeMonog
                 }
                 person.panel.AddChild(cTraitList);
             }
-            { 
+            {
             Paragraph traitHeader = new Paragraph("Traits:", scale: 1.20f);
             traitHeader.WrapWords = false;
             person.panel.AddChild(traitHeader);
@@ -474,14 +475,16 @@ namespace NodeMonog
 
             stats.panel.ClearChildren();
             stats.panel.AddChild(new Paragraph($"Ticks: {history.Count}"));
+            SelectList l = new SelectList(new Vector2(Window.ClientBounds.Width / 3 / 8 * 7, Window.ClientBounds.Height / 5 * 4));
+            stats.panel.AddChild(l);
             foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
             {
-                stats.panel.AddChild(new Paragraph(entry.Key + ": " + entry.Value));
+                l.AddItem(entry.Key + ": " + entry.Value);
             }
             stats.panel.AddChild(new Paragraph());
             foreach (KeyValuePair<string, List<int>> entry in new GameState(masterGraph).allStatuses)
             {
-                stats.panel.AddChild(new Paragraph(entry.Key + " average: " + entry.Value.Average()));
+                l.AddItem(entry.Key + " average: " + entry.Value.Average());
             }
 
             save.panel.ClearChildren();
@@ -974,7 +977,6 @@ namespace NodeMonog
 
             for (int i = 0; i < allNodes.Count; i++)
             {
-
                 if (allNodes[i].SubGraph != null) allNodes.AddRange(allNodes[i].SubGraph.Nodes);
             }
             
