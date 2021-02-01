@@ -187,11 +187,23 @@ namespace Implementation {
             if (info == NodeCreationInfo.SystemStart) {
                 statuses.Add("Healthy");
                 traits.Add("Hygiene", rng.Next(1, 101));
+                traits.Add("Immune Strength", rng.NextGaussian(100, 10));
+                traits.Add("Genetic Factor", rng.NextGaussian(100, 10));
+                traits.Add("Health", (int)(Math.Sqrt(rng.NextDouble()) * 100));
                 traits.Add("Age", rng.Next(1, 101));
-                traits.Add("Infected Time", 0);
                 traits.Add("Awareness", 0);
                 if (rng.NextDouble() <= 0.3) {
                     statuses.Add("Asthmatic");
+                    traits["Health"] -= 20;
+                }
+                if (rng.NextDouble() <= 0.21) {
+                    if (rng.NextDouble() <= 0.52) {
+                        statuses.Add("Heavy Smoker");
+                        traits["Health"] -= 15;
+                    } else {
+                        statuses.Add("Smoker");
+                        traits["Health"] -= 5;
+                    }
                 }
             }
             return;

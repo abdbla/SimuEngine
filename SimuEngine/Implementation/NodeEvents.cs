@@ -20,8 +20,8 @@ namespace Implementation
                     var conn = (PersonConnection)_conn;
                     if (n.Statuses.Contains("Infected"))
                     {
-                        var prox = conn.PhysicalProximity / 100 * conn.TemporalProximity;
-                        chance = (1 - prox);
+                        var prox = conn.PhysicalProximity / 100 * conn.TemporalProximity * ((double)n.traits["Viral Intensity"] / 100d) * ((double)(150 - (n.traits["Hygiene"] + self.traits["Hygiene"]) / 2) / 100d) * ((double)self.traits["Immune Strength"] / 100d) * ((double)self.traits["Genetic Factor"] / 100d);
+                        chance = 1 - prox;
                     }
                 }
                 return chance;
@@ -30,6 +30,9 @@ namespace Implementation
             {
                 n.statuses.Remove("Healthy");
                 n.statuses.Add("Infected");
+                n.traits.Add("Infected Time", 0);
+                n.traits.Add("Medicinal Support", 100);
+                n.traits.Add("Viral Intensity", Node.rng.NextGaussian(100, 10));
             });
 
             return ev;
@@ -40,8 +43,7 @@ namespace Implementation
             {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
-                if (n.Statuses.Contains("Asthmatic")) chance += 0.02;
-                chance += ((double)n.Traits["Age"] / 300d);
+                chance = ((double)n.Traits["Age"] / 300d) * ((double)(150 - n.Traits["Health"]) / 100d) * ((double)n.Traits["Viral Intensity"] / 100d) * ((double)(200 - n.Traits["Immune Strength"]) / 100d) * ((double)(200 - n.Traits["Medicinal Support"]) / 100d) * ((double)n.Traits["Genetic Factor"] / 100d);
                 return chance;
             }, null, delegate (Node n, Graph l, Graph w)
             {
@@ -147,6 +149,41 @@ namespace Implementation
                 InfectionEvent();
             });
             return ev;
+        }
+
+        static Event GetTested() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Tested")) {
+                    return 0d;
+                }
+                double chance = 0;
+                if (n.statuses.Contains("Infected")) {
+                    chance += ((double)n.traits["Awareness"] / 100d) - 0.3;
+                    chance += ((double)n.traits["Viral Intensity"] - 100) / 100d;
+                }
+                if (!n.statuses.Contains("Infected")) {
+                    chance += 0.5 - ((double)n.traits["Awareness"] / 100d);
+                }
+                return chance;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Add("Tested");
+                if (n.statuses.Contains("Infected")) {
+                    if (Node.rng.NextDouble() > 0.2) {
+                        n.statuses.Add("Tested: Positive");
+                    } else {
+                        n.statuses.Add("Tested: Negative");
+                    }
+                }
+                if (!n.statuses.Contains("Infected")) {
+                    if (Node.rng.NextDouble() > 0.01) {
+                        n.statuses.Add("Tested: Negative");
+                    } else {
+                        n.statuses.Add("Tested: Positive");
+                    }
+                }
+            })
         }
         public static List<Event> InitializeEvents()
         {
