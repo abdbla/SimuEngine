@@ -106,6 +106,8 @@ namespace NodeMonog
             // alt: 0.8f, 0.5f, 0.3f, 0.1f
         }
 
+        public event EventHandler<Engine> OnTickFinished;
+
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
         /// This is where it can query for any required services and load any non-graphic
@@ -188,7 +190,6 @@ namespace NodeMonog
             history.Add(new GameState(masterGraph));
 
             resizeMenu(new object(), new EventArgs());
-
 
 
             UpdateHud();
@@ -305,12 +306,9 @@ namespace NodeMonog
             };
             fittingPeople.OnValueChange += _ =>
             {
+                if(currentGraph.Nodes.First(x => x.Name == fittingPeople.SelectedValue )!= null)
                     currentSimulation.SelectedNode = currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue);
                 
-                //catch (Exception)
-                //{
-                //    selectedNode = new DrawNode(currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue), currentSimulation.Simulation);
-                //}
                 
             };
             group.panel.AddChild(drop);
@@ -603,6 +601,7 @@ namespace NodeMonog
                                 engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
                                 history.Add(new GameState(masterGraph));
                                 updating = false;
+                                OnTickFinished(this, engine);
                             };
                             if(!updating)updateTask = Task.Run(action);
                         }
