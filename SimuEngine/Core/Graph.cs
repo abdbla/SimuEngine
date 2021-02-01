@@ -17,6 +17,7 @@ namespace Core {
         // TODO: Add tratis and statuses, maybe
         public IEnumerable<Connection> Connections { get => adjacencyMatrix.Values; }
         private List<Node> nodes;
+        public Node parent;
         public ReadOnlyCollection<Node> Nodes => nodes.AsReadOnly();
         public List<Group> groups;
         Dictionary<(Node, Node), Connection> adjacencyMatrix;

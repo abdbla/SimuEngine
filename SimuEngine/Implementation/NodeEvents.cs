@@ -2,13 +2,12 @@
 using SimuEngine;
 using System;
 using System.Collections.Generic;
+using NodeMonog;
 
 namespace Implementation
 {
     static class PersonEvents
     {
-        
-
         static Event InfectionEvent()
         {
             var ev = new Event();
@@ -150,7 +149,7 @@ namespace Implementation
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w)
             {
-                InfectionEvent();
+                n.traits["Infected Time"]++;
             });
             return ev;
         }
@@ -158,8 +157,8 @@ namespace Implementation
         static Event GetTested() {
             Event ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
-                if (n.statuses.Contains("Tested")) {
-                    return 0d;
+                if (n.statuses.Contains("Tested") || !l.parent.statuses.Contains("Testing Implemented")) {
+                    return 0;
                 }
                 double chance = 0;
                 if (n.statuses.Contains("Infected")) {
@@ -172,7 +171,9 @@ namespace Implementation
                 return chance;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                if (l.parent.traits["Tests"] >= w.Nodes[0].traits["Time"] * l.parent.traits["Testing Capacity"]) return;
                 n.statuses.Add("Tested");
+                l.parent.traits["Tests"]++;
                 if (n.statuses.Contains("Infected")) {
                     if (Node.rng.NextDouble() > 0.2) {
                         n.statuses.Add("Tested: Positive");
@@ -190,6 +191,56 @@ namespace Implementation
             });
             return ev;
         }
+
+        static Event ImplementTesting() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Testing Implemented") || !l.parent.statuses.Contains("Testing Started")) return 0;
+                if (n.SubGraph.FindAllNodes(s => s.statuses.Contains("Dead")).Count == 0) return 0;
+                double chance = (double)n.SubGraph.FindAllNodes(s => s.statuses.Contains("Dead")).Count / (double)n.traits["Population"];
+                return chance;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Add("Testing Implemented");
+            });
+            return ev;
+        }
+
+        static Event CheckInfection() {
+            Event ev = new Event();
+            ev.AddReqGuaranteed(delegate (Node n, Graph l, Graph w) {
+                if (n.SubGraph.FindAllNodes(s => s.statuses.Contains("Infected")).Count > n.traits["Population"] / 5 || !n.statuses.Contains("Infected")) return true;
+                return false;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Add("Infected");
+            });
+        }
+
+        static Event StartTesting() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Testing Started")) return 0;
+                double chance = 0;
+                return Math.Atan((double)n.traits["Time"] / 3d);
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Add("Testing Started");
+            });
+            return ev;
+        }
+
+        static Event KeepCount() {
+            Event ev = new Event();
+            ev.AddReqGuaranteed(delegate (Node n, Graph l, Graph w) {
+                return true;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.traits["Time"]++;
+            });
+            return ev;
+        }
+
         public static List<Event> InitializePersonEvents()
         {
             List<Event> personEvents = new List<Event>() {
@@ -210,7 +261,7 @@ namespace Implementation
 
         public static List<Event> InitializeDistrictEvents() {
             List<Event> districtEvents = new List<Event> {
-
+                ImplementTesting(),
             };
 
             return districtEvents;
@@ -218,7 +269,8 @@ namespace Implementation
 
         public static List<Event> InitializeCityEvents() {
             List<Event> cityEvents = new List<Event>() {
-
+                StartTesting(),
+                KeepCount(),
             };
 
             return cityEvents;

@@ -55,7 +55,9 @@ namespace Implementation {
         public City(int population, int density) {
             traits["Population"] = population;
             traits["Density"] = density;
+            traits["Time"] = 0;
             SubGraph = new Graph();
+            SubGraph.parent = this;
             NodeCreation(SubGraph);
         }
     }
@@ -175,7 +177,10 @@ namespace Implementation {
             Name = $"District {idx}";
             traits["Population"] = population;
             traits["Density"] = density;
+            traits["Testing Capacity"] = population / 100;
+            traits["Tests"] = 0;
             SubGraph = new Graph();
+            SubGraph.parent = this;
             NodeCreation(SubGraph);
             Console.WriteLine($"District {idx} finished.");
         }
