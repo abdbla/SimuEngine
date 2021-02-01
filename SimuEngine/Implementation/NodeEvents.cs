@@ -164,7 +164,7 @@ namespace Implementation
                 double chance = 0;
                 if (n.statuses.Contains("Infected")) {
                     chance += ((double)n.traits["Awareness"] / 100d) - 0.3;
-                    chance += ((double)n.traits["Viral Intensity"] - 100) / 100d;
+                    chance += ((double)n.traits["Viral Intensity"] - 100d) / 100d;
                 }
                 if (!n.statuses.Contains("Infected")) {
                     chance += 0.5 - ((double)n.traits["Awareness"] / 100d);
