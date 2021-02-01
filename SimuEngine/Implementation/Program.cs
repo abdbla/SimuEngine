@@ -126,10 +126,14 @@ namespace Implementation
             actions.Add(("Make infected", new GuaranteedEvent(
                 delegate (Node n, Graph l, Graph w) {
                     List<string> tStatus = engine.player.selectedNode.statuses;
+                    Dictionary<string, int> tTrait = engine.player.selectedNode.traits;
                     tStatus.Remove("Healthy");
                     tStatus.Add("Infected");
                     tStatus.Remove("Dead");
                     tStatus.Remove("Recovered");
+                    tTrait.Add("Infected Time", 0);
+                    tTrait.Add("Medicinal Support", 100);
+                    tTrait.Add("Viral Intensity", Node.rng.NextGaussian(100, 10));
                 }
             )));
 
