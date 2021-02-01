@@ -38,6 +38,8 @@ namespace NodeMonog
         Point cameraPosition = Point.Zero, cameraGoal = Point.Zero;
         Vector2 cameraVelocity = Vector2.Zero;
         double zoomlevel = 1f;
+        bool updating = false;
+        bool wasUpdating = false;
 
         const int zwoomTime = 200;
         int frameRate = 0;
@@ -588,11 +590,12 @@ namespace NodeMonog
                             //The tickbutton is pressed
                             Action action = ()  =>
                             {
+                                updating = true;
                                 engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
                                 history.Add(new GameState(masterGraph));
-                                UpdateHud();
+                                updating = false;
                             };
-                            updateTask = Task.Run(action);
+                            if(!updating)updateTask = Task.Run(action);
                         }
                     }
 
@@ -615,6 +618,12 @@ namespace NodeMonog
                 };
             }
 
+            if (updating) wasUpdating = true;
+            if(!updating && wasUpdating)
+            {
+                wasUpdating = false;
+                UpdateHud();
+            }
            
             cameraGoal = new Vector2(
                 selectedNode.Position.X + circleDiameter / 4 * 3,

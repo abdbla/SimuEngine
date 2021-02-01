@@ -29,6 +29,7 @@ namespace SimuEngine
             graphs.Add(graph);
             var worldGraph = graphs[0];
             var localGraph = graphs[graphs.Count - 1];
+            
 
             foreach (Node n in graph.Nodes) {
                 List<Event> posEvents = new List<Event>();
