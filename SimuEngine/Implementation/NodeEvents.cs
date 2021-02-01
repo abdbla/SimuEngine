@@ -7,6 +7,8 @@ namespace Implementation
 {
     static class PersonEvents
     {
+        
+
         static Event InfectionEvent()
         {
             var ev = new Event();
@@ -39,6 +41,7 @@ namespace Implementation
         }
         static Event DeathEvent()
         {
+            const float lethalityConst = 0.2f;
             var ev = new Event(delegate (Node n, Graph l, Graph w)
             {
                 double chance = 0;
@@ -105,11 +108,12 @@ namespace Implementation
         static Event RecoveryEvent()
         {
             Event ev = new Event();
+            
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w)
             {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
-                chance = Math.Pow((101 - n.Traits["Age"]) / 100, 14 - n.Traits["Infected Time"]);
+                chance = Math.Pow((101 - n.Traits["Age"]) / 100, 14 - n.Traits["Infected Time"]) * 2.5f;
                 return chance;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w)
@@ -183,7 +187,8 @@ namespace Implementation
                         n.statuses.Add("Tested: Positive");
                     }
                 }
-            })
+                return;
+            });
         }
         public static List<Event> InitializeEvents()
         {
