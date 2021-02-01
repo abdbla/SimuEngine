@@ -41,12 +41,12 @@ namespace Implementation
         }
         static Event DeathEvent()
         {
-            const float lethalityConst = 0.2f;
+            const double lethalityConst = 0.2d;
             var ev = new Event(delegate (Node n, Graph l, Graph w)
             {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
-                chance = ((double)n.Traits["Age"] / 300d) * ((double)(150 - n.Traits["Health"]) / 100d) * ((double)n.Traits["Viral Intensity"] / 100d) * ((double)(200 - n.Traits["Immune Strength"]) / 100d) * ((double)(200 - n.Traits["Medicinal Support"]) / 100d) * ((double)n.Traits["Genetic Factor"] / 100d);
+                chance = ((double)n.Traits["Age"] / 300d) * ((double)(150 - n.Traits["Health"]) / 100d) * ((double)n.Traits["Viral Intensity"] / 100d) * ((double)(200 - n.Traits["Immune Strength"]) / 100d) * ((double)(200 - n.Traits["Medicinal Support"]) / 100d) * ((double)n.Traits["Genetic Factor"] / 100d) * lethalityConst;
                 return chance;
             }, null, delegate (Node n, Graph l, Graph w)
             {
@@ -187,8 +187,8 @@ namespace Implementation
                         n.statuses.Add("Tested: Positive");
                     }
                 }
-                return;
             });
+            return ev;
         }
         public static List<Event> InitializeEvents()
         {
