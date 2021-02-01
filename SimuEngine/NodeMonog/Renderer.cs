@@ -57,7 +57,7 @@ namespace NodeMonog
 
         List<DrawNode> drawNodes { get => currentSimulation.DrawNodes.ToList(); set { } }
 
-        List<GameState> history = new List<GameState>();
+        public static List<GameState> history = new List<GameState>();
 
         Engine engine;
 
@@ -192,7 +192,6 @@ namespace NodeMonog
             resizeMenu(new object(), new EventArgs());
 
 
-
             UpdateHud();
             outsidePanel.AddChild(tabs);
 
@@ -285,7 +284,13 @@ namespace NodeMonog
             group.panel.ClearChildren();
             SelectList fittingPeople = new SelectList();
             fittingPeople.Size = new Vector2(fittingPeople.Size.X, Window.ClientBounds.Height - 200);
-            fittingPeople.Items = currentGraph.Nodes.Select(x => x.Name).ToArray();
+            List<Node> allNodes = new List<Node>();
+            allNodes.AddRange(masterGraph.Nodes);
+            for (int i = 0; i < allNodes.Count; i++)
+            {
+                if (allNodes[i].SubGraph != null) allNodes.AddRange(allNodes[i].SubGraph.Nodes);
+            }
+            fittingPeople.Items = allNodes.Select(x => x.Name).ToArray();
             DropDown drop = new DropDown(new Vector2(0, 280));
             drop.AddItem("All");
             foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
@@ -294,19 +299,16 @@ namespace NodeMonog
             }
             drop.OnValueChange += _ => {
                 if (drop.SelectedValue == "All") {
-                    fittingPeople.Items = currentGraph.Nodes.Select(x => x.Name).ToArray();
+                    fittingPeople.Items = allNodes.Select(x => x.Name).ToArray();
                 } else {
-                    fittingPeople.Items = currentGraph.FindAllNodes(x => x.statuses.Contains(drop.SelectedValue)).Select(x => x.Name).ToArray();
+                    fittingPeople.Items = allNodes.FindAll(x => x.statuses.Contains(drop.SelectedValue)).Select(x => x.Name).ToArray();
                 }
             };
             fittingPeople.OnValueChange += _ =>
             {
+                if(currentGraph.Nodes.First(x => x.Name == fittingPeople.SelectedValue )!= null)
                     currentSimulation.SelectedNode = currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue);
                 
-                //catch (Exception)
-                //{
-                //    selectedNode = new DrawNode(currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue), currentSimulation.Simulation);
-                //}
                 
             };
             group.panel.AddChild(drop);
@@ -964,12 +966,10 @@ namespace NodeMonog
 
             base.Draw(gameTime);
         }
-
-       
     }
+
     public class GameState
     {
-
         public Dictionary<string, int> allTraits;
         public Dictionary<string, List<int>> allStatuses;
 
