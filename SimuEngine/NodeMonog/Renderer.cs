@@ -190,7 +190,6 @@ namespace NodeMonog
             resizeMenu(new object(), new EventArgs());
 
 
-
             UpdateHud();
             outsidePanel.AddChild(tabs);
 
@@ -305,12 +304,9 @@ namespace NodeMonog
             };
             fittingPeople.OnValueChange += _ =>
             {
+                if(currentGraph.Nodes.First(x => x.Name == fittingPeople.SelectedValue )!= null)
                     currentSimulation.SelectedNode = currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue);
                 
-                //catch (Exception)
-                //{
-                //    selectedNode = new DrawNode(currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue), currentSimulation.Simulation);
-                //}
                 
             };
             group.panel.AddChild(drop);
