@@ -205,6 +205,9 @@ namespace Implementation {
                         traits["Health"] -= 5;
                     }
                 }
+                if (traits["Health"] < 0) {
+                    statuses.Add("Dead");
+                }
             }
             return;
         }
