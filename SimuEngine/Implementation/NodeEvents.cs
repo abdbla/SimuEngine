@@ -200,7 +200,8 @@ namespace Implementation
                 WearingMask(),
                 RemovinggMask(),
                 IsolationEvent(),
-                LocalWork()
+                LocalWork(),
+                GetTested()
             };
 
             personEvents.Add(new Event());
