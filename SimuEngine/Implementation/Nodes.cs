@@ -43,6 +43,13 @@ namespace Implementation {
                     }
                 }
             }
+            District tmp = (District)SubGraph.Nodes[rng.Next(SubGraph.Nodes.Count)];
+            Person tmp2 = (Person)tmp.SubGraph.Nodes[rng.Next(tmp.SubGraph.Nodes.Count)];
+            tmp2.statuses.Remove("Healthy");
+            tmp2.statuses.Add("Infected");
+            tmp2.traits.Add("Infected Time", 0);
+            tmp2.traits.Add("Medicinal Support", 100);
+            tmp2.traits.Add("Viral Intensity", rng.NextGaussian(100, 10));
         }
 
         public City(int population, int density) {

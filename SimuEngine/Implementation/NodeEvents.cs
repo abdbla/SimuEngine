@@ -190,7 +190,7 @@ namespace Implementation
             });
             return ev;
         }
-        public static List<Event> InitializeEvents()
+        public static List<Event> InitializePersonEvents()
         {
             List<Event> personEvents = new List<Event>() {
                 InfectionEvent(),
@@ -206,6 +206,22 @@ namespace Implementation
 
             personEvents.Add(new Event());
             return personEvents;
+        }
+
+        public static List<Event> InitializeDistrictEvents() {
+            List<Event> districtEvents = new List<Event> {
+
+            };
+
+            return districtEvents;
+        }
+
+        public static List<Event> InitializeCityEvents() {
+            List<Event> cityEvents = new List<Event>() {
+
+            };
+
+            return cityEvents;
         }
     }
 }

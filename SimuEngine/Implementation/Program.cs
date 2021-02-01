@@ -155,8 +155,12 @@ namespace Implementation
                 tStatus.Add("Recovered");
             })));
 
-            List<Event> personEvents = PersonEvents.InitializeEvents();
+            List<Event> personEvents = PersonEvents.InitializePersonEvents();
+            List<Event> districtEvents = PersonEvents.InitializeDistrictEvents();
+            List<Event> cityEvents = PersonEvents.InitializeCityEvents();
             eventList.AddEventList(typeof(Person), personEvents);
+            eventList.AddEventList(typeof(District), districtEvents);
+            eventList.AddEventList(typeof(City), cityEvents);
 
             return engine;
         }
