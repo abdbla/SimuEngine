@@ -33,13 +33,16 @@ namespace Implementation {
 
             for (int i = 0; i < DISTRICT_AMOUNT - 1; i++) {
                 g.AddConnection(g.Nodes[i], g.Nodes[i + 1], new DistrictConnection());
+                g.AddConnection(g.Nodes[i + 1], g.Nodes[i], new DistrictConnection());
             }
             g.AddConnection(g.Nodes[0], g.Nodes[16], new DistrictConnection());
+            g.AddConnection(g.Nodes[16], g.Nodes[0], new DistrictConnection());
             foreach (var district in g.Nodes) {
                 for (int i = 0; i < Node.rng.Next(0, 3); i++) {
                     int temp = rng.Next(0, DISTRICT_AMOUNT);
                     if (district != g.Nodes[temp]) {
                         g.AddConnection(district, g.Nodes[temp], new DistrictConnection());
+                        g.AddConnection(g.Nodes[temp], district, new DistrictConnection());
                     }
                 }
             }

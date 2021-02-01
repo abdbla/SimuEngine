@@ -209,12 +209,39 @@ namespace Implementation
         static Event CheckInfection() {
             Event ev = new Event();
             ev.AddReqGuaranteed(delegate (Node n, Graph l, Graph w) {
-                if (n.SubGraph.FindAllNodes(s => s.statuses.Contains("Infected")).Count > n.traits["Population"] / 5 || !n.statuses.Contains("Infected")) return true;
+                if (n.SubGraph.FindAllNodes(s => s.statuses.Contains("Infected")).Count > n.traits["Population"] / 5 && !n.statuses.Contains("Infected")) return true;
                 return false;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.statuses.Add("Infected");
             });
+            return ev;
+        }
+
+        static Event DistrictInfection() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node s, Graph l, Graph w) {
+                double chance = 1;
+                foreach ((Connection, Connection, Node) n in l.GetNeighbors(s)) {
+                    if (n.Item3.statuses.Contains("Infected")) {
+                        chance *= 1 - ((double)n.Item3.SubGraph.FindAllNodes(f => f.statuses.Contains("Infected")).Count / (double)n.Item3.traits["Population"] * (s.traits["Density"] / 100d));
+                    }
+                }
+                chance = 1 - chance;
+                return chance;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                Node tmp;
+                do {
+                    tmp = n.SubGraph.Nodes[Node.rng.Next(n.SubGraph.Count.Nodes)];
+                } while (!tmp.statuses.Contains("Healthy"));
+                tmp.statuses.Remove("Healthy");
+                tmp.statuses.Add("Infected");
+                tmp.traits.Add("Infected Time", 0);
+                tmp.traits.Add("Medicinal Support", 100);
+                tmp.traits.Add("Viral Intensity", Node.rng.NextGaussian(100, 10));
+            });
+            return ev;
         }
 
         static Event StartTesting() {
@@ -262,6 +289,8 @@ namespace Implementation
         public static List<Event> InitializeDistrictEvents() {
             List<Event> districtEvents = new List<Event> {
                 ImplementTesting(),
+                CheckInfection(),
+                DistrictInfection(),
             };
 
             return districtEvents;
