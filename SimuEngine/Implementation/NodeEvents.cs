@@ -15,6 +15,7 @@ namespace Implementation
             ev.AddReqPossible(delegate (Node self, Graph localGraph, Graph w)
             {
                 double chance = 0.0;
+                const double infectionConst = 0.1d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -36,7 +37,8 @@ namespace Implementation
                             (viral / 100d) *
                             ((double)(150 - (hygiene + selfHygiene) / 2) / 100d) *
                             (immuneStrength / 100d) *
-                            (genetic / 100d);
+                            (genetic / 100d) *
+                            infectionConst;
                         chance = 1 - prox;
                     }
                 }
@@ -80,7 +82,7 @@ namespace Implementation
             Event ev = new Event(delegate (Node n, Graph l, Graph w)
             {
                 if (n.Statuses.Contains("WearingMask")) return 0;
-                else return n.Traits["Awareness"] / 100;
+                else return n.Traits["Awareness"] / 100d;
             }, null, delegate (Node n, Graph l, Graph w)
             {
                 foreach (PersonConnection c in n.connections)
@@ -191,11 +193,10 @@ namespace Implementation
                 }
                 double chance = 0;
                 if (n.statuses.Contains("Infected")) {
-                    chance += ((double)n.traits["Awareness"] / 100d) - 0.3d;
-                    chance += ((double)n.traits["Viral Intensity"] - 100d) / 100d;
+                    chance = ((double)n.traits["Awareness"] / 50d) * ((double)n.traits["Viral Intensity"] / 200d) - 0.5;
                 }
                 if (!n.statuses.Contains("Infected")) {
-                    chance += 0.5 - ((double)n.traits["Awareness"] / 100d);
+                    chance += 0.3 - ((double)n.traits["Awareness"] / 100d);
                 }
                 return chance;
             });
