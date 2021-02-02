@@ -92,6 +92,7 @@ namespace Implementation
                 while (true) {
                     try {
                         export.Save(saveFile);
+                        break;
                     } catch (InvalidOperationException e) {
                         Console.WriteLine("Error saving excel_export.xslx file");
                         Console.WriteLine($"Exception: {e}");
