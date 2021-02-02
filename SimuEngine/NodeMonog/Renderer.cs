@@ -294,9 +294,9 @@ namespace NodeMonog
                     {
                         engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
                         history.Add(new GameState(masterGraph));
+                        OnTickFinished(this, engine);
                     }
                     updating = false;
-                    OnTickFinished(this, engine);
                 };
                 if (!updating) updateTask = Task.Run(action);
             };
