@@ -27,7 +27,9 @@ namespace NodeMonog
 
         Random rng = new Random();
 
-        
+        ProgressBar prog;
+        Paragraph running;
+
 
         // hud elements:
         Texture2D circle, pixel, tickButton, square, arrow;
@@ -42,6 +44,8 @@ namespace NodeMonog
         double zoomlevel = 1f;
         bool updating = false;
         bool wasUpdating = false;
+        uint tickAmount;
+        int tickMin;
 
         const int zwoomTime = 200;
         int frameRate = 0;
@@ -285,12 +289,17 @@ namespace NodeMonog
             Tickcount.Value = "1";
             actions.panel.AddChild(Tickcount);
             Button TickGButton = new Button("Tick");
+            prog = new ProgressBar(0, tickAmount);
+            prog.Value = history.Count - tickMin;
+            prog.Locked = true;
             TickGButton.OnClick += _ =>
             {
                 Action action = () =>
                 {
                     updating = true;
-                    for (int i = 0; i < int.Parse(Tickcount.Value); i++)
+                    tickMin = history.Count;
+                    tickAmount = uint.Parse(Tickcount.Value);
+                    for (int i = 0; i < tickAmount; i++)
                     {
                         engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
                         history.Add(new GameState(masterGraph));
@@ -300,7 +309,13 @@ namespace NodeMonog
                 };
                 if (!updating) updateTask = Task.Run(action);
             };
-            if(updating) actions.panel.AddChild(new Paragraph(updateTask.Status.ToString()));
+            
+            if (updating)
+            {
+                if(running == null) running = new Paragraph(updateTask.Status.ToString());
+                actions.panel.AddChild(running);
+                actions.panel.AddChild(prog);
+            }
             actions.panel.AddChild(TickGButton);
 
             group.panel.ClearChildren();
@@ -647,12 +662,15 @@ namespace NodeMonog
                 };
             }
             //Should make the hud update, but alas, it does not
-            if (!wasUpdating && updating)
+            if ((!wasUpdating && updating) || Keyboard.GetState().IsKeyDown(Keys.R))
             {
                 UpdateHud();
             }
             if (updating)
             {
+                prog.Value = history.Count - tickMin;
+                if (running != null) running = new Paragraph("Running tick: " + prog.Value);
+                else running.Text = "Running tick: " + prog.Value;
                 wasUpdating = true;
             }
             if(!updating && wasUpdating)
