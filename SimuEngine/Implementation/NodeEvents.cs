@@ -16,12 +16,27 @@ namespace Implementation
             {
                 double chance = 0.0;
                 if (!self.Statuses.Contains("Healthy")) return 0;
-                foreach ((var _conn, var n) in localGraph.GetOutgoingConnections(self))
+
+                double selfHygiene = self.traits["Hygiene"];
+                double immuneStrength = self.traits["Immune Strength"];
+                double genetic = self.traits["Genetic Factor"];
+                var outgoing = localGraph.GetOutgoingConnections(self);
+
+                foreach ((var _conn, var n) in outgoing)
                 {
                     var conn = (PersonConnection)_conn;
                     if (n.Statuses.Contains("Infected"))
                     {
-                        var prox = conn.PhysicalProximity / 100 * conn.TemporalProximity * ((double)n.traits["Viral Intensity"] / 100d) * ((double)(150 - (n.traits["Hygiene"] + self.traits["Hygiene"]) / 2) / 100d) * ((double)self.traits["Immune Strength"] / 100d) * ((double)self.traits["Genetic Factor"] / 100d);
+                        double viral = n.traits["Viral Intensity"];
+                        double hygiene = n.traits["Hygiene"];
+
+                        var prox = 
+                            conn.PhysicalProximity / 100 *
+                            conn.TemporalProximity *
+                            (viral / 100d) *
+                            ((double)(150 - (hygiene + selfHygiene) / 2) / 100d) *
+                            (immuneStrength / 100d) *
+                            (genetic / 100d);
                         chance = 1 - prox;
                     }
                 }
@@ -231,15 +246,15 @@ namespace Implementation
                 return chance;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
-                Node tmp;
-                do {
-                    tmp = n.SubGraph.Nodes[Node.rng.Next(n.SubGraph.Count.Nodes)];
-                } while (!tmp.statuses.Contains("Healthy"));
-                tmp.statuses.Remove("Healthy");
-                tmp.statuses.Add("Infected");
-                tmp.traits.Add("Infected Time", 0);
-                tmp.traits.Add("Medicinal Support", 100);
-                tmp.traits.Add("Viral Intensity", Node.rng.NextGaussian(100, 10));
+                List<Node> healthy = n.SubGraph.FindAllNodes(node => node.statuses.Contains("Healthy"));
+                if (healthy.Count > 0) {
+                    Node tmp = healthy[Node.rng.Next(healthy.Count - 1)];
+                    tmp.statuses.Remove("Healthy");
+                    tmp.statuses.Add("Infected");
+                    tmp.traits.Add("Infected Time", 0);
+                    tmp.traits.Add("Medicinal Support", 100);
+                    tmp.traits.Add("Viral Intensity", Node.rng.NextGaussian(100, 10));
+                }
             });
             return ev;
         }

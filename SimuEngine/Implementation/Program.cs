@@ -81,13 +81,24 @@ namespace Implementation
             }
 
             ExcelExport export = new ExcelExport();
+            FileInfo saveFile = new FileInfo(
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory),
+                                 "excel_export.xlsx"));
 
             using (Renderer renderer = new Renderer(engine)) {
 
                 renderer.OnTickFinished += export.OnTick;
                 renderer.Run();
-                export.Save(new FileInfo(
-                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "excel_export.xlsx")));
+                while (true) {
+                    try {
+                        export.Save(saveFile);
+                    } catch (InvalidOperationException e) {
+                        Console.WriteLine("Error saving excel_export.xslx file");
+                        Console.WriteLine($"Exception: {e}");
+                        bool retry = YesNo("Would you like to try again?");
+                        if (!retry) break;
+                    }
+                }
             }
         }
 
