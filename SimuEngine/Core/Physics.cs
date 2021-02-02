@@ -117,7 +117,7 @@ namespace Core.Physics {
 
         public Vector2 Normalize() {
             float m = Magnitude();
-            if (m == 0.0) throw new SystemException("Tried to normalize a zero vector");
+            if (m == 0.0) return new Vector2(1, 0);
             return this * (1 / m);
         }
 
