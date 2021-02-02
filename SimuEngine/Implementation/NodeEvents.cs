@@ -55,7 +55,7 @@ namespace Implementation
         }
         static Event DeathEvent()
         {
-            const double lethalityConst = 0.2d;
+            const double lethalityConst = 0.0001d;
             var ev = new Event(delegate (Node n, Graph l, Graph w)
             {
                 double chance = 0;
@@ -184,6 +184,11 @@ namespace Implementation
                 if (n.statuses.Contains("Tested") || !l.parent.statuses.Contains("Testing Implemented")) {
                     return 0;
                 }
+                foreach (var t in l.GetOutgoingConnections(n)) {
+                    if (t.Item2.statuses.Contains("Tested: True Positive") || t.Item2.statuses.Contains("Tested: False Positive")) {
+                        return 1;
+                    }
+                }
                 double chance = 0;
                 if (n.statuses.Contains("Infected")) {
                     chance += ((double)n.traits["Awareness"] / 100d) - 0.3d;
@@ -200,16 +205,16 @@ namespace Implementation
                 l.parent.traits["Tests"]++;
                 if (n.statuses.Contains("Infected")) {
                     if (Node.rng.NextDouble() > 0.2) {
-                        n.statuses.Add("Tested: Positive");
+                        n.statuses.Add("Tested: True Positive");
                     } else {
-                        n.statuses.Add("Tested: Negative");
+                        n.statuses.Add("Tested: False Negative");
                     }
                 }
                 if (!n.statuses.Contains("Infected")) {
                     if (Node.rng.NextDouble() > 0.01) {
-                        n.statuses.Add("Tested: Negative");
+                        n.statuses.Add("Tested: True Negative");
                     } else {
-                        n.statuses.Add("Tested: Positive");
+                        n.statuses.Add("Tested: False Positive");
                     }
                 }
             });
