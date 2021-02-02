@@ -104,7 +104,7 @@ namespace Implementation {
                 statusSheet.Cells[1, 1].Style.Font.Bold = true;
                 statusSheet.Cells[1, 1].Value = "Statuses";
                 for (int i = 0; i < tick; i++) {
-                    statusSheet.Cells[i + 2, 1].Value = "Tick " + i + 1;
+                    statusSheet.Cells[i + 2, 1].Value = $"Tick {i + 1}";
                 }
 
                 double width = 0;

@@ -51,6 +51,7 @@ namespace Implementation
                 n.traits.Add("Infected Time", 0);
                 n.traits.Add("Medicinal Support", 100);
                 n.traits.Add("Viral Intensity", Node.rng.NextGaussian(100, 10));
+                n.statuses.Add("Cumulative Infection");
             });
 
             return ev;
