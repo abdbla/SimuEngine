@@ -30,9 +30,6 @@ namespace Implementation {
         string creationID;
         string graphName;
 
-        public double TemporalProximity { get; set; }
-        public double PhysicalProximity { get; set; }
-
         public override void SetName(string name) {
             graphName = name;
         }
@@ -42,19 +39,24 @@ namespace Implementation {
 
             switch (t.ToUpper()) {
                 case "FAMILY":
-                    Traits.Add("Proximity", Node.rng.Next(75, 101));
+                    Traits.Add("Physical Proximity", Node.rng.Next(25, 101));
+                    Traits.Add("Temporal Proximity", Node.rng.Next(75, 101));
                     break;
                 case "FRIENDS":
-                    Traits.Add("Proximity", Node.rng.Next(40, 76));
+                    Traits.Add("Physical Proximity", Node.rng.Next(40, 76));
+                    Traits.Add("Temporal Proximity", Node.rng.Next(40, 101));
                     break;
                 case "WORK":
-                    Traits.Add("Proximity", Node.rng.Next(25, 61));
+                    Traits.Add("Physical Proximity", Node.rng.Next(25, 61));
+                    Traits.Add("Temporal Proximity", Node.rng.Next(40, 81));
                     break;
                 case "ACQUIANTANCES":
-                    Traits.Add("Proximity", Node.rng.Next(5, 46));
+                    Traits.Add("Physical Proximity", Node.rng.Next(5, 46));
+                    Traits.Add("Temporal Proximity", Node.rng.Next(5, 16));
                     break;
                 default:
-                    Traits.Add("Proximity", Node.rng.Next(1, 101));
+                    Traits.Add("Physical Proximity", Node.rng.Next(1, 101));
+                    Traits.Add("Temporal Proximity", Node.rng.Next(1, 101));
                     break;
             }
         }

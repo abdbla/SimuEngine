@@ -189,6 +189,8 @@ namespace Implementation {
             traits["Density"] = density;
             traits["Testing Capacity"] = population / 100;
             traits["Vaccination Capacity"] = population / 400;
+            traits["Medicinal Capacity: Light"] = population / 50;
+            traits["Medicinal Capacity: Heavy"] = population / 1000;
             SubGraph = new Graph();
             SubGraph.parent = this;
             NodeCreation(SubGraph);
