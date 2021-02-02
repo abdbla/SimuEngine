@@ -515,7 +515,7 @@ namespace NodeMonog
 
 
             stats.panel.ClearChildren();
-            stats.panel.AddChild(new Paragraph($"Ticks: {history.Count}"));
+            stats.panel.AddChild(new Paragraph($"Ticks: {history.Count - 1}"));
             SelectList l = new SelectList(new Vector2(Window.ClientBounds.Width / 3 / 8 * 7, Window.ClientBounds.Height / 5 * 4));
             stats.panel.AddChild(l);
             foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
