@@ -19,12 +19,12 @@ namespace Implementation {
             List<Task<District>> districtCreationTasks = new List<Task<District>>();
 
             for (int i = 0; i < DISTRICT_AMOUNT; i++) {
-                if (i < 2) tempPopulation /= 2;
-                else tempPopulation = (traits["Population"] - 262500) / 13;
+                if (i < 2) { tempPopulation /= 2; } else { tempPopulation = (traits["Population"] - 262500) / 13; }
 
                 int n = rng.Next(traits["Density"] - 10, traits["Density"] + 11);
+                int temp2Population = tempPopulation;
                 districtCreationTasks.Add(
-                    Task.Run(() => { return new District(tempPopulation, n); }));
+                    Task.Run(() => { return new District(temp2Population, n); }));
             }
             Task.WaitAll(districtCreationTasks.ToArray());
             foreach (Task<District> dt in districtCreationTasks) {
@@ -206,7 +206,7 @@ namespace Implementation {
                 traits.Add("Genetic Factor", rng.NextGaussian(100, 10));
                 traits.Add("Health", (int)(Math.Sqrt(rng.NextDouble()) * 100));
                 traits.Add("Age", rng.Next(1, 101));
-                traits.Add("Awareness", 0);
+                traits.Add("Awareness", rng.Next(1, 101));
                 if (rng.NextDouble() <= 0.3) {
                     statuses.Add("Asthmatic");
                     traits["Health"] -= 20;

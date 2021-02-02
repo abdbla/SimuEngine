@@ -60,7 +60,13 @@ namespace Implementation
             {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
-                chance = ((double)n.Traits["Age"] / 300d) * ((double)(150 - n.Traits["Health"]) / 100d) * ((double)n.Traits["Viral Intensity"] / 100d) * ((double)(200 - n.Traits["Immune Strength"]) / 100d) * ((double)(200 - n.Traits["Medicinal Support"]) / 100d) * ((double)n.Traits["Genetic Factor"] / 100d) * lethalityConst;
+                chance = (10 * (double)n.Traits["Age"] / 300d) 
+                * ((double)(400 - (3 * n.Traits["Health"])) / 100d) 
+                * ((double)n.Traits["Viral Intensity"] / 100d) 
+                * ((double)(200 - n.Traits["Immune Strength"]) / 100d) 
+                * ((double)(200 - n.Traits["Medicinal Support"]) / 100d) 
+                * ((5 * (double)n.Traits["Genetic Factor"]) / 100d) 
+                * lethalityConst;
                 return chance;
             }, null, delegate (Node n, Graph l, Graph w)
             {
@@ -89,7 +95,7 @@ namespace Implementation
         {
             Event ev = new Event(delegate (Node n, Graph l, Graph w)
             {
-                if (n.Statuses.Contains("WearingMask")) return n.Traits["Awareness"] / 1000;
+                if (n.Statuses.Contains("WearingMask")) return n.Traits["Awareness"] / 1000d;
                 else return 0;
             }, null, delegate (Node n, Graph l, Graph w)
             {
@@ -127,7 +133,10 @@ namespace Implementation
             {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
-                chance = Math.Pow((101 - n.Traits["Age"]) / 100, 14 - n.Traits["Infected Time"]) * 2.5f;
+                chance = Math.Pow(((101 - n.Traits["Age"]) / 100d) 
+                    * (n.traits["Immune Strength"] / 100d) 
+                    * (n.traits["Genetic Factor"] / 100d), 
+                    2 - (n.Traits["Infected Time"] / 7d));
                 return chance;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w)
@@ -177,7 +186,7 @@ namespace Implementation
                 }
                 double chance = 0;
                 if (n.statuses.Contains("Infected")) {
-                    chance += ((double)n.traits["Awareness"] / 100d) - 0.3;
+                    chance += ((double)n.traits["Awareness"] / 100d) - 0.3d;
                     chance += ((double)n.traits["Viral Intensity"] - 100d) / 100d;
                 }
                 if (!n.statuses.Contains("Infected")) {
