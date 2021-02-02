@@ -114,15 +114,15 @@ namespace Implementation
             Event ev = new Event(delegate (Node n, Graph l, Graph w)
             {
                 if (n.Statuses.Contains("Isolated") && n.Traits["Awareness"] < 70) return 0;
-                else return (n.Traits["Awareness"] - 70 )/ 100;
+                else return (n.Traits["Awareness"] - 70d)/ 100d;
             }, null, delegate (Node n, Graph l, Graph w)
             {
                 foreach ((Connection c, Node adjecentNode) in l.GetOutgoingConnections(n))
                 {
                     //All non family members have a temproal proximity of 0
                     if (!n.groups.Find(x => x.Statuses.Contains("Family")).Members.Contains(adjecentNode)) ((PersonConnection)c).TemporalProximity = 0;
-                    n.statuses.Add("Isolated");
                 }
+                n.statuses.Add("Isolated");
             }
                 );
             return ev;
