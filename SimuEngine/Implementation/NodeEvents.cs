@@ -15,7 +15,7 @@ namespace Implementation
             ev.AddReqPossible(delegate (Node self, Graph localGraph, Graph w)
             {
                 double chance = 0.0;
-                const double infectionConst = 0.1d;
+                const double infectionConst = 0.001d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -58,7 +58,7 @@ namespace Implementation
         }
         static Event DeathEvent()
         {
-            const double lethalityConst = 0.0001d;
+            const double lethalityConst = 0.00015d;
             var ev = new Event(delegate (Node n, Graph l, Graph w)
             {
                 double chance = 0;
@@ -268,6 +268,41 @@ namespace Implementation
             return ev;
         }
 
+        static Event GetMedicinalSupport() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Getting Support") || !n.statuses.Contains("Infected")) return 0;
+                double chance = 0;
+                chance += n.traits["Age"] / 300d;
+                chance += n.traits["Health"] / 300d;
+                return chance;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                if (n.traits["Health"] > 40) {
+                    n.statuses.Add("Getting Support: Light");
+                    n.traits["Medicinal Support"] += 20;
+                } else {
+                    n.statuses.Add("Getting Support: Heavy");
+                    n.traits["Medicinal Support"] += 50;
+                }
+            });
+            return ev;
+        }
+
+        static Event RemoveMedicinalSupport() {
+            Event ev = new Event();
+            ev.AddReqGuaranteed(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Recovered") || n.statuses.Contains("Dead")) return true;
+                return false;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Remove("Getting Support");
+                if (n.statuses.Contains("Getting Support: Light")) { n.statuses.Remove("Getting Support: Light"); n.traits["Medicinal Support"] -= 20; }
+                if (n.statuses.Contains("Getting Support: Heavy")) { n.statuses.Remove("Getting Support: Heavy"); n.traits["Medicinal Support"] -= 50; }
+            });
+            return ev;
+        }
+
         static Event CheckInfection() {
             Event ev = new Event();
             ev.AddReqGuaranteed(delegate (Node n, Graph l, Graph w) {
@@ -341,7 +376,9 @@ namespace Implementation
                 RemovinggMask(),
                 IsolationEvent(),
                 LocalWork(),
-                GetTested()
+                GetTested(),
+                GetMedicinalSupport(),
+                RemoveMedicinalSupport(),
             };
 
             personEvents.Add(new Event());
