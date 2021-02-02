@@ -35,6 +35,7 @@ namespace Implementation {
             Dictionary<string, (int, int)> traitStuff = new Dictionary<string, (int, int)>();
 
             int districtCount = engine.system.graph.Nodes[0].SubGraph.Nodes.Cast<District>().Count();
+            statCount["Population"] = 0;
 
             foreach (District district in engine.system.graph.Nodes[0].SubGraph.Nodes.Cast<District>()) {
                 foreach (Person person in district.SubGraph.Nodes.Cast<Person>()) {
@@ -56,6 +57,8 @@ namespace Implementation {
                             traitStuff[trait] = (val, 1);
                         }
                     }
+
+                    statCount["Population"]++;
                 }
             }
             history.AddStats(statCount, tick);
@@ -101,7 +104,7 @@ namespace Implementation {
                 statusSheet.Cells[1, 1].Style.Font.Bold = true;
                 statusSheet.Cells[1, 1].Value = "Statuses";
                 for (int i = 0; i < tick; i++) {
-                    statusSheet.Cells[i + 2, 1].Value = "Tick " + i;
+                    statusSheet.Cells[i + 2, 1].Value = "Tick " + i + 1;
                 }
 
                 double width = 0;
@@ -117,7 +120,7 @@ namespace Implementation {
                 }
                 statusSheet.Drawings.Clear();
                 var chart = CreateChart();
-                chart.SetPosition(0, (int)(width / 0.1423));
+                chart.SetPosition(0, (int)(width / 0.1423) + 10);
 
                 traitSheet.Cells[1, 1].Style.Font.Bold = true;
                 traitSheet.Cells[1, 1].Value = "Traits";
