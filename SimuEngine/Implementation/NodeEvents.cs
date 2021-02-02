@@ -72,6 +72,37 @@ namespace Implementation
                 return chance;
             }, null, delegate (Node n, Graph l, Graph w)
             {
+                foreach (var g in n.groups) {
+                    switch (g.statuses[0].ToUpper()) { //the first status *should* be the type of the group...
+                        case "FAMILY":
+                            foreach (var p in g.members) {
+                                p.traits["Awareness"] += 60;
+                                p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
+                            }
+                            break;
+                        case "WORK":
+                            foreach (var p in g.members) {
+                                p.traits["Awareness"] += 15;
+                                p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
+                            }
+                            break;
+                        case "FRIENDS":
+                            foreach (var p in g.members) {
+                                p.traits["Awareness"] += 30;
+                                p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
+                            }
+                            break;
+                        case "ACQUIANTANCES":
+                            foreach (var p in g.members) {
+                                p.traits["Awareness"] += 5;
+                                p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
+                            }
+                            break;
+                        default:
+                            break;
+
+                    }
+                }
                 n.statuses.Remove("Infected");
                 n.statuses.Add("Dead");
             });
@@ -113,7 +144,7 @@ namespace Implementation
         {
             Event ev = new Event(delegate (Node n, Graph l, Graph w)
             {
-                if (n.Statuses.Contains("Isolated") && n.Traits["Awareness"] < 70) return 0;
+                if (n.Statuses.Contains("Isolated") || n.Traits["Awareness"] < 70) return 0;
                 else return (n.Traits["Awareness"] - 70d)/ 100d;
             }, null, delegate (Node n, Graph l, Graph w)
             {
