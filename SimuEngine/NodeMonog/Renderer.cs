@@ -280,6 +280,28 @@ namespace NodeMonog
                 };
                 actions.panel.AddChild(subGraphButton);
             }
+            actions.panel.AddChild(new Paragraph("Amount to Tick: "));
+            TextInput Tickcount = new TextInput();
+            Tickcount.Value = "1";
+            actions.panel.AddChild(Tickcount);
+            Button TickGButton = new Button("Tick");
+            TickGButton.OnClick += _ =>
+            {
+                Action action = () =>
+                {
+                    updating = true;
+                    for (int i = 0; i < int.Parse(Tickcount.Value); i++)
+                    {
+                        engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
+                        history.Add(new GameState(masterGraph));
+                    }
+                    updating = false;
+                    OnTickFinished(this, engine);
+                };
+                if (!updating) updateTask = Task.Run(action);
+            };
+            if(updating) actions.panel.AddChild(new Paragraph(updateTask.Status.ToString()));
+            actions.panel.AddChild(TickGButton);
 
             group.panel.ClearChildren();
             SelectList fittingPeople = new SelectList();
@@ -532,7 +554,6 @@ namespace NodeMonog
             arial = Content.Load<SpriteFont>(@"Arial");
             circle = Content.Load<Texture2D>(@"circle");
             pixel = Content.Load<Texture2D>(@"pixel");
-            tickButton = Content.Load<Texture2D>(@"TickButton");
             square = Content.Load<Texture2D>(@"transparantSquare");
             arrow = Content.Load<Texture2D>(@"Arrow");
 
@@ -592,7 +613,7 @@ namespace NodeMonog
                             }
                         }
 
-                        
+                        /*Old TickButton code
                         if (new Rectangle(0, r.Height - 128, 256, 128).Contains(nms.Position) && (updateTask?.IsCompleted ?? true) || Keyboard.GetState().IsKeyDown(Keys.T)) {
                             //The tickbutton is pressed
                             Action action = ()  =>
@@ -604,7 +625,7 @@ namespace NodeMonog
                                 OnTickFinished(this, engine);
                             };
                             if(!updating)updateTask = Task.Run(action);
-                        }
+                        }*/
                     }
 
                     if (nms.LeftButton == ButtonState.Pressed) {
@@ -625,8 +646,15 @@ namespace NodeMonog
                     dragtimer = 0;
                 };
             }
-
-            if (updating) wasUpdating = true;
+            //Should make the hud update, but alas, it does not
+            if (!wasUpdating && updating)
+            {
+                UpdateHud();
+            }
+            if (updating)
+            {
+                wasUpdating = true;
+            }
             if(!updating && wasUpdating)
             {
                 wasUpdating = false;
@@ -773,8 +801,8 @@ namespace NodeMonog
                 spriteBatch.Draw(square, new Rectangle(bottomleft.ToPoint(), (topright - bottomleft).ToPoint()), Color.Red);
             }
 
-            spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
-            spriteBatch.DrawString(arial, "Tick", new Vector2(16, r.Height - 48), Color.Black);
+            //spriteBatch.Draw(tickButton, new Rectangle(0, r.Height - 64, 256, 64), Color.DarkGray);
+            //spriteBatch.DrawString(arial, "Tick", new Vector2(16, r.Height - 48), Color.Black);
 
 
             int centerX = r.Width / 3;
