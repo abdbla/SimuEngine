@@ -671,6 +671,7 @@ namespace NodeMonog
                 prog.Value = history.Count - tickMin;
                 if (running != null) running = new Paragraph("Running tick: " + prog.Value);
                 else running.Text = "Running tick: " + prog.Value;
+                ((Paragraph)actions.panel.Children.Last(x => x is Paragraph)).Text = "Running tick: " + prog.Value;
                 wasUpdating = true;
             }
             if(!updating && wasUpdating)
