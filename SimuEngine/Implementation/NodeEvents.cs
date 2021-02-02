@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated")) return 0;
                 double chance = 0.0;
-                const double infectionConst = 0.001d;
+                const double infectionConst = 0.00001d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
