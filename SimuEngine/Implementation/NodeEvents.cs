@@ -60,19 +60,26 @@ namespace Implementation
         static Event DeathEvent()
         {
             const double lethalityConst = 0.00015d;
-            var ev = new Event(delegate (Node n, Graph l, Graph w)
-            {
+            var ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
-                chance = (10 * (double)n.Traits["Age"] / 300d) 
-                * ((double)(400 - (3 * n.Traits["Health"])) / 100d) 
-                * ((double)n.Traits["Viral Intensity"] / 100d) 
-                * ((double)(200 - n.Traits["Immune Strength"]) / 100d) 
-                * ((double)(200 - n.Traits["Medicinal Support"]) / 100d) 
-                * ((5 * (double)n.Traits["Genetic Factor"]) / 100d) 
+                chance = (10 * (double)n.Traits["Age"] / 300d)
+                * ((double)(400 - (3 * n.Traits["Health"])) / 100d)
+                * ((double)n.Traits["Viral Intensity"] / 100d)
+                * ((double)(200 - n.Traits["Immune Strength"]) / 100d)
+                * ((double)(200 - n.Traits["Medicinal Support"]) / 100d)
+                * ((5 * (double)n.Traits["Genetic Factor"]) / 100d)
                 * lethalityConst;
                 return chance;
-            }, null, delegate (Node n, Graph l, Graph w)
+            });
+            if (Implementation.Program.YesNo("Does the Death Event remove statuses?")) {
+                ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                    n.statuses.Clear();
+                    n.statuses.Add("Dead");
+                });
+            }
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w)
             {
                 foreach (var g in n.groups) {
                     switch (g.statuses[0].ToUpper()) { //the first status *should* be the type of the group...
