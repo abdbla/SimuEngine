@@ -280,7 +280,7 @@ namespace NodeMonog
                 };
                 actions.panel.AddChild(subGraphButton);
             }
-            actions.panel.AddChild(new Paragraph("Amount of ticks: "));
+            actions.panel.AddChild(new Paragraph("Amount to Tick: "));
             TextInput Tickcount = new TextInput();
             Tickcount.Value = "1";
             actions.panel.AddChild(Tickcount);
