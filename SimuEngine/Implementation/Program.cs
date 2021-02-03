@@ -107,7 +107,7 @@ namespace Implementation
             throw new SystemException("this isn't real");
         }
 
-        static bool YesNo(string prompt) {
+        public static bool YesNo(string prompt) {
             Console.Write(prompt + " (Y/N) ");
             while (true) {
                 var k = Console.ReadKey();

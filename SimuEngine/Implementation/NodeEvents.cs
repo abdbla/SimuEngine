@@ -14,8 +14,9 @@ namespace Implementation
 
             ev.AddReqPossible(delegate (Node self, Graph localGraph, Graph w)
             {
-                double chance = 0.0;
-                const double infectionConst = 0.1d;
+                if (self.statuses.Contains("Vaccinated")) return 0;
+                double chance = 1;
+                const double infectionConst = 5d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -32,17 +33,17 @@ namespace Implementation
                         double hygiene = n.traits["Hygiene"];
 
                         var prox = 
-                            conn.PhysicalProximity / 100 *
-                            conn.TemporalProximity *
+                            Math.Pow((conn.traits["Physical Proximity"] / 100d), 2) *
+                            (conn.traits["Temporal Proximity"] / 100d) *
                             (viral / 100d) *
                             ((double)(150 - (hygiene + selfHygiene) / 2) / 100d) *
                             (immuneStrength / 100d) *
                             (genetic / 100d) *
                             infectionConst;
-                        chance = 1 - prox;
+                        chance *= 1 - prox;
                     }
                 }
-                return chance;
+                return 1 - chance;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w)
             {
@@ -58,20 +59,27 @@ namespace Implementation
         }
         static Event DeathEvent()
         {
-            const double lethalityConst = 0.0001d;
-            var ev = new Event(delegate (Node n, Graph l, Graph w)
-            {
+            const double lethalityConst = 0.00015d;
+            var ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
                 if (!n.Statuses.Contains("Infected")) return 0;
-                chance = (10 * (double)n.Traits["Age"] / 300d) 
-                * ((double)(400 - (3 * n.Traits["Health"])) / 100d) 
-                * ((double)n.Traits["Viral Intensity"] / 100d) 
-                * ((double)(200 - n.Traits["Immune Strength"]) / 100d) 
-                * ((double)(200 - n.Traits["Medicinal Support"]) / 100d) 
-                * ((5 * (double)n.Traits["Genetic Factor"]) / 100d) 
+                chance = (10 * (double)n.Traits["Age"] / 300d)
+                * ((double)(400 - (3 * n.Traits["Health"])) / 100d)
+                * ((double)n.Traits["Viral Intensity"] / 100d)
+                * ((double)(200 - n.Traits["Immune Strength"]) / 100d)
+                * ((double)(200 - n.Traits["Medicinal Support"]) / 100d)
+                * ((5 * (double)n.Traits["Genetic Factor"]) / 100d)
                 * lethalityConst;
                 return chance;
-            }, null, delegate (Node n, Graph l, Graph w)
+            });
+            if (Implementation.Program.YesNo("Does the Death Event remove statuses?")) {
+                ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                    n.statuses.Clear();
+                    n.statuses.Add("Dead");
+                });
+            }
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w)
             {
                 foreach (var g in n.groups) {
                     switch (g.statuses[0].ToUpper()) { //the first status *should* be the type of the group...
@@ -146,7 +154,8 @@ namespace Implementation
             Event ev = new Event(delegate (Node n, Graph l, Graph w)
             {
                 if (n.Statuses.Contains("Isolated") || n.Traits["Awareness"] < 70) return 0;
-                else return (n.Traits["Awareness"] - 70d)/ 100d;
+                if ((n.statuses.Contains("Tested: True Positive") || n.statuses.Contains("Tested: False Positive")) && n.traits["Awareness"] >= 20) return 1;
+                else return (n.Traits["Awareness"] - 70d) / 100d;
             }, null, delegate (Node n, Graph l, Graph w)
             {
                 foreach ((Connection c, Node adjecentNode) in l.GetOutgoingConnections(n))
@@ -181,6 +190,19 @@ namespace Implementation
 
             ev.AppliesStatus = new HashSet<string>() { "Recovered" };
 
+            return ev;
+        }
+
+        static Event SusceptibleEvent() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Recovered")) return 0.001d * (n.traits["Immune Strength"] / 100d);
+                return 0d;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Remove("Recovered");
+                n.statuses.Add("Healthy");
+            });
             return ev;
         }
          
@@ -233,9 +255,9 @@ namespace Implementation
                 return chance;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
-                if (l.parent.traits["Tests"] >= w.Nodes[0].traits["Time"] * l.parent.traits["Testing Capacity"]) return;
+                if (l.parent.traits["Testing Capacity"] > 0) return;
                 n.statuses.Add("Tested");
-                l.parent.traits["Tests"]++;
+                l.parent.traits["Testing Capacity"]--;
                 if (n.statuses.Contains("Infected")) {
                     if (Node.rng.NextDouble() > 0.2) {
                         n.statuses.Add("Tested: True Positive");
@@ -264,6 +286,61 @@ namespace Implementation
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.statuses.Add("Testing Implemented");
+            });
+            return ev;
+        }
+
+        static Event GetMedicinalSupport() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Getting Support") || !n.statuses.Contains("Infected")) return 0;
+                double chance = 0;
+                chance += n.traits["Age"] / 300d;
+                chance += n.traits["Health"] / 300d;
+                return chance;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                if (n.traits["Health"] > 40) {
+                    if (l.parent.traits["Medicinal Capacity: Light"] == 0) return;
+                    l.parent.traits["Medicinal Capacity: Light"]--;
+                    n.statuses.Add("Getting Support: Light");
+                    n.statuses.Add("Getting Support");
+                    n.traits["Medicinal Support"] += 20;
+                } else {
+                    if (l.parent.traits["Medicinal Capacity: Heavy"] == 0) return;
+                    l.parent.traits["Medicinal Capacity: Heavy"]--;
+                    n.statuses.Add("Getting Support: Heavy");
+                    n.statuses.Add("Getting Support");
+                    n.traits["Medicinal Support"] += 50;
+                }
+            });
+            return ev;
+        }
+
+        static Event RemoveMedicinalSupport() {
+            Event ev = new Event();
+            ev.AddReqGuaranteed(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Recovered") || n.statuses.Contains("Dead")) return true;
+                return false;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Remove("Getting Support");
+                if (n.statuses.Contains("Getting Support: Light")) { n.statuses.Remove("Getting Support: Light"); n.traits["Medicinal Support"] -= 20; l.parent.traits["Medicinal Capacity: Light"]++; }
+                if (n.statuses.Contains("Getting Support: Heavy")) { n.statuses.Remove("Getting Support: Heavy"); n.traits["Medicinal Support"] -= 50; l.parent.traits["Medicinal Capacity: Heavy"]++; }
+            });
+            return ev;
+        }
+
+        static Event GetVaccinated() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (!l.parent.statuses.Contains("Vaccination Implemented") || n.statuses.Contains("Vaccinated")) return 0;
+                return n.traits["Awareness"] / 100d;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                if (l.parent.traits["Vaccination Capacity"] == 0) return;
+                l.parent.traits["Vaccination Capacity"]--;
+                n.statuses.Add("Vaccinated");
             });
             return ev;
         }
@@ -306,15 +383,40 @@ namespace Implementation
             return ev;
         }
 
+        static Event ImplementVaccination() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Vaccination Implemented") || !l.parent.statuses.Contains("Vaccination Started")) return 0;
+                if (n.SubGraph.FindAllNodes(s => s.statuses.Contains("Dead")).Count == 0) return 0;
+                double chance = (double)n.SubGraph.FindAllNodes(s => s.statuses.Contains("Dead")).Count / (double)n.traits["Population"];
+                return chance;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Add("Vaccination Implemented");
+            });
+            return ev;
+        }
+
         static Event StartTesting() {
             Event ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 if (n.statuses.Contains("Testing Started")) return 0;
-                double chance = 0;
                 return Math.Atan((double)n.traits["Time"] / 3d);
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.statuses.Add("Testing Started");
+            });
+            return ev;
+        }
+
+        static Event StartVaccinating() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("Vaccination Started")) return 0;
+                return Math.Atan((double)n.traits["Time"] / 450d);
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                n.statuses.Add("Vaccination Started");
             });
             return ev;
         }
@@ -326,6 +428,14 @@ namespace Implementation
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.traits["Time"]++;
+                foreach (var g in n.SubGraph.Nodes) {
+                    if (g.statuses.Contains("Testing Implemented")) {
+                        n.traits["Testing Capacity"] = n.traits["Population"] / 100;
+                    }
+                    if (g.statuses.Contains("Vaccination Implemented")) {
+                        n.traits["Vaccination Capacity"] = n.traits["Population"] = 400;
+                    }
+                }
             });
             return ev;
         }
@@ -341,7 +451,11 @@ namespace Implementation
                 RemovinggMask(),
                 IsolationEvent(),
                 LocalWork(),
-                GetTested()
+                GetTested(),
+                GetMedicinalSupport(),
+                RemoveMedicinalSupport(),
+                GetVaccinated(),
+                SusceptibleEvent()
             };
 
             personEvents.Add(new Event());
@@ -352,6 +466,7 @@ namespace Implementation
             List<Event> districtEvents = new List<Event> {
                 ImplementTesting(),
                 CheckInfection(),
+                ImplementVaccination(),
                 DistrictInfection(),
             };
 
@@ -361,6 +476,7 @@ namespace Implementation
         public static List<Event> InitializeCityEvents() {
             List<Event> cityEvents = new List<Event>() {
                 StartTesting(),
+                StartVaccinating(),
                 KeepCount(),
             };
 

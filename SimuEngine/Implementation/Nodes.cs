@@ -14,6 +14,7 @@ namespace Implementation {
     class City : Node
     {
         const int DISTRICT_AMOUNT = 17;
+        const int INFECTED_START_AMOUNT = 1000;
         public override void NodeCreation(Graph g, NodeCreationInfo creationInfo = NodeCreationInfo.Empty) {
             int tempPopulation = traits["Population"];
             List<Task<District>> districtCreationTasks = new List<Task<District>>();
@@ -46,13 +47,19 @@ namespace Implementation {
                     }
                 }
             }
-            District tmp = (District)SubGraph.Nodes[rng.Next(SubGraph.Nodes.Count)];
-            Person tmp2 = (Person)tmp.SubGraph.Nodes[rng.Next(tmp.SubGraph.Nodes.Count)];
-            tmp2.statuses.Remove("Healthy");
-            tmp2.statuses.Add("Infected");
-            tmp2.traits.Add("Infected Time", 0);
-            tmp2.traits.Add("Medicinal Support", 100);
-            tmp2.traits.Add("Viral Intensity", rng.NextGaussian(100, 10));
+            for (int i = 0; i < INFECTED_START_AMOUNT; i++) {
+                District tmp = (District)SubGraph.Nodes[rng.Next(SubGraph.Nodes.Count)];
+                var tmp2 = from node in tmp.SubGraph.Nodes
+                           where node.statuses.Contains("Healthy")
+                           select node;
+                var tmp3 = tmp2.ToList();
+                Person tmp4 = (Person)tmp3[rng.Next(tmp3.Count)];
+                tmp4.statuses.Remove("Healthy");
+                tmp4.statuses.Add("Infected");
+                tmp4.traits.Add("Infected Time", 0);
+                tmp4.traits.Add("Medicinal Support", 100);
+                tmp4.traits.Add("Viral Intensity", rng.NextGaussian(100, 10));
+            }
         }
 
         public City(int population, int density) {
@@ -181,7 +188,9 @@ namespace Implementation {
             traits["Population"] = population;
             traits["Density"] = density;
             traits["Testing Capacity"] = population / 100;
-            traits["Tests"] = 0;
+            traits["Vaccination Capacity"] = population / 400;
+            traits["Medicinal Capacity: Light"] = population / 50;
+            traits["Medicinal Capacity: Heavy"] = population / 1000;
             SubGraph = new Graph();
             SubGraph.parent = this;
             NodeCreation(SubGraph);
