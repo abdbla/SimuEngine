@@ -95,6 +95,7 @@ namespace NodeMonog
         bool showGraph = false;
         bool animations = false;
         bool showBoundingBox = false;
+        bool showDebugStats = false;
 
         public Renderer(Engine engine)
         {
@@ -300,16 +301,24 @@ namespace NodeMonog
                     updating = true;
                     tickMin = history.Count;
                     tickAmount = uint.Parse(Tickcount.Value);
-                    Stopwatch sw = new Stopwatch();
+                    Stopwatch outerSw = new Stopwatch();
+                    outerSw.Start();
+                    Stopwatch innerSw = new Stopwatch();
                     for (int i = 0; i < tickAmount; i++) {
-                        sw.Start();
-                        engine.handler.Tick(engine.system.graph);
-                        sw.Stop();
-                        Console.WriteLine($"Done with tick {i}, elapsed: {sw.ElapsedMilliseconds}ms");
-                        sw.Reset();
-                        history.Add(new GameState(masterGraph));
+                        lock (engine) {
+                            innerSw.Start();
+                            engine.handler.Tick(engine.system.graph);
+                            innerSw.Stop();
+                            Console.WriteLine($"Done with tick {i}, elapsed: {innerSw.ElapsedMilliseconds}ms");
+                            innerSw.Reset();
+                        }
+                        lock (engine) {
+                            history.Add(new GameState(masterGraph));
+                        }
                         OnTickFinished(this, engine);
                     }
+                    outerSw.Stop();
+                    Console.WriteLine($"Finished {tickAmount} ticks in {outerSw.Elapsed}");
                     updating = false;
                 };
                 if (!updating) updateTask = Task.Run(action);
@@ -350,8 +359,6 @@ namespace NodeMonog
             {
                 if(currentGraph.Nodes.First(x => x.Name == fittingPeople.SelectedValue )!= null)
                     currentSimulation.SelectedNode = currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue);
-                
-                
             };
             group.panel.AddChild(drop);
             group.panel.AddChild(fittingPeople);
@@ -456,11 +463,16 @@ namespace NodeMonog
             boundingBox.Checked = false;
             boundingBox.OnValueChange += _ => showBoundingBox = boundingBox.Checked;
 
+            CheckBox debugStats = new CheckBox("Show Debug Stats");
+            debugStats.Checked = false;
+            debugStats.OnValueChange += _ => showDebugStats = debugStats.Checked;
+
             
             options.panel.AddChild(graphBox);
             options.panel.AddChild(animationBox);
             options.panel.AddChild(cameraBox);
             options.panel.AddChild(boundingBox);
+            options.panel.AddChild(debugStats);
 
 
             Slider sliderDamp = new Slider(0, 500);
@@ -523,14 +535,14 @@ namespace NodeMonog
             stats.panel.AddChild(new Paragraph($"Ticks: {history.Count - 1}"));
             SelectList l = new SelectList(new Vector2(Window.ClientBounds.Width / 3 / 8 * 7, Window.ClientBounds.Height / 5 * 4));
             stats.panel.AddChild(l);
-            foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
-            {
-                l.AddItem(entry.Key + ": " + entry.Value);
-            }
-            stats.panel.AddChild(new Paragraph());
-            foreach (KeyValuePair<string, List<int>> entry in new GameState(masterGraph).allStatuses)
-            {
-                l.AddItem(entry.Key + " average: " + entry.Value.Average());
+            lock (engine) {
+                foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits) {
+                    l.AddItem(entry.Key + ": " + entry.Value);
+                }
+                stats.panel.AddChild(new Paragraph());
+                foreach (KeyValuePair<string, List<int>> entry in new GameState(masterGraph).allStatuses) {
+                    l.AddItem(entry.Key + " average: " + entry.Value.Average());
+                }
             }
 
             save.panel.ClearChildren();
@@ -830,31 +842,35 @@ namespace NodeMonog
 
 
             int centerX = r.Width / 3;
+            if (showDebugStats) {
+                string visitedGraphString = "";
 
-            string visitedGraphString = "";
+                for (int k = 0; k < visitedGraphs.Count; k++) {
+                    visitedGraphString += visitedGraphs[k].Item2 + "\n";
+                }
+                spriteBatch.DrawString(arial, visitedGraphString, new Vector2(centerX, 0), Color.Black);
 
-            for (int k = 0; k < visitedGraphs.Count; k++) {
-                visitedGraphString += visitedGraphs[k].Item2 + "\n";
-            }
-            spriteBatch.DrawString(arial, visitedGraphString, new Vector2(centerX, 0), Color.Black);
+                spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
 
-            spriteBatch.DrawString(arial, r.ToString() + "   :   " + engine.player.selectedNode.ToString(), Vector2.Zero, Color.Black);
-
-            spriteBatch.DrawString(arial, (animation).ToString(), new Vector2(0, 32), Color.Black);
-
-
-            StringBuilder debugText = new StringBuilder();
-
-            foreach ((string debugField, Func<string> f) in debugStats) {
-                debugText.Append(debugField);
-                debugText.Append(": ");
-                debugText.AppendLine(f());
+                spriteBatch.DrawString(arial, (animation).ToString(), new Vector2(0, 32), Color.Black);
             }
 
             try {
-                spriteBatch.DrawString(arial, debugText.ToString(), new Vector2(0, 48), Color.Black);
+                if (showDebugStats) {
+                    StringBuilder debugText = new StringBuilder();
+
+                    foreach ((string debugField, Func<string> f) in debugStats) {
+                        debugText.Append(debugField);
+                        debugText.Append(": ");
+                        debugText.AppendLine(f());
+                    }
+
+
+                    spriteBatch.DrawString(arial, debugText.ToString(), new Vector2(0, 48), Color.Black);
+                }
             } catch {
             }
+
             if (showGraph) {
                 float maxTime = Math.Max(1, currentSimulation.SimulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
                 float maxIter = Math.Min(1000, currentSimulation.SimulationStatus.TimeStepHistory.Last().Item1); // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
@@ -877,8 +893,7 @@ namespace NodeMonog
             var dvs = currentSimulation.Simulation.ΔV;
 
             //for (int i = 0; i < visitedGraphs[historyIndex].Item1.Graph.Nodes.Count; i++)
-            foreach (DrawNode currentDrawNode in currentSimulation.DrawNodes)
-            {
+            foreach (DrawNode currentDrawNode in currentSimulation.DrawNodes) {
                 //Node currentNode = visitedGraphs[historyIndex].Item1.Graph.Nodes[i];
                 //Vector2 currentNodePosition = currentSimulation.DrawNodes.Find(x => x.node == currentNode).Position;
 
@@ -890,14 +905,13 @@ namespace NodeMonog
                 if (selectedNode.node == currentNode) {
                     selectcolour = Color.Black;
                     depth = 0.2f;
-                }
-                else selectcolour = new Color(
-                    0.7f, // (float)rng.NextDouble(),
-                    0.7f, // (float)rng.NextDouble(),
-                    0.7f, // (float)rng.NextDouble(),
-                    1.0f
-                );
-                
+                } else selectcolour = new Color(
+                      0.7f, // (float)rng.NextDouble(),
+                      0.7f, // (float)rng.NextDouble(),
+                      0.7f, // (float)rng.NextDouble(),
+                      1.0f
+                  );
+
                 foreach ((Connection c, Node n) in currentGraph.GetOutgoingConnections(currentNode)) {
                     DrawNode otherDrawNode = currentSimulation.LookupDrawNode(n);
                     if (otherDrawNode == null) continue;
@@ -922,10 +936,9 @@ namespace NodeMonog
                         layerDepth: depth
                     );
 
-                    if (animations)
-                    {
+                    if (animations) {
 
-                        Vector2 relativeMovement = 
+                        Vector2 relativeMovement =
                             (arrowVector + offsetPoint) * (animation % (c.Strength() * 1000)) / (c.Strength() * 1000);
                         spriteBatch.Draw(
                             texture: arrow,
@@ -973,29 +986,29 @@ namespace NodeMonog
                    Vector2.Zero,
                    SpriteEffects.None,
                    depth / 2 + 0.02f);
+                if (showDebugStats) {
+                    //Draws node text
+                    if (zoomlevel > 0.35f || true) {
+                        Color fadeColour = Color.Black;
+                        if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
 
-                //Draws node text
-                if (zoomlevel > 0.35f || true)
-                {
-                    Color fadeColour = Color.Black;
-                    if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
+                        var p = currentSimulation.Simulation.physicsNodes[currentNode].Point.Velocity;
+                        var c =
+                            LabColor.LabToRgb(
+                            LabColor.LinearGradient(LabColor.RgbToLab(Color.Green), LabColor.RgbToLab(Color.Red),
+                            (float)(Math.Log10(Math.Min(dvs[currentNode].Magnitude(), 1e4)) / 3))
+                        );
 
-                    var p = currentSimulation.Simulation.physicsNodes[currentNode].Point.Velocity;
-                    var c =
-                        LabColor.LabToRgb(
-                        LabColor.LinearGradient(LabColor.RgbToLab(Color.Green), LabColor.RgbToLab(Color.Red),
-                        (float)(Math.Log10(Math.Min(dvs[currentNode].Magnitude(), 1e4)) / 3))
-                    );
-
-                    spriteBatch.DrawString(arial,
-                        string.Format("{0:f2}\ndv: {1:f3}", p.Magnitude(), dvs[currentNode].Magnitude()),
-                        CameraTransform(currentNodePosition + new Vector2(32 * (float)zoomlevel - (currentNode.Name.Length) * 8, 16 * (float)zoomlevel)),
-                        c,
-                        0,
-                        Vector2.Zero,
-                        Math.Min((float)(1 / zoomlevel / 32 + 1f), 1f),
-                        SpriteEffects.None,
-                        0.1f);
+                        spriteBatch.DrawString(arial,
+                            string.Format("{0:f2}\ndv: {1:f3}", p.Magnitude(), dvs[currentNode].Magnitude()),
+                            CameraTransform(currentNodePosition + new Vector2(32 * (float)zoomlevel - (currentNode.Name.Length) * 8, 16 * (float)zoomlevel)),
+                            c,
+                            0,
+                            Vector2.Zero,
+                            Math.Min((float)(1 / zoomlevel / 32 + 1f), 1f),
+                            SpriteEffects.None,
+                            0.1f);
+                    }
                 }
             }
 
