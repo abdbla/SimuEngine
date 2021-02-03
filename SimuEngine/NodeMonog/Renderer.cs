@@ -722,9 +722,9 @@ namespace NodeMonog
             if (updating)
             {
                 prog.Value = tickCount - tickMin;
-                if (running != null) running = new Paragraph("Running tick: " + prog.Value);
-                else running.Text = "Running tick: " + prog.Value;
-                ((Paragraph)actions.panel.Children.Last(x => x is Paragraph)).Text = "Running tick: " + prog.Value;
+                if (running != null) running = new Paragraph($"Running tick: {prog.Value}/{prog.Max}");
+                else running.Text = $"Running tick: {prog.Value}/{prog.Max}";
+                ((Paragraph)actions.panel.Children.Last(x => x is Paragraph)).Text = $"Running tick: {prog.Value}/{prog.Max}";
                 wasUpdating = true;
             }
             if (!updating && wasUpdating)
