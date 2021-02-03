@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated")) return 0;
                 double chance = 1;
-                const double infectionConst = 0.5d;
+                const double infectionConst = 0.15d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -122,7 +122,17 @@ namespace Implementation
             Event ev = new Event(delegate (Node n, Graph l, Graph w)
             {
                 if (n.Statuses.Contains("WearingMask")) return 0;
-                else return n.Traits["Awareness"] / 100d;
+                double chance = 0;
+                chance = (n.Traits["Awareness"] - 50) / 100d;
+                foreach ((Connection c, Node s) in l.GetOutgoingConnections(n)) {
+                    if (s.statuses.Contains("Wearing Mask")) {
+                        chance += c.traits["Temporal Proximity"] / 1000d;
+                    }
+                    else {
+                        chance -= c.traits["Temporal Proximity"] / 1000d;
+                    }
+                }
+                return chance;
             }, null, delegate (Node n, Graph l, Graph w)
             {
                 foreach (PersonConnection c in n.connections)
@@ -297,10 +307,10 @@ namespace Implementation
                 }
                 double chance = 0;
                 if (n.statuses.Contains("Infected")) {
-                    chance = ((double)n.traits["Awareness"] / 50d) * ((double)n.traits["Viral Intensity"] / 200d) - 0.5;
+                    chance = ((double)n.traits["Awareness"] / 50d) * ((double)n.traits["Viral Intensity"] / 200d) - 0.3;
                 }
                 if (!n.statuses.Contains("Infected")) {
-                    chance += 0.3 - ((double)n.traits["Awareness"] / 100d);
+                    chance = 0.3 - ((double)n.traits["Awareness"] / 100d);
                 }
                 return chance;
             });
