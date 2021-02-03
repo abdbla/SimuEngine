@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated")) return 0;
                 double chance = 1;
-                const double infectionConst = 0.4d;
+                const double infectionConst = 0.75d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -425,9 +425,9 @@ namespace Implementation
                     Node tmp = healthy[Node.rng.Next(healthy.Count - 1)];
                     tmp.statuses.Remove("Healthy");
                     tmp.statuses.Add("Infected");
-                    tmp.traits.Add("Infected Time", 0);
-                    tmp.traits.Add("Medicinal Support", 100);
-                    tmp.traits.Add("Viral Intensity", Node.rng.NextGaussian(100, 10));
+                    if (!tmp.traits.ContainsKey("Infected Time")) tmp.traits.Add("Infected Time", 0); else tmp.traits["Infected Time"] = 0;
+                    if (!tmp.traits.ContainsKey("Medicinal Support")) tmp.traits.Add("Medicinal Support", 100);
+                    if (!tmp.traits.ContainsKey("Viral Intensity")) tmp.traits.Add("Viral Intensity", Node.rng.NextGaussian(100, 10)); else tmp.traits["Viral Intensity"] = Node.rng.NextGaussian(100, 10);
                 }
             });
             return ev;
@@ -463,7 +463,7 @@ namespace Implementation
             Event ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 if (n.statuses.Contains("Vaccination Started")) return 0;
-                return Math.Atan(((double)n.traits["Time"] - 75) / 140d);
+                return Math.Atan(((double)n.traits["Time"] - 150) / 200d);
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.statuses.Add("Vaccination Started");
@@ -483,7 +483,7 @@ namespace Implementation
                         n.traits["Testing Capacity"] = n.traits["Population"] / 100;
                     }
                     if (g.statuses.Contains("Vaccination Implemented")) {
-                        n.traits["Vaccination Capacity"] = n.traits["Population"] = 400;
+                        n.traits["Vaccination Capacity"] = n.traits["Population"] / 400;
                     }
                 }
             });
