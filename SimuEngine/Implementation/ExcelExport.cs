@@ -14,6 +14,7 @@ namespace Implementation {
         ExcelPackage excel;
         ExcelWorksheet statusSheet;
         ExcelWorksheet traitSheet;
+        ExcelWorksheet districtSheet;
         TickStates history;
         int tick;
 
@@ -22,6 +23,7 @@ namespace Implementation {
             excel = new ExcelPackage();
             statusSheet = excel.Workbook.Worksheets.Add("Statuses");
             traitSheet = excel.Workbook.Worksheets.Add("Traits");
+            districtSheet = excel.Workbook.Worksheets.Add("District stats");
             history = new TickStates();
             tick = 0;
         }
@@ -33,6 +35,7 @@ namespace Implementation {
         public void OnTick(object sender, Engine engine) {
             Dictionary<string, int> statCount = new Dictionary<string, int>();
             Dictionary<string, (int sum, int count)> traitStuff = new Dictionary<string, (int, int)>();
+            Dictionary<string, int> testCapacity = new Dictionary<string, int>();
 
             int districtCount = engine.system.graph.Nodes[0].SubGraph.Nodes.Cast<District>().Count();
             statCount["Population"] = 0;
@@ -60,9 +63,13 @@ namespace Implementation {
 
                     statCount["Population"]++;
                 }
+
+                testCapacity.Add(district.Name, district.traits["Testing Capacity"]);
             }
             history.AddStats(statCount, tick);
             history.AddTraits(traitStuff, tick);
+            history.AddDistricts(testCapacity, tick);
+
             tick++;
 
             UpdateSheet();
@@ -116,6 +123,10 @@ namespace Implementation {
                 var series = chart.Series.Add(range, rangeLabel);
                 series.Header = status;
             }
+
+            var lineChart = chart.PlotArea.ChartTypes.AddLineChart(eLineChartType.Line);
+            var cumulativeSeries = lineChart.Series.Add(StatusValueRange("Cumulative Infection"), rangeLabel);
+            cumulativeSeries.Header = "Cumulative Infection";
 
             return chart;
         }
@@ -205,6 +216,26 @@ namespace Implementation {
             CreateAwarenessChart();
         }
 
+        void UpdateDistrictSheet() {
+            districtSheet.Cells.Clear();
+            districtSheet.Cells[1, 1].Style.Font.Bold = true;
+            districtSheet.Cells[1, 1].Value = "Districts";
+            for (int i = 0; i < tick; i++) {
+                districtSheet.Cells[i + 2, 1].Value = $"Day {i + 1}";
+            }
+
+            int colIndex = 2;
+            foreach ((string district, List<int?> testingCapacities) in
+                    history.districtStuff.OrderBy(x => x.Key).Select(x => (x.Key, x.Value))) {
+                districtSheet.Cells[1, colIndex].Value = district;
+                for (int i = 0; i < testingCapacities.Count; i++) {
+                    districtSheet.Cells[2 + i, colIndex].Value = testingCapacities[i];
+                }
+                districtSheet.Column(colIndex).AutoFit();
+                colIndex++;
+            }
+        }
+
         ExcelLineChart CreateAwarenessChart() {
             ExcelLineChart chart = traitSheet.Drawings.AddLineChart("Awareness", eLineChartType.Line);
             var labelRange = traitSheet.Cells[2, 1,
@@ -220,6 +251,7 @@ namespace Implementation {
             lock (excel) {
                 UpdateStatusSheet();
                 UpdateTraitSheet();
+                UpdateDistrictSheet();
             }
         }
 
@@ -231,10 +263,12 @@ namespace Implementation {
     class TickStates {
         public Dictionary<string, List<int?>> statCount;
         public Dictionary<string, List<(int, int)?>> traitStuff;
+        public Dictionary<string, List<int?>> districtStuff;
 
         public TickStates() {
             statCount = new Dictionary<string, List<int?>>();
             traitStuff = new Dictionary<string, List<(int, int)?>>();
+            districtStuff = new Dictionary<string, List<int?>>();
         }
 
         public bool AddStats(Dictionary<string, int> stats, int tick) {
@@ -243,6 +277,10 @@ namespace Implementation {
 
         public bool AddTraits(Dictionary<string, (int, int)> traits, int tick) {
             return AddStuff(traitStuff, traits, tick);
+        }
+
+        public bool AddDistricts(Dictionary<string, int> districts, int tick) {
+            return AddStuff(districtStuff, districts, tick);
         }
 
         private static bool AddStuff<T>(Dictionary<string, List<T?>> dict, Dictionary<string, T> source, int tick)
