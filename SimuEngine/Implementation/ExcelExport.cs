@@ -32,7 +32,7 @@ namespace Implementation {
 
         public void OnTick(object sender, Engine engine) {
             Dictionary<string, int> statCount = new Dictionary<string, int>();
-            Dictionary<string, (int, int)> traitStuff = new Dictionary<string, (int, int)>();
+            Dictionary<string, (int sum, int count)> traitStuff = new Dictionary<string, (int, int)>();
 
             int districtCount = engine.system.graph.Nodes[0].SubGraph.Nodes.Cast<District>().Count();
             statCount["Population"] = 0;
@@ -104,7 +104,7 @@ namespace Implementation {
                 statusSheet.Cells[1, 1].Style.Font.Bold = true;
                 statusSheet.Cells[1, 1].Value = "Statuses";
                 for (int i = 0; i < tick; i++) {
-                    statusSheet.Cells[i + 2, 1].Value = $"Tick {i + 1}";
+                    statusSheet.Cells[i + 2, 1].Value = $"Day {i + 1}";
                 }
 
                 double width = 0;

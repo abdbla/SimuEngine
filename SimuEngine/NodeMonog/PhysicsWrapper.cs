@@ -128,7 +128,7 @@ namespace NodeMonog {
 #endregion
 
             Graph = graph;
-            neighbors = (from ns in Graph.GetNeighborsDegrees(selectedNode, Degrees - 1)
+            neighbors = (from ns in Graph.GetNeighborsDegrees(selectedNode, degrees - 1)
                          let sep = ns.Item2
                          orderby sep ascending
                          select ns).Take(MAXNODES).ToList();
