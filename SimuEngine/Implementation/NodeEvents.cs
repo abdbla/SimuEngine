@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated")) return 0;
                 double chance = 1;
-                const double infectionConst = 0.15d;
+                const double infectionConst = 0.4d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -305,7 +305,7 @@ namespace Implementation
                 return chance;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
-                if (l.parent.traits["Testing Capacity"] > 0) return;
+                if (l.parent.traits["Testing Capacity"] == 0) return;
                 n.statuses.Add("Tested");
                 l.parent.traits["Testing Capacity"]--;
                 if (n.statuses.Contains("Infected")) {
@@ -462,9 +462,8 @@ namespace Implementation
         static Event StartVaccinating() {
             Event ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
-                Console.WriteLine($"Arctan testing: {Math.Atan((double)n.traits["Time"] / 3000d)}");
                 if (n.statuses.Contains("Vaccination Started")) return 0;
-                return Math.Atan((double)n.traits["Time"] / 3000d);
+                return Math.Atan(((double)n.traits["Time"] - 75) / 140d);
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.statuses.Add("Vaccination Started");
