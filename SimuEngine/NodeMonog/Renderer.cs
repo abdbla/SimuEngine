@@ -47,6 +47,7 @@ namespace NodeMonog
         bool wasUpdating = false;
         uint tickAmount;
         int tickMin;
+        int tickCount = 0;
 
         const int zwoomTime = 200;
         int frameRate = 0;
@@ -61,8 +62,6 @@ namespace NodeMonog
         Connection selectedConnection;
 
         List<DrawNode> drawNodes { get => currentSimulation.DrawNodes.ToList(); set { } }
-
-        public static List<GameState> history = new List<GameState>();
 
         Engine engine;
 
@@ -124,7 +123,7 @@ namespace NodeMonog
         {
             // TODO: Add your initialization logic here
 
-            
+
             IsMouseVisible = true;
             Window.AllowUserResizing = true;
 
@@ -149,7 +148,7 @@ namespace NodeMonog
 
             actions = tabs.AddTab("Global");
             Vector2 offset = new Vector2(0, -actions.button.CalcDestRect().Height / 3);
-            Vector2 size =   new Vector2(actions.button.CalcDestRect().Height / 3, actions.button.CalcDestRect().Height / 3);
+            Vector2 size = new Vector2(actions.button.CalcDestRect().Height / 3, actions.button.CalcDestRect().Height / 3);
             Image globalI = new Image(Content.Load<Texture2D>(@"GlobeIcon"), size: size * 2.25f, offset: offset, anchor: Anchor.TopCenter);
             globalI.ClickThrough = true;
             actions.button.AddChild(globalI);
@@ -161,7 +160,7 @@ namespace NodeMonog
             //group.panel.PanelOverflowBehavior = PanelOverflowBehavior.VerticalScroll;
 
             person = tabs.AddTab("Person");
-            Image personI = new Image(Content.Load<Texture2D>(@"PersonIcon") , size: size * 2.25f,offset: offset,anchor: Anchor.TopCenter);
+            Image personI = new Image(Content.Load<Texture2D>(@"PersonIcon"), size: size * 2.25f, offset: offset, anchor: Anchor.TopCenter);
             personI.ClickThrough = true;
             person.button.AddChild(personI);
             //person.panel.PanelOverflowBehavior = PanelOverflowBehavior.VerticalScroll;
@@ -193,7 +192,7 @@ namespace NodeMonog
             engine.player.SelectNode(selectedNode.node);
 
 
-            history.Add(new GameState(masterGraph));
+            //history.Add(new GameState(masterGraph));
 
             resizeMenu(new object(), new EventArgs());
 
@@ -201,8 +200,8 @@ namespace NodeMonog
             UpdateHud();
             outsidePanel.AddChild(tabs);
 
-            
-            
+
+
             UserInterface.Active.AddEntity(outsidePanel);
             UserInterface.Active.ShowCursor = false;
 
@@ -216,7 +215,8 @@ namespace NodeMonog
 
             debugStats = new List<(string, Func<string>)>();
 
-            debugStats.Add(("Simulation status", () => currentSimulation.SimulationStatus.Status switch {
+            debugStats.Add(("Simulation status", () => currentSimulation.SimulationStatus.Status switch
+            {
                 Status.Running => $"Running" +
                 $"\ntimestep: {currentSimulation.SimulationStatus.TimeStep}",
                 Status.IterationCap => "Iteration cap reached",
@@ -231,35 +231,43 @@ namespace NodeMonog
                            select Δv.X * Δv.X + Δv.Y * Δv.Y).Sum()).ToString("f3")
             ));
 
-            debugStats.Add(("Δv MAD", () => {
+            debugStats.Add(("Δv MAD", () =>
+            {
                 Core.Physics.Vector2 μ = Core.Physics.Vector2.Zero;
-                foreach (var Δv in currentSimulation.Simulation.ΔV.Values) {
+                foreach (var Δv in currentSimulation.Simulation.ΔV.Values)
+                {
                     μ += Δv;
                 }
                 μ *= 1.0 / currentSimulation.Simulation.ΔV.Count;
                 double MAD = 0.0;
-                foreach (var Δv in currentSimulation.Simulation.ΔV.Values) {
+                foreach (var Δv in currentSimulation.Simulation.ΔV.Values)
+                {
                     MAD += (Δv - μ).Magnitude();
                 }
                 MAD /= currentSimulation.Simulation.ΔV.Count;
                 return MAD.ToString("f3");
-            }));
+            }
+            ));
 
-            debugStats.Add(("μ of |v|", () => {
+            debugStats.Add(("μ of |v|", () =>
+            {
                 double μ = 0;
-                foreach (var Δv in currentSimulation.Simulation.ΔV.Values) {
+                foreach (var Δv in currentSimulation.Simulation.ΔV.Values)
+                {
                     μ += Δv.Magnitude();
                 }
                 μ *= 1.0 / currentSimulation.Simulation.ΔV.Count;
                 return μ.ToString("f3");
-            }));
+            }
+            ));
 
 
             base.Initialize();
         }
 
 
-        public void UpdateHud() {
+        public void UpdateHud()
+        {
 
 
             actions.panel.ClearChildren();
@@ -277,9 +285,10 @@ namespace NodeMonog
             };
 
             actions.panel.AddChild(eventList);
-            
-            if (selectedNode.node.SubGraph == null || selectedNode.node.SubGraph.Nodes.Count != 0) { 
-            Button subGraphButton = new Button("Enter Subgraph");
+
+            if (selectedNode.node.SubGraph == null || selectedNode.node.SubGraph.Nodes.Count != 0)
+            {
+                Button subGraphButton = new Button("Enter Subgraph");
                 subGraphButton.OnClick += x =>
                 {
                     GoIntoAGraph(selectedNode.node);
@@ -292,28 +301,31 @@ namespace NodeMonog
             actions.panel.AddChild(Tickcount);
             Button TickGButton = new Button("Tick");
             prog = new ProgressBar(0, tickAmount);
-            prog.Value = history.Count - tickMin;
+            prog.Value = tickCount - tickMin;
             prog.Locked = true;
             TickGButton.OnClick += _ =>
             {
                 Action action = () =>
                 {
                     updating = true;
-                    tickMin = history.Count;
+                    tickMin = tickCount;
                     tickAmount = uint.Parse(Tickcount.Value);
                     Stopwatch outerSw = new Stopwatch();
                     outerSw.Start();
                     Stopwatch innerSw = new Stopwatch();
-                    for (int i = 0; i < tickAmount; i++) {
-                        lock (engine) {
+                    for (int i = 0; i < tickAmount; i++)
+                    {
+                        lock (engine)
+                        {
                             innerSw.Start();
                             engine.handler.Tick(engine.system.graph);
                             innerSw.Stop();
                             Console.WriteLine($"Done with tick {i}, elapsed: {innerSw.ElapsedMilliseconds}ms");
                             innerSw.Reset();
                         }
-                        lock (engine) {
-                            history.Add(new GameState(masterGraph));
+                        lock (engine)
+                        {
+                            tickCount++;
                         }
                         OnTickFinished(this, engine);
                     }
@@ -323,10 +335,10 @@ namespace NodeMonog
                 };
                 if (!updating) updateTask = Task.Run(action);
             };
-            
+
             if (updating)
             {
-                if(running == null) running = new Paragraph(updateTask.Status.ToString());
+                if (running == null) running = new Paragraph(updateTask.Status.ToString());
                 actions.panel.AddChild(running);
                 actions.panel.AddChild(prog);
             }
@@ -344,20 +356,24 @@ namespace NodeMonog
             fittingPeople.Items = allNodes.Select(x => x.Name).ToArray();
             DropDown drop = new DropDown(new Vector2(0, 280));
             drop.AddItem("All");
-            foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
+            /*foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
             {
                 drop.AddItem(entry.Key);
-            }
-            drop.OnValueChange += _ => {
-                if (drop.SelectedValue == "All") {
+            }*/
+            drop.OnValueChange += _ =>
+            {
+                if (drop.SelectedValue == "All")
+                {
                     fittingPeople.Items = allNodes.Select(x => x.Name).ToArray();
-                } else {
+                }
+                else
+                {
                     fittingPeople.Items = allNodes.FindAll(x => x.statuses.Contains(drop.SelectedValue)).Select(x => x.Name).ToArray();
                 }
             };
             fittingPeople.OnValueChange += _ =>
             {
-                if(currentGraph.Nodes.First(x => x.Name == fittingPeople.SelectedValue )!= null)
+                if (currentGraph.Nodes.First(x => x.Name == fittingPeople.SelectedValue) != null)
                     currentSimulation.SelectedNode = currentGraph.FindNode(x => x.Name == fittingPeople.SelectedValue);
             };
             group.panel.AddChild(drop);
@@ -384,59 +400,64 @@ namespace NodeMonog
             person.panel.AddChild(p);
             person.panel.AddChild(connectionList);
 
-            if(selectedConnection != null) { 
-            Paragraph connectionTraitHeader = new Paragraph("Selected Connection:", scale: 1.20f);
-            connectionTraitHeader.WrapWords = false;
-            person.panel.AddChild(connectionTraitHeader);
-            SelectList cTraitList = new SelectList();
-            List<string> cTraitNames = new List<string>();
-            List<string> cTraitValues = new List<string>();
-            int cNameMaxWidth = 0;
-            int cValMaxWidth = 0;
-            foreach (var kv in selectedConnection.traits)
+            if (selectedConnection != null)
             {
-                var traitVal = kv.Value.ToString();
-                cTraitNames.Add(kv.Key);
-                cTraitValues.Add(traitVal);
-                cNameMaxWidth = Math.Max(cNameMaxWidth, kv.Key.Length);
-                cValMaxWidth = Math.Max(cValMaxWidth, traitVal.Length);
-            }
-            foreach ((var name, var val) in cTraitNames.Zip(cTraitValues, (x, y) => (x, y)))
-            {
-                cTraitList.AddItem(name.PadRight(cNameMaxWidth + 1) + val.PadLeft(cValMaxWidth));
-            }
-            if(selectedConnection.Statuses != null) { 
-            foreach (string status in selectedConnection.statuses)
-            {
-                cTraitList.AddItem(status);
-            }
+                Paragraph connectionTraitHeader = new Paragraph("Selected Connection:", scale: 1.20f);
+                connectionTraitHeader.WrapWords = false;
+                person.panel.AddChild(connectionTraitHeader);
+                SelectList cTraitList = new SelectList();
+                List<string> cTraitNames = new List<string>();
+                List<string> cTraitValues = new List<string>();
+                int cNameMaxWidth = 0;
+                int cValMaxWidth = 0;
+                foreach (var kv in selectedConnection.traits)
+                {
+                    var traitVal = kv.Value.ToString();
+                    cTraitNames.Add(kv.Key);
+                    cTraitValues.Add(traitVal);
+                    cNameMaxWidth = Math.Max(cNameMaxWidth, kv.Key.Length);
+                    cValMaxWidth = Math.Max(cValMaxWidth, traitVal.Length);
+                }
+                foreach ((var name, var val) in cTraitNames.Zip(cTraitValues, (x, y) => (x, y)))
+                {
+                    cTraitList.AddItem(name.PadRight(cNameMaxWidth + 1) + val.PadLeft(cValMaxWidth));
+                }
+                if (selectedConnection.Statuses != null)
+                {
+                    foreach (string status in selectedConnection.statuses)
+                    {
+                        cTraitList.AddItem(status);
+                    }
                 }
                 person.panel.AddChild(cTraitList);
             }
             {
-            Paragraph traitHeader = new Paragraph("Traits:", scale: 1.20f);
-            traitHeader.WrapWords = false;
-            person.panel.AddChild(traitHeader);
-            SelectList traitList = new SelectList();
-            List<string> traitNames = new List<string>();
-            List<string> traitValues = new List<string>();
-            int nameMaxWidth = 0;
-            int valMaxWidth = 0;
-            foreach (var kv in selectedNode.node.Traits) {
-                var traitVal = kv.Value.ToString();
-                traitNames.Add(kv.Key);
-                traitValues.Add(traitVal);
-                nameMaxWidth = Math.Max(nameMaxWidth, kv.Key.Length);
-                valMaxWidth = Math.Max(valMaxWidth, traitVal.Length);
-            }
-            foreach ((var name, var val) in traitNames.Zip(traitValues, (x, y) => (x, y))) {
-                traitList.AddItem(name.PadRight(nameMaxWidth + 1) + val.PadLeft(valMaxWidth));
-            }
-            foreach (string status in selectedNode.node.Statuses) {
-                traitList.AddItem(status);
-            }
+                Paragraph traitHeader = new Paragraph("Traits:", scale: 1.20f);
+                traitHeader.WrapWords = false;
+                person.panel.AddChild(traitHeader);
+                SelectList traitList = new SelectList();
+                List<string> traitNames = new List<string>();
+                List<string> traitValues = new List<string>();
+                int nameMaxWidth = 0;
+                int valMaxWidth = 0;
+                foreach (var kv in selectedNode.node.Traits)
+                {
+                    var traitVal = kv.Value.ToString();
+                    traitNames.Add(kv.Key);
+                    traitValues.Add(traitVal);
+                    nameMaxWidth = Math.Max(nameMaxWidth, kv.Key.Length);
+                    valMaxWidth = Math.Max(valMaxWidth, traitVal.Length);
+                }
+                foreach ((var name, var val) in traitNames.Zip(traitValues, (x, y) => (x, y)))
+                {
+                    traitList.AddItem(name.PadRight(nameMaxWidth + 1) + val.PadLeft(valMaxWidth));
+                }
+                foreach (string status in selectedNode.node.Statuses)
+                {
+                    traitList.AddItem(status);
+                }
 
-            person.panel.AddChild(traitList);
+                person.panel.AddChild(traitList);
             }
             //SCrolbar, if only
             //VerticalScrollbar scrollbar = new VerticalScrollbar(0, 10, Anchor.CenterRight);
@@ -467,7 +488,7 @@ namespace NodeMonog
             debugStats.Checked = false;
             debugStats.OnValueChange += _ => showDebugStats = debugStats.Checked;
 
-            
+
             options.panel.AddChild(graphBox);
             options.panel.AddChild(animationBox);
             options.panel.AddChild(cameraBox);
@@ -480,9 +501,9 @@ namespace NodeMonog
             Paragraph sDampParagraph = new Paragraph("Physics Damp: " + damping);
             options.panel.AddChild(sDampParagraph);
             sliderDamp.Value = (int)((Math.Log10(damping) + 3) * 100);
-            sliderDamp.OnValueChange += _ => 
+            sliderDamp.OnValueChange += _ =>
             {
-                float damping = (float) Math.Pow(10f, ((float)sliderDamp.Value / 100) - 3);
+                float damping = (float)Math.Pow(10f, ((float)sliderDamp.Value / 100) - 3);
                 currentSimulation.Simulation.Damping = damping;
                 sDampParagraph.Text = "Physics Damp: " + damping.ToString("f3");
             };
@@ -532,17 +553,20 @@ namespace NodeMonog
 
 
             stats.panel.ClearChildren();
-            stats.panel.AddChild(new Paragraph($"Ticks: {history.Count - 1}"));
+            stats.panel.AddChild(new Paragraph($"Ticks: " + tickCount));
             SelectList l = new SelectList(new Vector2(Window.ClientBounds.Width / 3 / 8 * 7, Window.ClientBounds.Height / 5 * 4));
             stats.panel.AddChild(l);
-            lock (engine) {
-                foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits) {
+            lock (engine)
+            {
+               /* foreach (KeyValuePair<string, int> entry in new GameState(masterGraph).allTraits)
+                {
                     l.AddItem(entry.Key + ": " + entry.Value);
                 }
                 stats.panel.AddChild(new Paragraph());
-                foreach (KeyValuePair<string, List<int>> entry in new GameState(masterGraph).allStatuses) {
+                foreach (KeyValuePair<string, List<int>> entry in new GameState(masterGraph).allStatuses)
+                {
                     l.AddItem(entry.Key + " average: " + entry.Value.Average());
-                }
+                }*/
             }
 
             save.panel.ClearChildren();
@@ -559,7 +583,7 @@ namespace NodeMonog
             };
             save.panel.AddChild(serializeButton);
         }
-    
+
 
 
 
@@ -612,28 +636,35 @@ namespace NodeMonog
         /// checking for collisions, gathering input, and playing audio.
         /// </summary>
         /// <param NName="gameTime">Provides a snapshot of timing values.</param>
-        protected override void Update(GameTime gameTime) {
+        protected override void Update(GameTime gameTime)
+        {
             Rectangle r = Window.ClientBounds;
             int x = r.Width / 3;
 
             MouseState nms = Mouse.GetState();
             KeyboardState nkbs = Keyboard.GetState();
 
-            if (nkbs.IsKeyDown(Keys.Space) && okbs.IsKeyUp(Keys.Space)) {
+            if (nkbs.IsKeyDown(Keys.Space) && okbs.IsKeyUp(Keys.Space))
+            {
                 currentSimulation.AdvanceOnce();
             }
-            
+
 
             //Mouse is moved/pressed/Scrolled
-            if (nms != oms) {
+            if (nms != oms)
+            {
                 //Vänsta hud
-                if (new Rectangle(0, 0, x * 2, r.Height).Contains(nms.Position)) {
-                    if (nms.ScrollWheelValue != oms.ScrollWheelValue) {
+                if (new Rectangle(0, 0, x * 2, r.Height).Contains(nms.Position))
+                {
+                    if (nms.ScrollWheelValue != oms.ScrollWheelValue)
+                    {
                         zoomlevel *= ((nms.ScrollWheelValue - oms.ScrollWheelValue) / 2000f) + 1f;
                     }
 
-                    if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released) {
-                        foreach (var currentNode in currentSimulation.DrawNodes) {
+                    if (nms.LeftButton == ButtonState.Pressed && oms.LeftButton == ButtonState.Released)
+                    {
+                        foreach (var currentNode in currentSimulation.DrawNodes)
+                        {
                             if (new Rectangle(CameraTransform(currentNode.Position).ToPoint(), new Point(
                                 (int)(64 * zoomlevel),
                                 (int)(64 * zoomlevel))).Contains(nms.Position))
@@ -660,21 +691,26 @@ namespace NodeMonog
                         }*/
                     }
 
-                    if (nms.LeftButton == ButtonState.Pressed) {
-                        if (!new Rectangle(x * 2, 0, x, r.Height).Contains(nms.Position)) {
-                            if (dragtimer > 50) {
+                    if (nms.LeftButton == ButtonState.Pressed)
+                    {
+                        if (!new Rectangle(x * 2, 0, x, r.Height).Contains(nms.Position))
+                        {
+                            if (dragtimer > 50)
+                            {
                                 cameraPosition -= ((nms.Position - oms.Position).ToVector2() / (float)zoomlevel).ToPoint();
                                 cameraVelocity = Vector2.Zero;
                             }
                             else dragtimer += gameTime.ElapsedGameTime.Milliseconds;
                         }
                     }
-                    else if (oms.LeftButton == ButtonState.Pressed && nms.LeftButton == ButtonState.Released) {
+                    else if (oms.LeftButton == ButtonState.Pressed && nms.LeftButton == ButtonState.Released)
+                    {
                         dragtimer = 0;
                     }
                 }
 
-                if (!new Rectangle(0, 0, Window.ClientBounds.Width / 3 * 2, Window.ClientBounds.Height).Contains(nms.Position)) {
+                if (!new Rectangle(0, 0, Window.ClientBounds.Width / 3 * 2, Window.ClientBounds.Height).Contains(nms.Position))
+                {
                     dragtimer = 0;
                 };
             }
@@ -685,33 +721,36 @@ namespace NodeMonog
             }
             if (updating)
             {
-                prog.Value = history.Count - tickMin;
+                prog.Value = tickCount - tickMin;
                 if (running != null) running = new Paragraph("Running tick: " + prog.Value);
                 else running.Text = "Running tick: " + prog.Value;
                 ((Paragraph)actions.panel.Children.Last(x => x is Paragraph)).Text = "Running tick: " + prog.Value;
                 wasUpdating = true;
             }
-            if(!updating && wasUpdating)
+            if (!updating && wasUpdating)
             {
                 wasUpdating = false;
                 UpdateHud();
             }
-           
+
             cameraGoal = new Vector2(
                 selectedNode.Position.X + circleDiameter / 4 * 3,
                 selectedNode.Position.Y + circleDiameter / 4 * 3).ToPoint();
-            
-            if (nkbs.IsKeyDown(Keys.Z) && !okbs.IsKeyDown(Keys.Z)) GoOutAGraph();
-            
 
-            if (dragtimer == 0) {
+            if (nkbs.IsKeyDown(Keys.Z) && !okbs.IsKeyDown(Keys.Z)) GoOutAGraph();
+
+
+            if (dragtimer == 0)
+            {
                 cameraVelocity = ((cameraGoal - cameraPosition).ToVector2() / zwoomTime);
             }
-            if (cameraLock) {
+            if (cameraLock)
+            {
                 cameraPosition += (cameraVelocity * gameTime.ElapsedGameTime.Milliseconds).ToPoint();
             }
 
-            if (nkbs.IsKeyDown(Keys.LeftControl) && nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R)) {
+            if (nkbs.IsKeyDown(Keys.LeftControl) && nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R))
+            {
                 currentSimulation.CompleteReset();
             }
             else if (nkbs.IsKeyDown(Keys.R) && !okbs.IsKeyDown(Keys.R))
@@ -738,10 +777,12 @@ namespace NodeMonog
             base.Update(gameTime);
         }
 
-        public void GoIntoAGraph(Node enteredNode) {
+        public void GoIntoAGraph(Node enteredNode)
+        {
             Graph g = enteredNode.SubGraph;
 
-            if (g == null) {
+            if (g == null)
+            {
                 var errorTask = MessageBox.Show("Error", "There is no subgraph on this node!", new[] { "ok" });
                 errorTask.Wait();
                 return;
@@ -760,8 +801,10 @@ namespace NodeMonog
             UpdateHud();
         }
 
-        public void GoOutAGraph() {
-            if (historyIndex > 0) {
+        public void GoOutAGraph()
+        {
+            if (historyIndex > 0)
+            {
                 historyIndex--;
                 engine.player.SelectNode(currentSimulation.SelectedNode);
 
@@ -789,13 +832,15 @@ namespace NodeMonog
                 new Vector2(Window.ClientBounds.Width / 3, Window.ClientBounds.Height / 2);
         }
 
-        public Rectangle CameraTransform(Rectangle r) {
+        public Rectangle CameraTransform(Rectangle r)
+        {
             var newPoint = CameraTransform(r.Location);
             var newScale = (r.Size.ToVector2() * (float)zoomlevel).ToPoint();
             return new Rectangle(newPoint, newScale);
         }
 
-        public Rectangle CameraTransform(Vector2 location, Vector2 size) {
+        public Rectangle CameraTransform(Vector2 location, Vector2 size)
+        {
             var newLocation = CameraTransform(location);
             var newSize = size * (float)zoomlevel;
             return new Rectangle(newLocation.ToPoint(), newSize.ToPoint());
@@ -823,7 +868,8 @@ namespace NodeMonog
 
             spriteBatch.Begin(SpriteSortMode.BackToFront);
 
-            if (showBoundingBox) {
+            if (showBoundingBox)
+            {
                 (var bl_1, var bl_2) = currentSimulation.Simulation.GetBoundingBox();
                 Vector2 bottomleft = (VConv)(bl_1.X, bl_1.Y);
                 Vector2 topright = (VConv)(bl_2.X, bl_2.Y);
@@ -842,10 +888,12 @@ namespace NodeMonog
 
 
             int centerX = r.Width / 3;
-            if (showDebugStats) {
+            if (showDebugStats)
+            {
                 string visitedGraphString = "";
 
-                for (int k = 0; k < visitedGraphs.Count; k++) {
+                for (int k = 0; k < visitedGraphs.Count; k++)
+                {
                     visitedGraphString += visitedGraphs[k].Item2 + "\n";
                 }
                 spriteBatch.DrawString(arial, visitedGraphString, new Vector2(centerX, 0), Color.Black);
@@ -855,11 +903,14 @@ namespace NodeMonog
                 spriteBatch.DrawString(arial, (animation).ToString(), new Vector2(0, 32), Color.Black);
             }
 
-            try {
-                if (showDebugStats) {
+            try
+            {
+                if (showDebugStats)
+                {
                     StringBuilder debugText = new StringBuilder();
 
-                    foreach ((string debugField, Func<string> f) in debugStats) {
+                    foreach ((string debugField, Func<string> f) in debugStats)
+                    {
                         debugText.Append(debugField);
                         debugText.Append(": ");
                         debugText.AppendLine(f());
@@ -868,10 +919,13 @@ namespace NodeMonog
 
                     spriteBatch.DrawString(arial, debugText.ToString(), new Vector2(0, 48), Color.Black);
                 }
-            } catch {
+            }
+            catch
+            {
             }
 
-            if (showGraph) {
+            if (showGraph)
+            {
                 float maxTime = Math.Max(1, currentSimulation.SimulationStatus.TimeStepHistory.Select(t => t.Item2).Max());
                 float maxIter = Math.Min(1000, currentSimulation.SimulationStatus.TimeStepHistory.Last().Item1); // simulationStatus.TimeStepHistory.Select(t => t.Item1).Max();
 
@@ -893,7 +947,8 @@ namespace NodeMonog
             var dvs = currentSimulation.Simulation.ΔV;
 
             //for (int i = 0; i < visitedGraphs[historyIndex].Item1.Graph.Nodes.Count; i++)
-            foreach (DrawNode currentDrawNode in currentSimulation.DrawNodes) {
+            foreach (DrawNode currentDrawNode in currentSimulation.DrawNodes)
+            {
                 //Node currentNode = visitedGraphs[historyIndex].Item1.Graph.Nodes[i];
                 //Vector2 currentNodePosition = currentSimulation.DrawNodes.Find(x => x.node == currentNode).Position;
 
@@ -902,17 +957,20 @@ namespace NodeMonog
 
                 Color selectcolour;
                 float depth = 0.5f;
-                if (selectedNode.node == currentNode) {
+                if (selectedNode.node == currentNode)
+                {
                     selectcolour = Color.Black;
                     depth = 0.2f;
-                } else selectcolour = new Color(
-                      0.7f, // (float)rng.NextDouble(),
-                      0.7f, // (float)rng.NextDouble(),
-                      0.7f, // (float)rng.NextDouble(),
-                      1.0f
-                  );
+                }
+                else selectcolour = new Color(
+                    0.7f, // (float)rng.NextDouble(),
+                    0.7f, // (float)rng.NextDouble(),
+                    0.7f, // (float)rng.NextDouble(),
+                    1.0f
+                );
 
-                foreach ((Connection c, Node n) in currentGraph.GetOutgoingConnections(currentNode)) {
+                foreach ((Connection c, Node n) in currentGraph.GetOutgoingConnections(currentNode))
+                {
                     DrawNode otherDrawNode = currentSimulation.LookupDrawNode(n);
                     if (otherDrawNode == null) continue;
                     Vector2 arrowVector = otherDrawNode.Position - currentNodePosition;
@@ -936,7 +994,8 @@ namespace NodeMonog
                         layerDepth: depth
                     );
 
-                    if (animations) {
+                    if (animations)
+                    {
 
                         Vector2 relativeMovement =
                             (arrowVector + offsetPoint) * (animation % (c.Strength() * 1000)) / (c.Strength() * 1000);
@@ -986,9 +1045,11 @@ namespace NodeMonog
                    Vector2.Zero,
                    SpriteEffects.None,
                    depth / 2 + 0.02f);
-                if (showDebugStats) {
+                if (showDebugStats)
+                {
                     //Draws node text
-                    if (zoomlevel > 0.35f || true) {
+                    if (zoomlevel > 0.35f || true)
+                    {
                         Color fadeColour = Color.Black;
                         if (zoomlevel < 0.8f) fadeColour = new Color(0, 0, 0, (int)((zoomlevel - 0.35f) * 255 * 4));
 
@@ -1032,44 +1093,5 @@ namespace NodeMonog
             base.Draw(gameTime);
         }
     }
-
-    public class GameState
-    {
-        public Dictionary<string, int> allTraits;
-        public Dictionary<string, List<int>> allStatuses;
-
-        public GameState(Graph master)
-        {
-            List<Node> allNodes = new List<Node>();
-            allNodes.AddRange(master.Nodes);
-
-            for (int i = 0; i < allNodes.Count; i++)
-            {
-                if (allNodes[i].SubGraph != null) allNodes.AddRange(allNodes[i].SubGraph.Nodes);
-            }
-            
-
-            Dictionary<string, int> allTraits = new Dictionary<string, int>();
-            Dictionary<string, List<int>> allStatuses = new Dictionary<string, List<int>>();
-
-
-            foreach (Node n in allNodes) {
-                foreach (string s in n.Statuses) {
-                    if (allTraits.Keys.Contains(s)) allTraits[s]++;
-                    else allTraits.Add(s, 1);
-                }
-                foreach (KeyValuePair<string, int> kvp in n.Traits) {
-                    if (allStatuses.Keys.Contains(kvp.Key)) allStatuses[kvp.Key].Add(kvp.Value);
-                    else {
-                        List<int> x = new List<int> { kvp.Value };
-                        allStatuses.Add(kvp.Key, x);
-                    }
-                }
-            }
-            
-            this.allTraits = allTraits;
-            this.allStatuses = allStatuses;
-        }
-    }
-    
 }
+
