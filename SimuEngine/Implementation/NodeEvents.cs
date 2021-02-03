@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated")) return 0;
                 double chance = 1;
-                const double infectionConst = 0.01d;
+                const double infectionConst = 0.15d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -199,12 +199,12 @@ namespace Implementation
         static Event DeIsolate() {
             Event ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
-                if ((!n.statuses.Contains("Half-Isolated") && !n.statuses.Contains("Isolated")) || n.traits["Infected Time"] < 14) return 0;
+                if ((!n.statuses.Contains("Half-Isolated") && !n.statuses.Contains("Isolated")) || (n.traits.ContainsKey("Infected Time") && n.traits["Infected Time"] < 14)) return 0;
                 return 0.3d;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 foreach ((Connection c, Node s) in l.GetOutgoingConnections(n)) {
-                    if (n.groups.Find(x => x.statuses.Contains("Family")).members.Contains(s)) {
+                    if (!n.groups.Find(x => x.statuses.Contains("Family")).members.Contains(s)) {
                         c.traits["Temporal Proximity"] = c.traits["Non-isolated Temporal Proximity"];
                     }
                 }
@@ -462,8 +462,9 @@ namespace Implementation
         static Event StartVaccinating() {
             Event ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                Console.WriteLine($"Arctan testing: {Math.Atan((double)n.traits["Time"] / 3000d)}");
                 if (n.statuses.Contains("Vaccination Started")) return 0;
-                return Math.Atan((double)n.traits["Time"] / 450d);
+                return Math.Atan((double)n.traits["Time"] / 3000d);
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.statuses.Add("Vaccination Started");
@@ -505,7 +506,9 @@ namespace Implementation
                 GetMedicinalSupport(),
                 RemoveMedicinalSupport(),
                 GetVaccinated(),
-                SusceptibleEvent()
+                SusceptibleEvent(),
+                HalfIsolationEvent(),
+                DeIsolate(),
             };
 
             personEvents.Add(new Event());
