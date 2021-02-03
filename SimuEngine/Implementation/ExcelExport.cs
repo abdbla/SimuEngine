@@ -74,7 +74,35 @@ namespace Implementation {
                 .First(x => x.Item1 == name);
 
             return statusSheet.Cells[2, 2 + index,
-                                     2 + series.Count, 2 + index];
+                                     2 + series.Count - 1, 2 + index];
+        }
+
+        ExcelRange TraitValueRange(string name) {
+            (string _, List<(int, int)?> series, int index) = history.traitStuff.OrderBy(kv => kv.Key)
+                .Select((kv, i) => (kv.Key, kv.Value, i))
+                .First(x => x.Item1 == name);
+
+            const int FIRST_COL = 2;
+            const int OFFSET = 0;
+
+            var col = FIRST_COL + 2 * index + OFFSET;
+
+            return traitSheet.Cells[2, col,
+                                    2 + series.Count - 1, col];
+        }
+
+        ExcelRange TraitCountRange(string name) {
+            (string _, List<(int, int)?> series, int index) = history.traitStuff.OrderBy(kv => kv.Key)
+                .Select((kv, i) => (kv.Key, kv.Value, i))
+                .First(x => x.Item1 == name);
+
+            const int FIRST_COL = 2;
+            const int OFFSET = 1;
+
+            var col = FIRST_COL + 2 * index + OFFSET;
+
+            return traitSheet.Cells[2, col,
+                                    2 + series.Count - 1, col];
         }
 
         ExcelAreaChart CreateStatusBarChart() {
@@ -144,15 +172,18 @@ namespace Implementation {
             statusSheet.Drawings.Clear();
             var lineChart = CreateStatusLineChart();
             lineChart.SetPosition(0, (int)(width / 0.1423) + 100);
-            lineChart.SetSize(150);
             var barChart = CreateStatusBarChart();
-            barChart.SetPosition(lineChart.Position.Y + (int)lineChart.Size.Height, lineChart.Position.X);
-            
+            barChart.SetPosition(0, (int)(width / 0.1423) + 400);
         }
 
         void UpdateTraitSheet() {
             traitSheet.Cells[1, 1].Style.Font.Bold = true;
             traitSheet.Cells[1, 1].Value = "Traits";
+
+            for (int i = 0; i < tick; i++) {
+                traitSheet.Cells[i + 2, 1].Value = $"Day {i + 1}";
+            }
+
             int colIndex = 2;
             foreach ((string trait, List<(int, int)?> vals) in history.traitStuff.OrderBy(x => x.Key).Select(x => (x.Key, x.Value))) {
                 traitSheet.Cells[1, colIndex].Value = trait;
@@ -169,6 +200,20 @@ namespace Implementation {
                 traitSheet.Column(colIndex + 1).AutoFit();
                 colIndex += 2;
             }
+
+            traitSheet.Drawings.Clear();
+            CreateAwarenessChart();
+        }
+
+        ExcelLineChart CreateAwarenessChart() {
+            ExcelLineChart chart = traitSheet.Drawings.AddLineChart("Awareness", eLineChartType.Line);
+            var labelRange = traitSheet.Cells[2, 1,
+                                              2 + tick - 1, 1];
+
+            var dataRange = TraitValueRange("Awareness");
+            var series = chart.Series.Add(dataRange, labelRange);
+
+            return chart;
         }
 
         void UpdateSheet() {
