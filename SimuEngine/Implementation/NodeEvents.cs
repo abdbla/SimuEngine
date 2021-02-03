@@ -14,7 +14,7 @@ namespace Implementation
 
             ev.AddReqPossible(delegate (Node self, Graph localGraph, Graph w)
             {
-                if (self.statuses.Contains("Vaccinated")) return 0;
+                if (self.statuses.Contains("Vaccinated") ||self.statuses.Contains("Getting Support: Critical")) return 0;
                 double chance = 1;
                 const double infectionConst = 0.15d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
@@ -75,45 +75,60 @@ namespace Implementation
             });
             if (Implementation.Program.YesNo("Does the Death Event remove statuses?")) {
                 ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
-                    n.statuses.Clear();
-                    n.statuses.Add("Dead");
+                    if (n.statuses.Contains("Getting Support: Critical")) {
+                        return;
+                    } else if (l.parent.traits["Medicinal Capacity: Critical"] > 0) {
+                        n.statuses.Add("Getting Support: Critical");
+                        l.parent.traits["Medicinal Capacity: Critical"]--;
+                    } else {
+                        n.statuses.Clear();
+                        n.statuses.Add("Dead");
+                    }
                 });
             }
             ev.AddOutcome(delegate (Node n, Graph l, Graph w)
             {
-                foreach (var g in n.groups) {
-                    switch (g.statuses[0].ToUpper()) { //the first status *should* be the type of the group...
-                        case "FAMILY":
-                            foreach (var p in g.members) {
-                                p.traits["Awareness"] += 60;
-                                p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
-                            }
-                            break;
-                        case "WORK":
-                            foreach (var p in g.members) {
-                                p.traits["Awareness"] += 15;
-                                p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
-                            }
-                            break;
-                        case "FRIENDS":
-                            foreach (var p in g.members) {
-                                p.traits["Awareness"] += 30;
-                                p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
-                            }
-                            break;
-                        case "ACQUIANTANCES":
-                            foreach (var p in g.members) {
-                                p.traits["Awareness"] += 5;
-                                p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
-                            }
-                            break;
-                        default:
-                            break;
+                if (n.statuses.Contains("Getting Support: Critical")) {
+                    return;
+                } else if (l.parent.traits["Medicinal Capacity: Critical"] > 0) {
+                    n.statuses.Add("Getting Support: Critical");
+                    l.parent.traits["Medicinal Capacity: Critical"]--;
+                } else {
+                    foreach (var g in n.groups) {
+                        switch (g.statuses[0].ToUpper()) { //the first status *should* be the type of the group...
+                            case "FAMILY":
+                                foreach (var p in g.members) {
+                                    p.traits["Awareness"] += 60;
+                                    p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
+                                }
+                                break;
+                            case "WORK":
+                                foreach (var p in g.members) {
+                                    p.traits["Awareness"] += 15;
+                                    p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
+                                }
+                                break;
+                            case "FRIENDS":
+                                foreach (var p in g.members) {
+                                    p.traits["Awareness"] += 30;
+                                    p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
+                                }
+                                break;
+                            case "ACQUIANTANCES":
+                                foreach (var p in g.members) {
+                                    p.traits["Awareness"] += 5;
+                                    p.traits["Awareness"] = Math.Min(p.traits["Awareness"], 100);
+                                }
+                                break;
+                            default:
+                                break;
 
+                        }
                     }
+                    n.statuses.Remove("Infected");
+                    foreach (var o in RemoveMedicinalSupport().Outcome) { o(n, l, w); }
+                    n.statuses.Add("Dead");
                 }
-                n.statuses.Remove("Infected");
-                n.statuses.Add("Dead");
             });
             return ev;
         }
@@ -387,6 +402,7 @@ namespace Implementation
                 n.statuses.Remove("Getting Support");
                 if (n.statuses.Contains("Getting Support: Light")) { n.statuses.Remove("Getting Support: Light"); n.traits["Medicinal Support"] -= 20; l.parent.traits["Medicinal Capacity: Light"]++; }
                 if (n.statuses.Contains("Getting Support: Heavy")) { n.statuses.Remove("Getting Support: Heavy"); n.traits["Medicinal Support"] -= 50; l.parent.traits["Medicinal Capacity: Heavy"]++; }
+                if (n.statuses.Contains("Getting Support: Critical")) { n.statuses.Remove("Getting Support: Critical"); l.parent.traits["Medicinal Capacity: Critical"]++; }
             });
             return ev;
         }
@@ -490,10 +506,10 @@ namespace Implementation
                 n.traits["Time"]++;
                 foreach (var g in n.SubGraph.Nodes) {
                     if (g.statuses.Contains("Testing Implemented")) {
-                        n.traits["Testing Capacity"] = n.traits["Population"] / 100;
+                        g.traits["Testing Capacity"] = g.traits["Population"] / 100;
                     }
                     if (g.statuses.Contains("Vaccination Implemented")) {
-                        n.traits["Vaccination Capacity"] = n.traits["Population"] / 400;
+                        g.traits["Vaccination Capacity"] = g.traits["Population"] / 400;
                     }
                 }
             });
