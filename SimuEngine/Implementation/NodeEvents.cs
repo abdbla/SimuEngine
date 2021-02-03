@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated")) return 0;
                 double chance = 1;
-                const double infectionConst = 0.2d;
+                const double infectionConst = 0.4d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -463,7 +463,7 @@ namespace Implementation
             Event ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 if (n.statuses.Contains("Vaccination Started")) return 0;
-                return Math.Atan((double)n.traits["Time"] - 75 / 140d);
+                return Math.Atan(((double)n.traits["Time"] - 75) / 140d);
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.statuses.Add("Vaccination Started");
