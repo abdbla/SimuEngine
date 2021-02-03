@@ -131,8 +131,8 @@ namespace Implementation {
             return chart;
         }
 
-        ExcelLineChart CreateStatusLineChart() {
-            ExcelLineChart chart = statusSheet.Drawings.AddLineChart("Statuses over time", eLineChartType.Line);
+        ExcelLineChart[] CreateStatusLineCharts() {
+            ExcelLineChart generalChart = statusSheet.Drawings.AddLineChart("General statuses over time", eLineChartType.Line);
             // all statuses that don't remain constant over their whole series
             // ordered from the start by key because we need .Select to return the right index
             var nonConsts = (from item in history.statCount.OrderBy(x => x.Key).Select((x, i) => (x, i))
@@ -140,6 +140,7 @@ namespace Implementation {
                              let Index = item.Item2
                              let Name = item.Item1.Key
                              where timeSeries.Distinct().Count() > 1
+                             where !(Name.StartsWith("Getting Support") || Name.StartsWith("Tested"))
                              select new { Name, timeSeries.Count, Index }).ToList();
 
             var rangeLabel = statusSheet.Cells[2, 1,
@@ -153,11 +154,30 @@ namespace Implementation {
                 var dataRange = statusSheet.Cells[rowStart, col,
                                                   rowEnd,   col];
 
-                var series = chart.Series.Add(dataRange, rangeLabel);
+                var series = generalChart.Series.Add(dataRange, rangeLabel);
                 series.Header = status.Name;
             }
 
-            return chart;
+            ExcelLineChart testingChart = statusSheet.Drawings.AddLineChart("Testing", eLineChartType.Line);
+            var testingRanges = (from item in history.statCount
+                                 where item.Key.StartsWith("Tested")
+                                 select new { Range = StatusValueRange(item.Key), Name = item.Key }).ToList();
+
+            foreach (var range in testingRanges) {
+                var series = testingChart.Series.Add(range.Range, rangeLabel);
+                series.Header = range.Name;
+            }
+
+            ExcelLineChart supportChart = statusSheet.Drawings.AddLineChart("Support", eLineChartType.Line);
+            var supportRanges = (from item in history.statCount
+                                 where item.Key.StartsWith("Getting Support")
+                                 select new { Name = item.Key, Range = StatusValueRange(item.Key) });
+            foreach (var range in supportRanges) {
+                var series = supportChart.Series.Add(range.Range, rangeLabel);
+                series.Header = range.Name;
+            }
+
+            return new[] { generalChart, testingChart, supportChart };
         }
 
         void UpdateStatusSheet() {
@@ -181,10 +201,11 @@ namespace Implementation {
                 colIndex++;
             }
             statusSheet.Drawings.Clear();
-            var lineChart = CreateStatusLineChart();
-            lineChart.SetPosition(0, (int)(width / 0.1423) + 100);
+            var lineCharts = CreateStatusLineCharts();
+            foreach (var lineChart in lineCharts)
+                lineChart.SetPosition(0, (int)(width / 0.1423) + 100);
             var barChart = CreateStatusBarChart();
-            barChart.SetPosition(0, (int)(width / 0.1423) + 400);
+            barChart.SetPosition(30, (int)(width / 0.1423));
         }
 
         void UpdateTraitSheet() {
