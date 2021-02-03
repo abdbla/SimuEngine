@@ -251,7 +251,7 @@ namespace Implementation
         static Event SusceptibleEvent() {
             Event ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
-                if (n.statuses.Contains("Recovered")) return 0.001d * (n.traits["Immune Strength"] / 100d);
+                if (n.statuses.Contains("Recovered")) return 0.08d * (n.traits["Immune Strength"] / 100d);
                 return 0d;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
@@ -500,6 +500,62 @@ namespace Implementation
             return ev;
         }
 
+        static Event AwarenessCampaign() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                return 0.05;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("No Campaign")) {
+                    n.statuses.Remove("No Campaign");
+                    n.statuses.Add("Small Campaign");
+                }
+                if (n.statuses.Contains("Small Campaign")) {
+                    n.statuses.Remove("Small Campaign");
+                    n.statuses.Add("Big Campaign");
+                }
+            });
+            return ev;
+        }
+
+        static Event CityAwarenessCampaign() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                return 0.01;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                if (n.statuses.Contains("No Campaign")) {
+                    n.statuses.Remove("No Campaign");
+                    n.statuses.Add("Small Campaign");
+                }
+                if (n.statuses.Contains("Small Campaign")) {
+                    n.statuses.Remove("Small Campaign");
+                    n.statuses.Add("Big Campaign");
+                }
+            });
+            return ev;
+        }
+
+        static Event AwarenessAdjustment() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                return 0.4;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                if (l.parent.statuses.Contains("No Campaign")) {
+                    n.traits["Awareness"] -= 2;
+                } else if (l.parent.statuses.Contains("Small Campaign")) {
+                    n.traits["Awareness"] -= 1;
+                }
+                if (w.Nodes[0].statuses.Contains("No Campaign")) {
+                    n.traits["Awareness"] -= 2;
+                } else if (w.Nodes[0].statuses.Contains("Big Campaign")) {
+                    n.traits["Awareness"] += 2;
+                }
+            });
+            return ev;
+        }
+
         public static List<Event> InitializePersonEvents()
         {
             List<Event> personEvents = new List<Event>() {
@@ -518,6 +574,7 @@ namespace Implementation
                 SusceptibleEvent(),
                 HalfIsolationEvent(),
                 DeIsolate(),
+                AwarenessAdjustment(),
             };
 
             personEvents.Add(new Event());
@@ -530,6 +587,7 @@ namespace Implementation
                 CheckInfection(),
                 ImplementVaccination(),
                 DistrictInfection(),
+                AwarenessCampaign(),
             };
 
             return districtEvents;
@@ -539,6 +597,7 @@ namespace Implementation
             List<Event> cityEvents = new List<Event>() {
                 StartTesting(),
                 StartVaccinating(),
+                CityAwarenessCampaign(),
                 KeepCount(),
             };
 
