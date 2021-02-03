@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated")) return 0;
                 double chance = 1;
-                const double infectionConst = 0.75d;
+                const double infectionConst = 0.5d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -224,7 +224,7 @@ namespace Implementation
                 chance = Math.Pow(((101 - n.Traits["Age"]) / 100d) 
                     * (n.traits["Immune Strength"] / 100d) 
                     * (n.traits["Genetic Factor"] / 100d), 
-                    2 - (n.Traits["Infected Time"] / 7d));
+                    7 - (n.Traits["Infected Time"] / 2d));
                 return chance;
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w)
