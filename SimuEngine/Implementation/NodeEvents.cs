@@ -506,10 +506,10 @@ namespace Implementation
                 n.traits["Time"]++;
                 foreach (var g in n.SubGraph.Nodes) {
                     if (g.statuses.Contains("Testing Implemented")) {
-                        g.traits["Testing Capacity"] = g.traits["Population"] / 100;
+                        g.traits["Testing Capacity"] = g.traits["Population"] / 400;
                     }
                     if (g.statuses.Contains("Vaccination Implemented")) {
-                        g.traits["Vaccination Capacity"] = g.traits["Population"] / 400;
+                        g.traits["Vaccination Capacity"] = g.traits["Population"] / 600;
                     }
                 }
             });
