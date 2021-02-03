@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated")) return 0;
                 double chance = 1;
-                const double infectionConst = 5d;
+                const double infectionConst = 0.01d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -49,9 +49,9 @@ namespace Implementation
             {
                 n.statuses.Remove("Healthy");
                 n.statuses.Add("Infected");
-                n.traits.Add("Infected Time", 0);
-                n.traits.Add("Medicinal Support", 100);
-                n.traits.Add("Viral Intensity", Node.rng.NextGaussian(100, 10));
+                n.traits["Infected Time"] = 0;
+                n.traits["Medicinal Support"] = 100;
+                n.traits["Viral Intensity"] = Node.rng.NextGaussian(100, 10);
                 n.statuses.Add("Cumulative Infection");
             });
 
@@ -127,13 +127,13 @@ namespace Implementation
             {
                 foreach (PersonConnection c in n.connections)
                 {
-                    c.PhysicalProximity -= 20;
+                    c.traits["Physical Proximity"] -= 20;
                 }
                 n.statuses.Add("WearingMask");
             });
             return ev;
         }
-        static Event RemovinggMask()
+        static Event RemovingMask()
         {
             Event ev = new Event(delegate (Node n, Graph l, Graph w)
             {
@@ -143,9 +143,28 @@ namespace Implementation
             {
                 foreach (PersonConnection c in n.connections)
                 {
-                    c.PhysicalProximity += 20;
+                    c.traits["Physical Proximity"] += 20;
                 }
                 n.statuses.Remove("WearingMask");
+            });
+            return ev;
+        }
+
+        static Event HalfIsolationEvent() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if (n.Statuses.Contains("Isolated") || n.statuses.Contains("Half-Isolated") || n.Traits["Awareness"] < 40) return 0;
+                if ((n.statuses.Contains("Tested: True Positive") || n.statuses.Contains("Tested: False Positive")) && n.traits["Awareness"] >= 10) return 1;
+                else return (n.traits["Awareness"] - 40d) / 100d;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                foreach (var c in l.GetOutgoingConnections(n)) {
+                    if (!n.groups.Find(x => x.statuses.Contains("Family")).members.Contains(c.Item2)) {
+                        c.Item1.traits["Non-isolated Temporal Proximity"] = c.Item1.traits["Temporal Proximity"];
+                        c.Item1.traits["Temporal Proximity"] /= 2;
+                    }
+                }
+                n.statuses.Add("Half-Isolated");
             });
             return ev;
         }
@@ -158,14 +177,40 @@ namespace Implementation
                 else return (n.Traits["Awareness"] - 70d) / 100d;
             }, null, delegate (Node n, Graph l, Graph w)
             {
+                if (n.statuses.Contains("Half-Isolated")) {
+                    foreach (var o in DeIsolate().Outcome) {
+                        o(n, l, w);
+                    } 
+                }
                 foreach ((Connection c, Node adjecentNode) in l.GetOutgoingConnections(n))
                 {
                     //All non family members have a temproal proximity of 0
-                    if (!n.groups.Find(x => x.Statuses.Contains("Family")).Members.Contains(adjecentNode)) ((PersonConnection)c).TemporalProximity = 0;
+                    if (!n.groups.Find(x => x.Statuses.Contains("Family")).Members.Contains(adjecentNode)) {
+                        c.traits["Non-isolated Temporal Proximity"] = c.traits["Temporal Proximity"];
+                        c.traits["Temporal Proximity"] = 0;
+                    }
                 }
                 n.statuses.Add("Isolated");
             }
                 );
+            return ev;
+        }
+
+        static Event DeIsolate() {
+            Event ev = new Event();
+            ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
+                if ((!n.statuses.Contains("Half-Isolated") && !n.statuses.Contains("Isolated")) || n.traits["Infected Time"] < 14) return 0;
+                return 0.3d;
+            });
+            ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
+                foreach ((Connection c, Node s) in l.GetOutgoingConnections(n)) {
+                    if (n.groups.Find(x => x.statuses.Contains("Family")).members.Contains(s)) {
+                        c.traits["Temporal Proximity"] = c.traits["Non-isolated Temporal Proximity"];
+                    }
+                }
+                n.statuses.Remove("Isolated");
+                n.statuses.Remove("Half-Isolated");
+            });
             return ev;
         }
         static Event RecoveryEvent()
@@ -201,6 +246,7 @@ namespace Implementation
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w) {
                 n.statuses.Remove("Recovered");
+                n.statuses.Remove("Cumulative Infection");
                 n.statuses.Add("Healthy");
             });
             return ev;
@@ -225,7 +271,11 @@ namespace Implementation
             Event ev = new Event();
             ev.AddReqGuaranteed(delegate (Node n, Graph l, Graph w)
             {
-                return n.Statuses.Contains("Infected");
+                if (n.traits.ContainsKey("Infected Time")) {
+                    return n.Statuses.Contains("Infected") || n.traits["Infected Time"] < 14;
+                } else {
+                    return n.statuses.Contains("Infected");
+                }
             });
             ev.AddOutcome(delegate (Node n, Graph l, Graph w)
             {
@@ -448,7 +498,7 @@ namespace Implementation
                 RecoveryEvent(),
                 InfectionTimeUpdateEvent(),
                 WearingMask(),
-                RemovinggMask(),
+                RemovingMask(),
                 IsolationEvent(),
                 LocalWork(),
                 GetTested(),
