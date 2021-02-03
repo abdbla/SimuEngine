@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 
 using Core;
 
@@ -24,12 +26,12 @@ namespace SimuEngine
         {
             graphTree ??= new List<Graph>();
             List<Graph> graphs = new List<Graph>();
-            List<(Node, Action<Node, Graph, Graph>)> stack = new List<(Node, Action<Node, Graph, Graph>)>();
+            ConcurrentBag<(Node, Action<Node, Graph, Graph>)> stack = new ConcurrentBag<(Node, Action<Node, Graph, Graph>)>();
             graphs.AddRange(graphTree);
             graphs.Add(graph);
             var worldGraph = graphs[0];
             var localGraph = graphs[graphs.Count - 1];
-            
+            List<Task> taskList = new List<Task>();
 
             foreach (Node n in graph.Nodes) {
                 List<Event> posEvents = new List<Event>();
@@ -39,8 +41,12 @@ namespace SimuEngine
                 }
 
                 if (n.SubGraph != null) {
-                    Tick(n.SubGraph, graphs);
+                    taskList.Add(Task.Factory.StartNew((object g) => Tick((Graph)g, graphs), n.SubGraph));
                 }
+            }
+
+            if (taskList.Count > 0) {
+                Task.WaitAll(taskList.ToArray());
             }
 
             foreach (var item in stack) {
@@ -48,7 +54,7 @@ namespace SimuEngine
             }
         }
 
-        void InvokeEvent(Node n, List<(Node, Action<Node, Graph, Graph>)> stack,
+        void InvokeEvent(Node n, ConcurrentBag<(Node, Action<Node, Graph, Graph>)> stack,
                          Event ev, Graph localGraph, Graph worldGraph) {
             bool? req = null;
             bool? pos = null;
