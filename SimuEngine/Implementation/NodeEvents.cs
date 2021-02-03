@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated") ||self.statuses.Contains("Getting Support: Critical")) return 0;
                 double chance = 1;
-                const double infectionConst = 0.15d;
+                const double infectionConst = 0.075d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -59,7 +59,7 @@ namespace Implementation
         }
         static Event DeathEvent()
         {
-            const double lethalityConst = 0.00015d;
+            const double lethalityConst = 0.0003d;
             var ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
@@ -506,10 +506,10 @@ namespace Implementation
                 n.traits["Time"]++;
                 foreach (var g in n.SubGraph.Nodes) {
                     if (g.statuses.Contains("Testing Implemented")) {
-                        g.traits["Testing Capacity"] = g.traits["Population"] / 100;
+                        g.traits["Testing Capacity"] = g.traits["Population"] / 400;
                     }
                     if (g.statuses.Contains("Vaccination Implemented")) {
-                        g.traits["Vaccination Capacity"] = g.traits["Population"] / 400;
+                        g.traits["Vaccination Capacity"] = g.traits["Population"] / 600;
                     }
                 }
             });
