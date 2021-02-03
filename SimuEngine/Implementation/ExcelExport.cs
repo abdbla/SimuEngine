@@ -68,7 +68,31 @@ namespace Implementation {
             UpdateSheet();
         }
 
-        ExcelLineChart CreateChart() {
+        ExcelRange StatusValueRange(string name) {
+            (string _, List<int?> series, int index) = history.statCount.OrderBy(kv => kv.Key)
+                .Select((kv, i) => (kv.Key, kv.Value, i))
+                .First(x => x.Item1 == name);
+
+            return statusSheet.Cells[2, 2 + index,
+                                     2 + series.Count, 2 + index];
+        }
+
+        ExcelAreaChart CreateStatusBarChart() {
+            ExcelAreaChart chart = statusSheet.Drawings.AddAreaChart("Healthy/Infected/Dead/Recovered", eAreaChartType.AreaStacked);
+
+            var rangeLabel = statusSheet.Cells[2, 1,
+                                               2 + tick - 1, 1];
+
+            foreach (var status in new[] { "Healthy", "Dead", "Infected", "Recovered" }) {
+                var range = StatusValueRange(status);
+                var series = chart.Series.Add(range, rangeLabel);
+                series.Header = status;
+            }
+
+            return chart;
+        }
+
+        ExcelLineChart CreateStatusLineChart() {
             ExcelLineChart chart = statusSheet.Drawings.AddLineChart("Statuses over time", eLineChartType.Line);
             // all statuses that don't remain constant over their whole series
             // ordered from the start by key because we need .Select to return the right index
@@ -97,49 +121,60 @@ namespace Implementation {
             return chart;
         }
 
+        void UpdateStatusSheet() {
+            statusSheet.Cells.Clear();
+
+            statusSheet.Cells[1, 1].Style.Font.Bold = true;
+            statusSheet.Cells[1, 1].Value = "Statuses";
+            for (int i = 0; i < tick; i++) {
+                statusSheet.Cells[i + 2, 1].Value = $"Day {i + 1}";
+            }
+
+            double width = 0;
+            int colIndex = 2;
+            foreach ((string status, List<int?> counts) in history.statCount.OrderBy(x => x.Key).Select(x => (x.Key, x.Value))) {
+                statusSheet.Cells[1, colIndex].Value = status;
+                for (int i = 0; i < counts.Count; i++) {
+                    statusSheet.Cells[i + 2, colIndex].Value = counts[i];
+                }
+                statusSheet.Column(colIndex).AutoFit();
+                width += statusSheet.Column(colIndex).Width;
+                colIndex++;
+            }
+            statusSheet.Drawings.Clear();
+            var lineChart = CreateStatusLineChart();
+            lineChart.SetPosition(0, (int)(width / 0.1423) + 100);
+            lineChart.SetSize(150);
+            var barChart = CreateStatusBarChart();
+            barChart.SetPosition(lineChart.Position.Y + (int)lineChart.Size.Height, lineChart.Position.X);
+            
+        }
+
+        void UpdateTraitSheet() {
+            traitSheet.Cells[1, 1].Style.Font.Bold = true;
+            traitSheet.Cells[1, 1].Value = "Traits";
+            int colIndex = 2;
+            foreach ((string trait, List<(int, int)?> vals) in history.traitStuff.OrderBy(x => x.Key).Select(x => (x.Key, x.Value))) {
+                traitSheet.Cells[1, colIndex].Value = trait;
+                traitSheet.Cells[1, colIndex + 1].Value = trait + " (count)";
+                for (int i = 0; i < vals.Count; i++) {
+                    if (vals[i] != null) {
+                        traitSheet.Cells[i + 2, colIndex].Value = vals[i]?.Item1 / (double)vals[i]?.Item2;
+                        traitSheet.Cells[i + 2, colIndex + 1].Value = vals[i]?.Item2;
+                    } else {
+
+                    }
+                }
+                traitSheet.Column(colIndex).AutoFit();
+                traitSheet.Column(colIndex + 1).AutoFit();
+                colIndex += 2;
+            }
+        }
+
         void UpdateSheet() {
             lock (excel) {
-                statusSheet.Cells.Clear();
-
-                statusSheet.Cells[1, 1].Style.Font.Bold = true;
-                statusSheet.Cells[1, 1].Value = "Statuses";
-                for (int i = 0; i < tick; i++) {
-                    statusSheet.Cells[i + 2, 1].Value = $"Day {i + 1}";
-                }
-
-                double width = 0;
-                int colIndex = 2;
-                foreach ((string status, List<int?> counts) in history.statCount.OrderBy(x => x.Key).Select(x => (x.Key, x.Value))) {
-                    statusSheet.Cells[1, colIndex].Value = status;
-                    for (int i = 0; i < counts.Count; i++) {
-                        statusSheet.Cells[i + 2, colIndex].Value = counts[i];
-                    }
-                    statusSheet.Column(colIndex).AutoFit();
-                    width += statusSheet.Column(colIndex).Width;
-                    colIndex++;
-                }
-                statusSheet.Drawings.Clear();
-                var chart = CreateChart();
-                chart.SetPosition(0, (int)(width / 0.1423) + 10);
-
-                traitSheet.Cells[1, 1].Style.Font.Bold = true;
-                traitSheet.Cells[1, 1].Value = "Traits";
-                colIndex = 2;
-                foreach ((string trait, List<(int, int)?> vals) in history.traitStuff.OrderBy(x => x.Key).Select(x => (x.Key, x.Value))) {
-                    traitSheet.Cells[1, colIndex].Value = trait;
-                    traitSheet.Cells[1, colIndex + 1].Value = trait + " (count)";
-                    for (int i = 0; i < vals.Count; i++) {
-                        if (vals[i] != null) {
-                            traitSheet.Cells[i + 2, colIndex].Value = vals[i]?.Item1 / (double)vals[i]?.Item2;
-                            traitSheet.Cells[i + 2, colIndex + 1].Value = vals[i]?.Item2;
-                        } else {
-
-                        }
-                    }
-                    traitSheet.Column(colIndex).AutoFit();
-                    traitSheet.Column(colIndex + 1).AutoFit();
-                    colIndex += 2;
-                }
+                UpdateStatusSheet();
+                UpdateTraitSheet();
             }
         }
 
