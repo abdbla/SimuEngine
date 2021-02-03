@@ -12,6 +12,7 @@ using GeonBit.UI.Entities;
 using SimulationParams = Core.Physics.SimulationParams;
 using System.Xml.Schema;
 using System.Text;
+using System.Diagnostics;
 
 namespace NodeMonog
 {
@@ -299,9 +300,13 @@ namespace NodeMonog
                     updating = true;
                     tickMin = history.Count;
                     tickAmount = uint.Parse(Tickcount.Value);
-                    for (int i = 0; i < tickAmount; i++)
-                    {
-                        engine.handler.Tick(visitedGraphs[historyIndex].Item1.Graph);
+                    Stopwatch sw = new Stopwatch();
+                    for (int i = 0; i < tickAmount; i++) {
+                        sw.Start();
+                        engine.handler.Tick(engine.system.graph);
+                        sw.Stop();
+                        Console.WriteLine($"Done with tick {i}, elapsed: {sw.ElapsedMilliseconds}ms");
+                        sw.Reset();
                         history.Add(new GameState(masterGraph));
                         OnTickFinished(this, engine);
                     }
