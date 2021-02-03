@@ -16,7 +16,7 @@ namespace Implementation
             {
                 if (self.statuses.Contains("Vaccinated") ||self.statuses.Contains("Getting Support: Critical")) return 0;
                 double chance = 1;
-                const double infectionConst = 0.15d;
+                const double infectionConst = 0.075d;
                 if (!self.Statuses.Contains("Healthy")) return 0;
 
                 double selfHygiene = self.traits["Hygiene"];
@@ -59,7 +59,7 @@ namespace Implementation
         }
         static Event DeathEvent()
         {
-            const double lethalityConst = 0.00015d;
+            const double lethalityConst = 0.0003d;
             var ev = new Event();
             ev.AddReqPossible(delegate (Node n, Graph l, Graph w) {
                 double chance = 0;
