@@ -8,9 +8,12 @@ using System.Runtime.Serialization;
 namespace Core {
     public class NodeRandom {
         Random _instance = new Random();
+        double? nextGaussian;
+
         public NodeRandom() {}
         NodeRandom(Random rng) {
             _instance = rng;
+            nextGaussian = null;
         }
 
         public int Next(int low, int high) {
@@ -21,11 +24,25 @@ namespace Core {
 
         public int NextGaussian(int average, int stddev) {
             lock (_instance) {
-                int output = 0;
-                for (int i = 0; i < 25; i++) {
-                    output += _instance.Next(1, 8);
+                if (nextGaussian != null) {
+                    double ret = nextGaussian ?? throw new SystemException("what the fuck");
+                    ret *= stddev;
+                    ret += average;
+
+                    nextGaussian = null;
+                    return (int)ret;
+                } else {
+                    // Box-Muller transform
+                    var u1 = _instance.NextDouble();
+                    var u2 = _instance.NextDouble();
+
+                    var z1 = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Cos(2 * Math.PI * u2);
+                    var z2 = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2 * Math.PI * u2);
+
+                    nextGaussian = z2;
+                    double ret = z1 * stddev + average;
+                    return (int)ret;
                 }
-                return output;
             }
         }
 
