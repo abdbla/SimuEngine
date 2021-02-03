@@ -62,7 +62,7 @@ namespace Implementation {
         }
 
         public override float Strength() {
-            return (float)Traits["Proximity"] * 0.1f;
+            return (float)Traits["Temporal Proximity"] * 0.1f;
         }
     }
 }
