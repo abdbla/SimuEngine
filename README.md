@@ -1,13 +1,13 @@
 # SimuEngine
-A project to create a not-very-versatile and somewhat well-structured game engine. Hopefully.
+A project to create a not-very-versatile and somewhat well-structured simulation engine. Hopefully.
 
 ## Engine Design
 The engine is made from three separate parts.
-1. The player object
+1. The user object
 1. The system
 1. The handler
 
-The player object is the interface between the player and the engine. It is able to do two things. First, it can view information from the system. Secondly, it can perform "actions", as defined by the game, which influences
+The user object is the interface between the user and the engine. It is able to do two things. First, it can view information from the system. Secondly, it can perform "actions", as defined by the simulation, which influences
 the system in ways defined by the action. Actions have two components, requirements and consequences. Requirements need to be fulfilled before they can use the action. Consequences is what the action does.
 
 The system is an information graph, with each node having the ability to contain a subgraph. Nodes also have traits, numerical fields; statuses, informational tags; connections, identifiers that reference other nodes; a type,
